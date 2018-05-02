@@ -307,7 +307,7 @@ if isfield(useful_stored_energy,out) && any(useful_stored_energy.(out))>0
             locked_now(k) = true;
             new_locked = nonzeros((1:length(opt(:,1)))'.*ismember(opt,locked_now,'rows'));
             if~isempty(new_locked)
-                i_best_alt(t_start+j) = new_locked;
+                i_best_alt(t_start+j) = new_locked(1);
             end
             rem_stor(t1+j:t_start+j-1) = rem_stor(t1+j:t_start+j-1) + gen_output(t1+j+1,k);%need to hold this shifted energy in the storage from the previous time the generator shut down, until it had come on before
         end

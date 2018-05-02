@@ -14,7 +14,7 @@ years = str2double(get(handles.NPC_Years,'String'));%choose years in GUI
 % find net present cost for each size
 npc = zeros(size(gen_i_size));
 for i = 1:1:length(gen_i_size)
-    [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(project,gen_i_size,GENINDEX,TestData,design_day,years);
+    [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(project,gen_i_size(i),GENINDEX,TestData,design_day,years);
 end
 
 % get optimal size
