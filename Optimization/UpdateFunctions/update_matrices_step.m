@@ -1,4 +1,4 @@
-function qp = update_matrices_step(gen,building,cool_tower,subnet,options,qp,forecast,scale_cost,marginal,stor_power,dt,ic,first_profile,limit,t,temperatures)
+function qp = update_matrices_step(gen,building,fluid_loop,subnet,options,qp,forecast,scale_cost,marginal,stor_power,dt,ic,first_profile,limit,t,temperatures)
 % update the equalities with the correct demand, and scale fuel and electric costs
 % ec is the expected end condition at this time stamp (can be empty)
 % stor_power is the expected output/input of any energy storage at this timestep (can be empty)
@@ -8,10 +8,11 @@ qp.solver = options.solver;
 n_g = length(gen);
 n_b = length(building);
 n_l = length(qp.Organize.Transmission);
-n_ct = length(cool_tower);
+n_fl = length(fluid_loop);
 
 upper_bound = zeros(1,n_g);
 dx_dt = zeros(1,n_g);
+qp.Organize.Enabled = true(1,n_g);%which components are enabled
 for i = 1:1:n_g
     if ~isempty(gen(i).QPform.states)
         if strcmp(gen(i).Type,'Hydro Storage')
@@ -25,6 +26,9 @@ for i = 1:1:n_g
     end
     if isfield(gen(i).VariableStruct,'dX_dt')
         dx_dt(i) = gen(i).VariableStruct.dX_dt;
+    end
+    if ~gen(i).Enabled
+        qp.Organize.Enabled(i) = false;
     end
 end
 if strcmp(limit, 'unconstrained')
@@ -40,43 +44,45 @@ end
 
 network_names = fieldnames(subnet);
 %% update demands and storage self-discharge
-for net = 1:1:length(network_names)
-    out = subnet.(network_names{net}).abbreviation;
-    if strcmp(network_names{net},'Hydro')
+for nn = 1:1:length(network_names)
+    net = network_names{nn};
+    abrev = subnet.(net).abbreviation;
+    qp.network.(abrev).nodes = length(subnet.(net).nodes);
+    if strcmp(net,'Hydro')
         %don't do a water balance, since it depends on multiple time steps.
         %Any extra outflow at this time step is subtracted from the expected
         %outflow at the next step (same SOC and flows up river).
     else
-        if strcmp(network_names{net},'Electrical') && options.SpinReserve
+        if strcmp(net,'Electrical') && options.SpinReserve
             qp.b(qp.Organize.SpinReserve) = -options.SpinReservePerc/100*sum(forecast.Demand.E(t,:),2);% -shortfall + SRancillary - SR generators - SR storage <= -SR target
         end
-        qp.constDemand.(out).req = zeros(length(subnet.(network_names{net}).nodes),1);
-        qp.constDemand.(out).load = zeros(length(subnet.(network_names{net}).nodes),n_g);
-        for n = 1:1:length(subnet.(network_names{net}).nodes)
-            equip = subnet.(network_names{net}).Equipment{n};
-            req = qp.Organize.Balance.(network_names{net})(n);
-            loads = nonzeros(qp.Organize.Demand.(network_names{net}){n});
+        qp.constDemand.(abrev).req = zeros(qp.network.(abrev).nodes,1);
+        qp.constDemand.(abrev).load = zeros(qp.network.(abrev).nodes,n_g);
+        for n = 1:1:qp.network.(abrev).nodes
+            equip = subnet.(net).Equipment{n};
+            req = qp.Organize.Balance.(net)(n);
+            loads = nonzeros(qp.Organize.Demand.(net){n});
             if ~isempty(loads)%need this to avoid the next line when there is no load
-                qp.beq(req) = sum(forecast.Demand.(out)(t,loads),2); %multiple demands can be at the same node
+                qp.beq(req) = sum(forecast.Demand.(abrev)(t,loads),2); %multiple demands can be at the same node
             end
             for j = 1:1:length(equip)
                 k = equip(j);
-                if strcmp(network_names{net},'Electrical') 
+                if strcmp(net,'Electrical') 
                     if strcmp(gen(k).Source,'Renewable')% subtract renewable generation 
                         qp.beq(req) = qp.beq(req) - forecast.Renewable(t,k); %put renewable generation into energy balance at correct node
                     end
                 end
                 if ~isempty(first_profile) && ismember(gen(k).Type,{'Electric Storage';'Thermal Storage';})
-                    if isfield(gen(k).QPform.output,out)
+                    if isfield(gen(k).QPform.output,abrev)
                         loss = (gen(k).QPform.Stor.SelfDischarge*gen(k).QPform.Stor.UsableSize*gen(k).QPform.Stor.DischEff);
                         d_soc = first_profile(t+1,k) - ic(k);%positive means charging
                         qp.beq(req) = qp.beq(req) + (d_soc/dt(t)+loss)*gen(k).QPform.Stor.DischEff;
                         qp.b(qp.Organize.Inequalities(k)) = -(1/gen(k).QPform.Stor.ChargeEff-gen(k).QPform.Stor.DischEff)*(d_soc/dt(t)+loss);
                     end
                 end
-                if isfield(gen(k).QPform,'constDemand') && isfield(gen(k).QPform.constDemand,out)
-                    qp.constDemand.(out).req(n,1) = req;
-                    qp.constDemand.(out).load(n,k) = gen(k).QPform.constDemand.(out);
+                if isfield(gen(k).QPform,'constDemand') && isfield(gen(k).QPform.constDemand,abrev)
+                    qp.constDemand.(abrev).req(n,1) = req;
+                    qp.constDemand.(abrev).load(n,k) = gen(k).QPform.constDemand.(abrev);
                 end
             end
         end
@@ -86,40 +92,48 @@ end
 %% Building inequalities & equality
 for i = 1:1:n_b
     states = qp.Organize.States{n_g+n_l+i};
+    %Heating cooling offsets (value through dead_band)    
+    qp.Organize.Building.H_Offset(1,i) = forecast.Building.H0(t,i) - max(0,building(i).QPform.UA*(forecast.Building.Tzone(t,i)-forecast.Building.Tset_H(t,i)));
+    qp.Organize.Building.C_Offset(1,i) = forecast.Building.C0(t,i) - max(0,building(i).QPform.UA*(forecast.Building.Tset_C(t,i)-forecast.Building.Tzone(t,i)));
+    
+    %electrical energy balance
     req = qp.Organize.Building.Electrical.req(i);
     qp.beq(req) = qp.beq(req) + forecast.Building.E0(t,i);%Equipment and nominal Fan Power
+    %ensure when heating = H0, that there is no change in electrical demand
+    qp.beq(req) = qp.beq(req) + (forecast.Building.H0(t,i) - qp.Organize.Building.H_Offset(1,i))*qp.Aeq(req,states(2));
+    %ensure when cooling = C0, that there is no change in electrical demand
+    qp.beq(req) = qp.beq(req) + (forecast.Building.C0(t,i) - qp.Organize.Building.C_Offset(1,i))*qp.Aeq(req,states(3));
+    
     %Heating Equality
     req = qp.Organize.Building.DistrictHeat.req(i);
-    qp.Organize.Building.H_Offset(1,i) = building(i).QPform.UA*(forecast.Building.Tzone(t,i)-forecast.Building.Tset_H(t,i)) - forecast.Building.H0(t,i);
-    qp.beq(req) = qp.beq(req) - qp.Organize.Building.H_Offset(1,i);%Heating load
-    qp.lb(states(2)) = qp.lb(states(2)) + qp.Organize.Building.H_Offset(1,i);
+    qp.beq(req) = qp.beq(req) + qp.Organize.Building.H_Offset(1,i);%Heating load
+%     qp.lb(states(2)) = qp.lb(states(2)) + qp.Organize.Building.H_Offset(1,i);
     
     %Cooling Equality
     req = qp.Organize.Building.DistrictCool.req(i);
-    qp.Organize.Building.C_Offset(1,i) = building(i).QPform.UA*(forecast.Building.Tset_C(t,i)-forecast.Building.Tzone(t,i)) - forecast.Building.C0(t,i);
-    qp.beq(req) = qp.beq(req) - qp.Organize.Building.C_Offset(1,i);%Cooling Load
-    qp.lb(states(3)) = qp.lb(states(3)) + qp.Organize.Building.C_Offset(1,i);
+    qp.beq(req) = qp.beq(req) + qp.Organize.Building.C_Offset(1,i);%Cooling Load
+%     qp.lb(states(3)) = qp.lb(states(3)) + qp.Organize.Building.C_Offset(1,i);
     
-    %heating inequality
-    qp.b(qp.Organize.Building.r(i)) = building(i).QPform.UA*forecast.Building.Tset_H(t,i) + building(i).QPform.Cap*temperatures.build(1,i)/(3600*dt(t));
+    %heating inequality @ T0  H_bar >= H0 - offset becomes: 
+    qp.b(qp.Organize.Building.r(i)) = (building(i).QPform.UA + building(i).QPform.Cap/(3600*dt(t)))*temperatures.build(1,i) - (forecast.Building.H0(t,i) - qp.Organize.Building.H_Offset(1,i));
     qp.A(qp.Organize.Building.r(i),states(1)) = (building(i).QPform.UA+building(i).QPform.Cap/(3600*dt(t)));
-    %cooling inequality
-    qp.b(qp.Organize.Building.r(i)+1) = -building(i).QPform.UA*forecast.Building.Tset_C(t,i) + building(i).QPform.Cap*temperatures.build(1,i)/(3600*dt(t));
+    %cooling inequality @ T0  C_bar >= C0 - offset
+    qp.b(qp.Organize.Building.r(i)+1) = (building(i).QPform.UA + building(i).QPform.Cap/(3600*dt(t)))*temperatures.build(1,i) - (forecast.Building.C0(t,i) - qp.Organize.Building.C_Offset(1,i));
     qp.A(qp.Organize.Building.r(i)+1,states(1)) = -building(i).QPform.UA - building(i).QPform.Cap/(3600*dt(t));
     %penalty states (excess and under temperature)
     qp.b(qp.Organize.Building.r(i)+2) = forecast.Building.Tmax(t,i);%upper buffer inequality, the longer the time step the larger the penaly cost on the state is.
     qp.b(qp.Organize.Building.r(i)+3) = -forecast.Building.Tmin(t,i);%lower buffer inequality
 end
 %% Cooling Tower water loop equality
-for i = 1:1:n_ct
+for i = 1:1:n_fl
     %1st order temperature model: 0 = -T(k) + T(k-1) + dt/Capacitance*(energy balance)
     state = qp.Organize.States{n_g+n_l+n_b+i};
     req = qp.Organize.Balance.CoolingWater(i);
-    qp.Organize.cool_tower.req(i) = req;
-    capacitance = cool_tower(i).fluid_capacity*cool_tower(i).fluid_capacitance; %Water capacity in kg and thermal capacitance in kJ/kg*K to get kJ/K
-    qp.Aeq(req,:) = qp.Aeq(req,:)*dt(t)/capacitance; %energy balance for chillers & cooling tower fans already put in this row of Aeq
-    qp.Aeq(req,state) = -1; %-T(k)
-    qp.beq(req) = -temperatures.cool_tower(i);%-T(k-1)
+    qp.Organize.fluid_loop(i) = req;
+    capacitance = fluid_loop(i).fluid_capacity*fluid_loop(i).fluid_capacitance; %Water capacity in kg and thermal capacitance in kJ/kg*K to get kJ/K
+    qp.Aeq(req,:) = qp.Aeq(req,:); %energy balance for chillers & cooling tower fans already put in this row of Aeq
+    qp.Aeq(req,state) = -capacitance/(3600*dt(t)); %-T(k)
+    qp.beq(req) = -temperatures.fluid_loop(i)*capacitance/(3600*dt(t));%-T(k-1)
 end
 
 %% Update upper and lower bounds based on ramping constraint (if applicable)
@@ -128,7 +142,7 @@ if ~isempty(first_profile)
         states = qp.Organize.States{i};
         if ismember(gen(i).Type,{'Utility';'Electric Generator';'CHP Generator';'Chiller';'Heater';})%all generators and utilities
             if min_power(i)>sum(qp.lb(states))
-                qp.Organize.Dispatchable(i) = 0; %can't shut off
+                qp.Organize.Dispatchable(i) = false; %can't shut off
                 %raise the lower bounds
                 power_add = min_power(i) - sum(qp.lb(states));
                 for f = 1:1:length(states) %starting with lb of 1st state in generator, then moving on
@@ -180,7 +194,7 @@ end
 %% Adding cost for Line Transfer Penalties to differentiate from spillway flow 
 %%also want to penalize spill flow to conserve water for later, spill flow
 %%is just to meet instream requirments when the power gen needs to be low
-if ismember('Hydro',network_names) && ~isempty(subnet.Electrical.lineNames)
+if isfield(subnet,'Hydro') && ~isempty(subnet.Electrical.lineNames)
     for k = 1:1:length(subnet.Electrical.lineNames)
         line = subnet.Electrical.lineNumber(k);
         states = qp.Organize.States{n_g+line};
@@ -217,28 +231,23 @@ for i = 1:1:n_g
         elseif ismember(gen(i).Type,{'Electric Storage';'Thermal Storage';'Hydro Storage';})%all  storage
             stor_cat = fieldnames(gen(i).QPform.output);
             %penalize deviations from the expected storage output
-            %don't penalize spinning reserve state
-            if isempty(first_profile)
-                qp.f(states(1)) = marginal.(stor_cat{1});
-                if any(strcmp(network_names,'Electrical')) && strcmp(stor_cat{1},'H') % first initialization give arbitrarily high cost to storage (but not thermal storage if in conjunction with electric dispatch)
-                    H(states(1)) = 0;
-                elseif strcmp(stor_cat{1},'W') %Hydro needs to have high cost, but not too high that it never uses it; set arbitrary number
-                    H(states(1)) = 1e5*marginal.(stor_cat{1});
-                else 
-                    H(states(1)) = 1e8*marginal.(stor_cat{1});
-                end
-            else
-                a = 4; %sets severity of quadratic penalty
-                MaxCharge = gen(i).QPform.Ramp.b(1); %minimum of peak Charge, and SOC/time (completely charging storage in next step)
+            a = 1; %sets severity of quadratic penalty
+            %scale the penalty by a) larger of 5% capcity and 2x the
+            %expected change in stored capacity, b) lesser of a) and
+            %remaining space in storage
+            MaxCharge = 0.05*gen(i).QPform.Stor.UsableSize/dt(t);
+            if ~isempty(first_profile)
+                MaxCharge = max(MaxCharge,2*abs(stor_power(i)));
                 if gen(i).QPform.Stor.UsableSize>first_profile(t+1,i)
                     MaxCharge = min((gen(i).QPform.Stor.UsableSize-first_profile(t+1,i))/dt(t),MaxCharge);
                 end
-                qp.f(states(1)) = marginal.(stor_cat{1});
-                if MaxCharge == 0
-                    H(states(1)) = 0;
-                else
-                    H(states(1)) = a*2*qp.f(states(1))/MaxCharge;  %factor of 2 because its solving C = 0.5*x'*H*x + f'*x
+                if first_profile(t+1,i)>0
+                    MaxCharge = min(0.5*first_profile(t+1,i)/dt(t),MaxCharge);
                 end
+            end
+            qp.f(states(1)) = marginal.(stor_cat{1});
+            H(states(1)) = a*2*qp.f(states(1))/MaxCharge;  %factor of 2 because its solving C = 0.5*x'*H*x + f'*x
+            if length(states)>1
                 qp.f(states(2)) = 1e-6; %small penalty on charging state so that if there are no other generators it keeps the charging constraint as an equality
             end
         end

@@ -27,10 +27,10 @@ if isempty(test_data.HistProf) &&  isfield(data,'HistProf') && ~isempty(data.His
 end
 %create typical day fits if necessary
 if ~strcmp(options.forecast,'Perfect') && isempty(test_data.HistProf)
-    S = fieldnames(test_data.Weather);
-    for j = 1:1:length(S)
-        if isnumeric(test_data.Weather.(S{j}))
-            test_data.HistProf.(S{j}) = typical_day([],test_data.Timestamp,test_data.Weather.(S{j}));
+    s = fieldnames(test_data.Weather);
+    for j = 1:1:length(s)
+        if isnumeric(test_data.Weather.(s{j}))
+            test_data.HistProf.(s{j}) = typical_day([],test_data.Timestamp,test_data.Weather.(s{j}));
         end
     end
     if isfield(test_data,'Hydro')
@@ -39,12 +39,11 @@ if ~strcmp(options.forecast,'Perfect') && isempty(test_data.HistProf)
             test_data.HistProf.Hydro.SourceSink(n) = {typical_day([],test_data.Hydro.Timestamp,test_data.Hydro.SourceSink(:,n))};
         end
     end
-    
 end
 %create surface fits if necessary
 if strcmp(options.forecast,'Surface') && isfield(test_data,'Demand') 
-    S = fieldnames(test_data.Demand);
-    if ~isfield(test_data.HistProf,'Demand') || ~all(ismember(S,fieldnames(test_data.HistProf.Demand)))
+    s = fieldnames(test_data.Demand);
+    if ~isfield(test_data.HistProf,'Demand') || ~all(ismember(s,fieldnames(test_data.HistProf.Demand)))
         test_data.HistProf.Demand = calculate_fits(test_data.Demand,test_data.Timestamp,test_data.Weather);%% calculate surface fits used in forecasting
     end
 end

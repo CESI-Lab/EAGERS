@@ -15,33 +15,35 @@ if isempty(TestData)
     end
     if k == 1
         if isfield(Plant,'Building') && ~isempty(Plant.Building)
-            k2 = center_menu('Select Building', 'Building(s) in Project', 'Load from File');
-            if k2 == 2
-                files = dir(fullfile(Model_dir, 'System Library','Buildings','*.mat'));
-                list_b=strrep({files.name},'.mat','');
-                [s,v] = listdlg('ListString',list_b,'SelectionMode','multiple','Name','Saved buildings','PromptString','Select one or more buildings');
-                Plant.Building = [];
-                for i = 1:1:length(s)
-                    load(fullfile(Model_dir, 'System Library','Buildings',strcat(list_b{s(i)},'*.mat')));
-                    Plant.Building(i) = building;
-                end
+            %use building/s in project
+        else
+            files = dir(fullfile(Model_dir, 'System Library','Buildings','*.mat'));
+            list_b=strrep({files.name},'.mat','');
+            [s,v] = listdlg('ListString',list_b,'SelectionMode','multiple','Name','Saved buildings','PromptString','Select one or more buildings');
+            Plant.Building = [];
+            for i = 1:1:length(s)
+                load(fullfile(Model_dir, 'System Library','Buildings',strcat(list_b{s(i)},'*.mat')));
+                Plant.Building(i) = building;
             end
         end
         %% select simulation dates
         n_s = 365*24/Plant.optimoptions.Resolution+1;
         TestData.Timestamp = linspace(datenum([2017,1,1]),datenum([2018,1,1]),n_s)';
         %load weather file if not already loaded
-        cd(fullfile(Model_dir,'System Library','Weather'))
-        [fn,pn,~] = uigetfile('*.mat','Load Weather File');
-        load(fullfile(pn,fn));
-        cd(Model_dir)
-        TestData.Weather = interpolate_weather(weather,TestData.Timestamp);
+        if ~isfield(TestData,'Weather') || isempty(TestData.Weather)
+            if ~isfield(Plant,'Weather') || isempty(Plant.Weather)
+                cd(fullfile(Model_dir,'System Library','Weather'))
+                [fn,pn,~] = uigetfile('*.mat','Load Weather File');
+                load(fullfile(pn,fn));
+                cd(Model_dir)
+                TestData.Weather = interpolate_weather(weather,TestData.Timestamp);
+            else
+                TestData.Weather = interpolate_weather(Plant.Weather,TestData.Timestamp);
+            end
+        end
         TestData.Building = load_test_building(Plant.Building,Plant.Network,TestData.Timestamp,TestData.Weather);
     elseif k == 2
         TestData = Plant.Data;%% Revise this so you can pull from more than what is loaded in Plant
-%         if isfield(TestData,'HistProf')
-%             TestData = rmfield(TestData,'HistProf');
-%         end
         if isfield(Plant.Data,'Hydro')
             TestData = rmfield(TestData,'Hydro');
             TestData.Hydro.SourceSink = Plant.Data.Hydro.SourceSink;

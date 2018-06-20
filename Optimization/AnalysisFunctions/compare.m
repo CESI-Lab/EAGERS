@@ -35,7 +35,7 @@ while Si<NumSteps-1
         Plant.Generator(i).Status = Plant.Generator(i).CurrentState>LB(i);
     end
     [Forecast,Plant.Generator,Buildings] = update_forecast(Plant.Generator,Buildings,Plant.subNet,Plant.optimoptions,Date(2:end));%% function that creates demand vector with time intervals coresponding to those selected
-    Solution = dispatch_loop(Plant.Generator,Buildings,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,Plant.optimoptions,Date,Forecast,Solution);
+    [Solution,~] = dispatch_loop(Plant.Generator,Buildings,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,Plant.optimoptions,Date,Forecast,Solution);
     timers(Si,:) = Solution.timers;
     [C,~,~] = net_cost(Plant.Generator,Solution.Dispatch,Date,'Dispatch');
     Plant.Predicted.Cost(Si) = sum(C);

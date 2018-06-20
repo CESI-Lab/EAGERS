@@ -1,54 +1,61 @@
-function Costs = defaultCosts(Costs,Gen)
+function costs = defaultCosts(costs,gen)
 %DEFAULTCOSTS
-if isempty(Costs) || ~isfield(Costs,'DiscountRate')
-    Costs.DiscountRate = 2;% implies a 2% discount rate for NPC calculations
+if isempty(costs) || ~isfield(costs,'DiscountRate')
+    costs.DiscountRate = 2;% implies a 2% discount rate for NPC calculations
 end
-nG = length(Gen);
-for i = 1:1:nG
-    Type = Gen(i).Type;
-    if ~strcmp(Type,'Utility') && ~strcmp(Type,'AC_DC') && (~isfield(Costs,'Equipment') || length(Costs.Equipment)<i || isempty(Costs.Equipment(i)))
-        Costs.Equipment(i).Name = Gen(i).Name;
-        if strcmp(Type,'CHP Generator') || strcmp(Type,'Electric Generator') || strcmp(Type,'Hydrogen Generator') 
-            if isfield(Gen(i).Output,'DirectCurrent')
-                costPerkW = 3000;
-                OM = 100;
-            else
-                costPerkW = 1000;
-                OM = 50;
-            end
-        elseif strcmp(Type,'Electrolyzer')
-            costPerkW = 1000;
-            OM = 50;
-        elseif strcmp(Type,'Chiller') %chillers
-            if strcmp(Gen(i).Source,'Electricity')
-                % electric chiller
-                costPerkW = 100;
-                OM = 10;
-            else
-                % absorption chiller
-                costPerkW = 200;
-                OM = 20;
-            end
-        elseif strcmp(Type,'Heater') 
-            costPerkW = 100;
-            OM = 3;
-        elseif strcmp(Type,'Hydrogen Storage') 
-            costPerkW = 50;
-            OM = 5;
-        elseif strcmp(Type,'Thermal Storage') 
-            costPerkW = 20;
-            OM = 1;
-        elseif strcmp(Type,'Electric Storage')
-            costPerkW = 500;
-            OM = 10;
-        elseif strcmp(Type,'Solar')
-            costPerkW = 500;
-            OM = 5;
+n_g = length(gen);
+if ~isfield(costs,'Equipment') || length(costs.Equipment)~=n_g
+    costs.Equipment = [];
+    for i = 1:1:n_g
+        cost_per_kw = [];
+        costs.Equipment(i).Name = gen(i).Name;
+        switch gen(i).Type
+            case {'CHP Generator';'Electric Generator';'Hydrogen Generator';}
+                if isfield(gen(i).Output,'DirectCurrent')
+                    cost_per_kw = 3000;
+                    o_and_m = 100;
+                else
+                    cost_per_kw = 1000;
+                    o_and_m = 50;
+                end
+            case 'Electrolyzer'
+                cost_per_kw = 1000;
+                o_and_m = 50;
+            case 'Chiller'
+                if strcmp(gen(i).Source,'Electricity')
+                    % electric chiller
+                    cost_per_kw = 100;
+                    o_and_m = 10;
+                else
+                    % absorption chiller
+                    cost_per_kw = 200;
+                    o_and_m = 20;
+                end
+            case 'Heater'
+                cost_per_kw = 100;
+                o_and_m = 3;
+            case 'Hydro Storage'
+                cost_per_kw = 50;
+                o_and_m = 5;
+            case 'Hydrogen Storage'
+                cost_per_kw = 50;
+                o_and_m = 5;
+            case 'Thermal Storage'
+                cost_per_kw = 20;
+                o_and_m = 1;
+            case 'Electric Storage'
+                cost_per_kw = 500;
+                o_and_m = 10;
+            case 'Solar'
+                cost_per_kw = 500;
+                o_and_m = 5;
         end
-        Costs.Equipment(i).Cost = costPerkW*Gen(i).Size;
-        Costs.Equipment(i).OandM = OM*Gen(i).Size;
-        Costs.Equipment(i).Financed = 100;
-        Costs.Equipment(i).LoanRate = 6;
-        Costs.Equipment(i).LoanTerm = 15;
+        if ~isempty(cost_per_kw)
+            costs.Equipment(i).Cost = cost_per_kw*gen(i).Size;
+            costs.Equipment(i).OandM = o_and_m*gen(i).Size;
+            costs.Equipment(i).Financed = 100;
+            costs.Equipment(i).LoanRate = 6;
+            costs.Equipment(i).LoanTerm = 15;
+        end
     end
 end

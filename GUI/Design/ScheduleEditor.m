@@ -77,6 +77,11 @@ plotSched(data,ramp,handles.axesSchedule)
 
 guidata(hObject, handles);
 
+
+% --- Outputs from this function are returned to the command line.
+function varargout = ScheduleEditor_OutputFcn(hObject, eventdata, handles)
+building_edit()
+
 function rampfactor_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -92,8 +97,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --- Outputs from this function are returned to the command line.
-function varargout = ScheduleEditor_OutputFcn(hObject, eventdata, handles)
 
 function editLoad_Callback(hObject, eventdata, handles)
 global testSystems SYSINDEX

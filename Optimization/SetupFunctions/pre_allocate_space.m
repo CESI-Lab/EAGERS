@@ -1,4 +1,4 @@
-function [num_steps,dispatch,predicted,design,run_data] = pre_allocate_space(gen,building,cool_tower,subnet,options,test_data)
+function [num_steps,dispatch,predicted,design,run_data] = pre_allocate_space(gen,building,fluid_loop,subnet,options,test_data)
 n_g = length(gen);
 n_b = length(building);
 switch options.method
@@ -21,7 +21,7 @@ for i = 1:1:n_g
         n_d = n_d + 1;
     end
 end
-n_ct = length(cool_tower);
+n_fl = length(fluid_loop);
 n_s = round(options.Horizon/options.Resolution); %number of steps per dispatch
 num_steps = options.Interval*24/options.Resolution+1; %number of simulation steps
 dispatch = [];
@@ -30,13 +30,12 @@ design = [];
 run_data = [];
 f = fieldnames(test_data);
 f = f(~strcmp('Timestamp',f));
-f = f(~strcmp('RealTimeData',f));
 if strcmp(mode,'Design')
     design.Timestamp = zeros(num_steps,1);   
     design.GeneratorState = zeros(num_steps,n_g);
     design.LineFlows = zeros(num_steps,n_l);
     design.Buildings = zeros(num_steps,n_b);
-    design.cool_tower = zeros(num_steps,n_ct);
+    design.fluid_loop = zeros(num_steps,n_fl);
     design.hydroSOC = zeros(num_steps,n_d);
     design.LBRelax = ones(num_steps,1);%degree to which you relax the lower bound when doing cQP
     for j = 1:1:length(f)
@@ -58,12 +57,12 @@ elseif strcmp(mode,'Dispatch')
     dispatch.GeneratorState = zeros(num_steps,n_g);
     dispatch.LineFlows = zeros(num_steps,n_l);
     dispatch.Buildings = zeros(num_steps,n_b);
-    dispatch.cool_tower = zeros(num_steps,n_ct);
+    dispatch.fluid_loop = zeros(num_steps,n_fl);
     dispatch.hydroSOC = zeros(num_steps,n_d);
     predicted.GenDisp = zeros(n_s,n_g,num_steps);
     predicted.LineFlows = zeros(n_s,n_l,num_steps);
     predicted.Buildings = zeros(n_s,n_b,num_steps);
-    predicted.cool_tower = zeros(n_s,n_ct,num_steps);
+    predicted.fluid_loop = zeros(n_s,n_fl,num_steps);
     predicted.hydroSOC = zeros(n_s,n_d,num_steps);
     predicted.Timestamp = zeros(n_s,num_steps);
     predicted.Cost = zeros(num_steps,1);

@@ -1,4 +1,4 @@
-function [gen,n_g] = check_ac_dc(gen,buildings,demand_types)
+function [gen,n_g] = check_ac_dc(gen,buildings,test_data)
 %double check & add AC_DC conversion if neccessary
 dir = strrep(which('check_ac_dc.m'),fullfile('Optimization','BasicFunctions','check_ac_dc.m'),'');
 has_dc = false;
@@ -19,13 +19,11 @@ for i = 1:1:n_g
         has_ac = true;
     end
 end
-if ~isempty(demand_types)
-    if any(strcmp(demand_types,'E'))
-        need_ac = true;
-    end
-    if any(strcmp(demand_types,'DC'))
-        need_dc = true;
-    end
+if isfield(test_data,'Demand') && isfield(test_data.Demand,'E')
+    need_ac = true;    
+end
+if isfield(test_data,'Demand') && isfield(test_data.Demand,'DC')
+    need_dc = true;    
 end
 if ~isempty(buildings)
     need_ac = true;

@@ -1,4 +1,7 @@
-function dx_dt = ss_response(gen,handles)
+function [dx_dt,flag] = ss_response(gen,handles)
+% Flag values:
+%   0 -- Standard operation.
+%   1 -- error calculating response curve.
 switch gen.Type
         case {'CHP Generator';'Electric Generator';'Hydrogen Generator';} 
             names = {'Electricity';};
@@ -22,8 +25,11 @@ switch gen.Type
     case 'Cooling Tower'
         lower_bound = gen.VariableStruct.Startup.heat_reject(end);
 end
-
-t_peak = (gen.Size-lower_bound)/gen.VariableStruct.dX_dt*3600;
+if isfield(gen.VariableStruct,'dX_dt')
+    t_peak = (gen.Size-lower_bound)/gen.VariableStruct.dX_dt*3600;
+else 
+    t_peak = 3600;
+end
 if t_peak>4*60
     dt = 60;
 elseif t_peak>3.6e4
@@ -39,6 +45,7 @@ d = gen.VariableStruct.StateSpace.D;
 time = 5*t_peak;
 dx_dt = [];
 count = 0;
+flag = 0;
 while isempty(dx_dt)
     nS = round(time/dt)+1;
     u = gen.Size*linspace(1,1,nS);
@@ -58,9 +65,11 @@ while isempty(dx_dt)
     count = count+1;
     if count>10
         disp('error in ss_response');
-        nR = min(nonzeros((1:1:nS+1)'.*((y(:,1)-y(1,1))>(.95*(u(1)-y(1,1))))));
-        t_rise = interp1(y(nR-1:nR,1)-y(1,1),t(nR-1:nR),.95*(u(1)-y(1,1)))/3600; %rise time in hours
-        dx_dt = ((gen.Size-lower_bound).*(0.95)./t_rise);
+        flag = 1;
+        dx_dt = 1;
+%         nR = min(nonzeros((1:1:nS+1)'.*((y(:,1)-y(1,1))>(.95*(u(1)-y(1,1))))));
+%         t_rise = interp1(y(nR-1:nR,1)-y(1,1),t(nR-1:nR),.95*(u(1)-y(1,1)))/3600; %rise time in hours
+%         dx_dt = ((gen.Size-lower_bound).*(0.95)./t_rise);
     end
 end
 if ~isempty(handles)

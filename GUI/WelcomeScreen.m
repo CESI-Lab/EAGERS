@@ -60,23 +60,22 @@ guidata(hObject, handles);
 
 % UIWAIT makes WelcomeScreen wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-global Model_dir testSystems mainFig TestData DispatchWaitbar
+global testSystems mainFig TestData 
 if ishandle(mainFig)
     close(mainFig)
 end
 mainFig = gcf;
 testSystems =[];
 TestData = [];
-DispatchWaitbar = [];
 handles.output = hObject;
 guidata(hObject, handles);
 movegui(gcf,'center');
-
-files=dir(fullfile(Model_dir, 'Projects','*.mat'));
+model_dir=strrep(which('WelcomeScreen.m'),fullfile('GUI','WelcomeScreen.m'),'');
+files=dir(fullfile(model_dir, 'Projects','*.mat'));
 list=strrep({files.name},'.mat','');
 set(handles.ProjectList,'string',list,'value',1)
 
-files = dir(fullfile(Model_dir, 'Model Library','*.mat'));
+files = dir(fullfile(model_dir, 'Model Library','*.mat'));
 list=strrep({files.name},'.mat','');
 set(handles.popupmenuSTRIDES,'string',list,'value',1)
 
@@ -109,11 +108,12 @@ function pushbuttonDesign_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbuttonDesign (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Model_dir Plant mainFig
+global Plant mainFig
 % Load file that was selected from the popupmenu
+model_dir=strrep(which('WelcomeScreen.m'),fullfile('GUI','WelcomeScreen.m'),'');
 projList = get(handles.ProjectList,'String');
 projName = projList{get(handles.ProjectList,'Value')};
-load(fullfile(Model_dir,'Projects',projName));
+load(fullfile(model_dir,'Projects',projName));
 load_test_data
 mainFig = [];
 close
@@ -121,10 +121,11 @@ MainScreen1
 
 % --- Executes on button press in Open.
 function Open_Callback(hObject, eventdata, handles)
-global Model_dir Plant mainFig
+global Plant mainFig
+model_dir=strrep(which('WelcomeScreen.m'),fullfile('GUI','WelcomeScreen.m'),'');
 list=get(handles.ProjectList,'string');
 plantSel = list{get(handles.ProjectList,'value')};
-load(fullfile(Model_dir,'Projects',plantSel))
+load(fullfile(model_dir,'Projects',plantSel))
 load_test_data
 mainFig = [];
 close

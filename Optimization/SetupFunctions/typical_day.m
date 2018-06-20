@@ -14,7 +14,7 @@ for i = 1:1:length(months)
     for j = 1:1:24
         X = (m==i) & (hour == j-1);
         if any(data(X)~=0)
-            z(months(i),j) = sum(data(X))./nnz(data(X));
+            z(months(i),j) = sum(data(X))./nnz(X);
         end
     end
 end

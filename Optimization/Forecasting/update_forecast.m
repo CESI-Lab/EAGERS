@@ -1,83 +1,50 @@
-function [forecast,gen,building] = update_forecast(gen,building,cool_tower,subnet,options,date,hist_prof,prev_data,now_data,future_data)
+function [forecast,gen,buildings] = update_forecast(gen,buildings,cool_tower,subnet,options,date,hist_prof,prev_data,now_data,future_data)
 %Date is the date number, Time is a vector of times (in hours)
-[forecast.WYForecast,gen] = water_year_forecast(gen,building,cool_tower,subnet,options,date(end),hist_prof,prev_data,now_data,future_data);%if october 1st,Run a yearly forecast for hydrology
-switch options.forecast
-    case 'ARMA'
-        forecast = arma(date,prev_data);
-        forecast.Weather = weather_forecast(prev_data,hist_prof,date);
-    case 'ARIMA'
-        forecast = arima_wsu(date,prev_data,options);
-        forecast.Weather = weather_forecast(prev_data,hist_prof,date);
-    case 'NeuralNet'
-        %
-    case 'Surface'
-        Weather = weather_forecast(prev_data,hist_prof,date);
-        forecast = surface_forecast(prev_data,hist_prof.Demand,date,Weather.Tdb,[]);
-        forecast.Weather = Weather;
-    case 'Perfect'
-        if length(date) == 1
-            forecast = now_data;
-        else
+if length(date) == 1
+    forecast = now_data;
+else
+    switch options.forecast
+        case 'ARMA'
+            forecast = arma(date,prev_data);
+            forecast.Weather = weather_forecast(prev_data,hist_prof,date);
+        case 'ARIMA'
+            forecast = arima_wsu(date,prev_data,options);
+            forecast.Weather = weather_forecast(prev_data,hist_prof,date);
+        case 'NeuralNet'
+            %
+        case 'Surface'
+            Weather = weather_forecast(prev_data,hist_prof,date);
+            forecast = surface_forecast(prev_data,hist_prof.Demand,date,Weather.Tdb,[]);
+            forecast.Weather = Weather;
+        case 'Perfect'
             forecast = future_data;
-        end
-    case 'Building'
-        forecast.Timestamp = date;
-        forecast.Weather = weather_forecast(prev_data,hist_prof,date);
-        n_b = length(building);
-        for i = 1:1:n_b
-            sgain = solar_gain(building(i),date,building(i).QPform.Location,forecast.Weather);
-            forecast.Building.ExternalGains = sgain.Walls + sgain.Roof;
-            b_loads = building_loads(building(i),date,sgain);
-            forecast.Building.InternalGains(:,i) = b_loads.InternalGains;
-            forecast.Building.NonHVACelectric(:,i) = b_loads.Equipment + b_loads.InteriorLighting + b_loads.ExteriorLighting + b_loads.OtherLoads;
-            if isfield(b_loads,'DCloads')
-                forecast.Building.DCloads = b_loads.DCloads;
-            end
-        end
-end
-if isfield(forecast,'Building') && ~isfield(forecast.Building,'ExternalGains')
-    %needed when forecast method is something other than 'Building', and TestData does not have stored ExternalGains
-    n_b = length(building);
-    forecast.Building.ExternalGains = zeros(length(forecast.Timestamp),n_b);
-    for i = 1:1:n_b
-        sgain = solar_gain(building(i),forecast.Timestamp,building(i).QPform.Location,forecast.Weather);
-        forecast.Building.ExternalGains(:,i) = sgain.Walls + sgain.Roof;
+        case 'Building'
+            forecast.Timestamp = date;
+            forecast.Weather = weather_forecast(prev_data,hist_prof,date);
     end
 end
-if strcmp(options.method,'Dispatch')
-    f = fieldnames(now_data);
+if strcmp(options.method,'Dispatch') && length(date)>1
+    %make 1st hour forecast "perfect"
+    f = fieldnames(future_data);
     for j = 1:1:length(f)
-        if isstruct(now_data.(f{j}))
-            S = fieldnames(now_data.(f{j}));
+        if isstruct(future_data.(f{j}))
+            S = fieldnames(future_data.(f{j}));
             for i = 1:1:length(S)
-                forecast.(f{j}).(S{i})(1,:) = now_data.(f{j}).(S{i});
+                forecast.(f{j}).(S{i})(1,:) = future_data.(f{j}).(S{i})(1,:);
             end
         else
-            forecast.(f{j})(1,:) = now_data.(f{j});
+            forecast.(f{j})(1,:) = future_data.(f{j})(1,:);
         end
     end
 end
-if isfield(forecast,'Building') && ~strcmp(options.solver,'NREL')
-    %needed for WSU optimization approach only
-    %%Need warm-up period if not currently running the model
-    for i = 1:1:n_b
-        if  abs(round(864000*(building(i).Timestamp+options.Resolution/24))/864000 - date(1))>1e-5
-            if length(date) == 1
-                wu_date = linspace(date(1) + options.Resolution/24,date(1)+1,24)';
-            else
-                wu_date = linspace(date(1),date(1)+1 - options.Resolution/24,24)';
-            end
-            wu_weather = weather_forecast(prev_data,hist_prof,wu_date);
-            building(i) = building_warmup(building(i),wu_weather,options.Resolution/24,wu_date,6);
-        end
-    end
-    forecast.Building = forecast_building(forecast.Weather,date,forecast.Building,building);
+if ~isempty(buildings) && ~strcmp(options.solver,'NREL')
+    [buildings,forecast.Building] = forecast_building(forecast.Weather,date,buildings,prev_data,hist_prof,options);
 end
 if isfield(forecast,'Weather') && isfield(forecast.Weather,'irradDireNorm')
     forecast.Renewable = renewable_output(gen,subnet,date,forecast.Weather.irradDireNorm);
 end
 if isfield(subnet,'Hydro')
-    forecast.Hydro.InFlow = forecast_hydro(prev_data,date,forecast.Hydro.SourceSink,subnet,options.Resolution/24);
+    forecast.Hydro.InFlow = forecast_hydro(date,forecast.Hydro.SourceSink,subnet,prev_data,now_data);
 end
 
 if options.SpinReserve
@@ -86,3 +53,36 @@ if options.SpinReserve
     end
 end
 end%Ends function update_forecast
+
+function in_flow = forecast_hydro(date,source_sink,subnet,prev_data,now_data)
+% forecast the source/sink + previously released upsteam water flow at each 
+% time step: 1 to nS. When t<T it needs the scheduled outflow of the
+% upstream dam to be on the constant side of the optimization.
+% does not give a forecast at t=0;
+n_s = length(date);
+t_last_disp = now_data.Timestamp;
+in_flow = source_sink;
+time = [prev_data.Timestamp;now_data.Timestamp];
+outflow = [prev_data.Hydro.OutFlow;now_data.Hydro.OutFlow];
+for n = 1:1:length(subnet.Hydro.nodes) 
+    K = subnet.Hydro.up_river{n};
+    for j = 1:1:length(K)
+        T_seg = subnet.Hydro.lineTime(K(j));
+        for t = 1:1:n_s
+            if (date(t) - t_last_disp)<= T_seg/24 % All of the flow reaching this reservior at this time was previously scheduled
+                in_flow(t,n) = in_flow(t,n) + interp1(time,outflow(:,K(j)),date(t)-T_seg/24); %outflow from previous dispatches because the time preceeds t_last_disp
+            elseif t>1 && (date(t-1) - t_last_disp)< T_seg/24 % A portion of the flow reaching this reservior at this time was previously scheduled
+                frac = (date(t)- t_last_disp - T_seg/24)/(date(t) - date(t-1));
+                if (date(t)-T_seg/24)>time(end)
+                    in_flow(t,n) = in_flow(t,n) + (1-frac)*outflow(end,K(j));
+                else
+                    in_flow(t,n) = in_flow(t,n) + (1-frac)*interp1(time,outflow(:,K(j)),date(t)-T_seg/24); %outflow from previous dispatches because the time preceeds t_last_disp
+                end
+            end
+            if isnan(in_flow(t,n))
+                disp('Potential rounding error in update_forecast')
+            end
+        end
+    end
+end
+end %Ends function forecast_hydro

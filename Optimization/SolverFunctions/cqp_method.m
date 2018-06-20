@@ -66,7 +66,7 @@ while feasible ~= 1 && attempt <8
             end
         end
     end
-    qp = disable_generators(qp_0,locked,[]);%Disable generators here
+    qp = disable_generators(qp_0,locked);%Disable generators here
     [x,feasible] = call_solver(qp);
     attempt = attempt+1;
 end
@@ -86,7 +86,7 @@ if feasible==1
     [~,~,solution] = rule_four(gen,locked,cost,solution,date,qp_0,dx,upper_bound);
     %add something to see if FilterGenerators changed anything
 else
-    disp('error: Cannot Find Feasible Dispatch');
+    disp('cqp error: Cannot Find Feasible Dispatch');
 end
 solution.LBrelax = lb_relax;
 end%ends function cqp_method
@@ -106,7 +106,7 @@ if ~locked(1,i) && ~isempty(starts)
     if starts(1)-p>0
         l2 = locked;
         l2(1:(starts(1)-p+1),i) = false;
-        qp = disable_generators(qp_0,l2,[]);%Disable generators here
+        qp = disable_generators(qp_0,l2);%Disable generators here
         [x,Feasible] = call_solver(qp);
         if Feasible == 1
             sol_new = sort_solution(x,qp);
@@ -149,7 +149,7 @@ for k = 1:1:length(starts)
                 p = p+1;
             end
             l2((stops(k)+n):(starts(k)-p+1),i) = false;
-            qp = disable_generators(qp_0,l2,[]);%Disable generators here
+            qp = disable_generators(qp_0,l2);%Disable generators here
             [x,feasible] = call_solver(qp);
             if feasible == 1
                 sol_new = sort_solution(x,qp);
@@ -178,7 +178,7 @@ if length(stops)>length(starts)
     if n<(n_s)
         l2 = locked;
         l2((n+1):n_s+1,i) = false;
-        qp = disable_generators(qp_0,l2,[]);%Disable generators here
+        qp = disable_generators(qp_0,l2);%Disable generators here
         [x,feasible] = call_solver(qp);
         if feasible == 1
             sol_new = sort_solution(x,qp);
@@ -213,7 +213,7 @@ for i = 1:1:n_g
             if sum(dx(starts(k):stops(k),i))<upper_bound(i) && sum(locked(:,i))<floor(n_s/4)%can only ramp to 1/2 power and less than 1/4 of horizon
                 l2 = locked;
                 l2(starts(k):(stops(k)+1),i)= false;
-                qp = disable_generators(qp_0,l2,[]);%Disable generators here
+                qp = disable_generators(qp_0,l2);%Disable generators here
                 [x,feasible] = call_solver(qp);
                 if feasible == 1
                     sol_new = sort_solution(x,qp);

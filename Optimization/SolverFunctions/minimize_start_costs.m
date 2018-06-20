@@ -1,4 +1,4 @@
-function gen_output = minimize_start_costs(gen,date,dispatchable,gen_output,stor_power,alt,start_cost,dt,include,n)
+function [gen_output,i_best] = minimize_start_costs(qp,gen,date,gen_output,stor_power,binary_comb,disp_comb,cost_comb,verified,start_cost,dt)
 %This function finds the n shortest segments of time the generator is on or
 %off, and compares the start-up cost to the alternative configuration that
 %avoids the start or re-start
@@ -10,13 +10,15 @@ function gen_output = minimize_start_costs(gen,date,dispatchable,gen_output,stor
 % Type specifies the category of generator (currently this function is only interested in electric and CHP generators.
 % include is what type of generators to consider (currently this is always electric and CHP generators)
 % n is # of segments to check
-n_s = length(alt.Disp);
+n_s = length(dt);
 n_g = length(gen);
+include = {'Electric Generator';'CHP Generator';'Heater';'Electrolyzer';'Hydrogen Generator';'Cooling Tower';'Chiller'};
 skip_on = [];
 skip_off = [];
 locked = true(n_s+1,n_g);
-for t = 1:1:n_s+1
-    locked(t,dispatchable) = gen_output(t,dispatchable)>0;
+locked(1,:) = gen_output(1,1:n_g)~=0;
+for t = 2:1:n_s+1
+    locked(t,qp{t-1}.Organize.Dispatchable) = gen_output(t,qp{t-1}.Organize.Dispatchable)~=0;
 end
 inc = false(1,n_g);
 for i = 1:1:n_g
@@ -24,19 +26,14 @@ for i = 1:1:n_g
         inc(i) = true;
     end
 end
-i_best = ones(length(dt),1);
+i_best = ones(n_s,1);
 for t = 1:1:n_s
-    for i = 1:1:length(alt.Binary{t}(:,1))
-        if all(locked(t+1,inc)==alt.Binary{t}(i,inc))
-            i_best(t) = i;
-            break
-        end
-    end
+    [~,i_best(t)] = min(cost_comb{t});
 end
-%find I(t), index that results in lowest cost once start-up is considered.
+%find i_best(t), index that results in lowest cost once start-up is considered.
 seg = 1;
 on_seg = 1;
-while ~isempty(on_seg) && seg<n
+while ~isempty(on_seg) && seg<40
     %%Try and remove the shortest generator on segment, and if equal lengths, highest start cost, if same generator then first segment
     [on_seg, off_seg] = seg_length(locked,start_cost,dt,skip_on,skip_off,inc);
     if isempty(on_seg) && isempty(off_seg)
@@ -48,19 +45,19 @@ while ~isempty(on_seg) && seg<n
         t2 = on_seg(i_on,3);%index when generator shuts off
         %% Find the cheapest feasible alternative dispatch without this generator (only use generators that were on previously or will be on)
         %First try alternate generators at same time step that may have cheaper startup (or that are already on)
-        [i_best,locked,no_alt] = alt_generation(gen,i_best,k,t1,t2,start_cost,alt,gen_output,locked,dt);
+        [i_best,locked,no_alt,disp_comb,cost_comb,verified] = alt_generation(qp,gen,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt);
         if no_alt
             %Second, can it get close to the final storage capacity without this on-segment?
-            [alt,i_best,locked,must_replace] = avoid_generation(gen,date,i_best,k,t1,t2,start_cost,alt,gen_output,locked,dt);
+            [binary_comb,disp_comb,cost_comb,verified,i_best,locked,must_replace] = avoid_generation(qp,gen,date,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt);
             if must_replace
                 %Third try moving generation earlier or later with same generator (if there is storage)
-                [alt,i_best,locked,cant_move] = move_generation(gen,i_best,k,t1,t2,alt,gen_output,locked,inc,dt);
+                [binary_comb,disp_comb,cost_comb,verified,i_best,locked,cant_move] = move_generation(qp,gen,i_best,k,t1,t2,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,inc,dt);
                 if cant_move
                     skip_on(end+1,1:4) = on_seg(i_on,:); %add to list of segments to avoid
                 end
             end
         end
-        gen_output = update_storage(gen,gen_output,alt,i_best,stor_power,dt);
+        gen_output = update_storage(gen,gen_output,disp_comb,i_best,stor_power,dt);
     end
     %%Try and remove the shortest generator off segment, if it is a shorter segment than the next shortest on segment
     [on_seg, off_seg] = seg_length(locked,start_cost,dt,skip_on,skip_off,inc);
@@ -72,23 +69,23 @@ while ~isempty(on_seg) && seg<n
         k = off_seg(Ioff,1); %generator index
         t1 = off_seg(Ioff,2); %index when generator turns on
         t2 = off_seg(Ioff,3);%index when generator shuts off
-        [i_best,locked,cant_keep_on] = leave_gen_on(gen,i_best,k,t1,t2,start_cost,alt,gen_output,locked,inc,dt);
+        [i_best,locked,cant_keep_on,disp_comb,cost_comb,verified] = leave_gen_on(qp,gen,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt);
         if cant_keep_on
             skip_off(end+1,1:4) = off_seg(Ioff,:); %add to list of segments to avoid
         end
-        gen_output = update_storage(gen,gen_output,alt,i_best,stor_power,dt);
+        gen_output = update_storage(gen,gen_output,disp_comb,i_best,stor_power,dt);
     end 
     seg = seg+1;
 end
 end% Ends function minimize_start_costs
 
-function gen_output = update_storage(gen,gen_output,alt,i_best,stor_power,dt)
+function gen_output = update_storage(gen,gen_output,disp_comb,i_best,stor_power,dt)
 %pull the corresponding best dispatches with the start-cost considered
 status = gen_output(1,:);
 n_g = length(gen);
-n_s = length(alt.Disp);
+n_s = length(dt);
 for t = 1:1:n_s
-    new_status = alt.Disp{t}(i_best(t),:);
+    new_status = disp_comb{t}(i_best(t),:);
     for i = 1:1:n_g
         if ismember(gen(i).Type,{'Electric Storage';'Thermal Storage'})
             loss = (gen(i).QPform.Stor.SelfDischarge*gen(i).QPform.Stor.UsableSize*gen(i).QPform.Stor.DischEff);
@@ -115,26 +112,22 @@ for t = 1:1:n_s
 end
 end%Ends function update_storage
 
-function [alt,i_best,locked,must_replace] = avoid_generation(gen,date,i_best,k,t1,t2,start_cost,alt,gen_output,locked,dt)
+function [binary_comb,disp_comb,cost_comb,verified,i_best,locked,must_replace] = avoid_generation(qp,gen,date,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt)
 %need to re-do this for variable time steps
 %looking for enough slack in other generators to avoid the overdepleating storage at the minimum, and to get to the same final state
-n_s = length(alt.Disp);
-n_g = length(gen_output(1,:));
+n_s = length(dt);
+n_g = length(gen);
 must_replace = true;
-inc = false(1,n_g);
 cap = gen(k).Output.Capacity*gen(k).Size;
 [useful_stored_energy,~,stor] = stor_state(gen,gen_output,dt);
 out = [];
 if strcmp(gen(k).Type,'Chiller')
-    include = {'Chiller'};
     out = 'C';
     eff = gen(k).Output.Cooling;
 elseif strcmp(gen(k).Type,'Heater')
-    include = {'Heater'};
     out = 'H';
     eff = gen(k).Output.Heat;
 elseif ismember(gen(k).Type,{'CHP Generator';'Electric Generator';})
-    include = {'CHP Generator';'Electric Generator';};
     if isfield(gen(k).Output,'Electricity')
         eff = gen(k).Output.Electricity;
     else
@@ -144,11 +137,6 @@ elseif ismember(gen(k).Type,{'CHP Generator';'Electric Generator';})
         out = 'DC';
     elseif isfield(stor,'E')
         out = 'E';
-    end
-end
-for i = 1:1:n_g
-    if ismember(gen(i).Type,include) 
-        inc(i) = true;
     end
 end
 
@@ -198,13 +186,22 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
             must_replace = false;
             for t = t1:1:t2-1
                 locked(t+1,k) = false; %turn off
-                new_stor_power(t) = alt.Disp{t}(i_best(t),k);
-                alt.Disp{t}(end+1,:) = alt.Disp{t}(i_best(t),:);
-                alt.Binary{t}(end+1,:) = alt.Binary{t}(i_best(t),:);
-                i_best(t) = length(alt.Disp{t}(:,1));
-                alt.Disp{t}(i_best(t),k) = 0;%set output of this generator to zero
-                alt.Binary{t}(i_best(t),k) = 0;%set output of this generator to zero
-                alt.Cost{t}(end+1) = -1; %make cheaper than standard
+                new_stor_power(t) = disp_comb{t}(i_best(t),k);
+                new_case = nonzeros((1:length(binary_comb{t}(:,1)))'.*ismember(binary_comb{t},locked(t+1,:),'rows'));
+                if~isempty(new_case)
+                    i_best(t) = new_case(1);
+                    if ~verified{t}(new_case(1))
+                        [cost_comb{t},verified{t},disp_comb{t}] = test_more_cases(qp{t},i_best(t),cost_comb{t},verified{t},disp_comb{t},binary_comb{t});
+                    end
+                else
+                    disp_comb{t}(end+1,:) = disp_comb{t}(i_best(t),:);
+                    binary_comb{t}(end+1,:) = binary_comb{t}(i_best(t),:);
+                    cost_comb{t}(end+1) = cost_comb{t}(i_best(t))-1e-3; %make cheaper than standard
+                    verified{t}(end+1) = false;
+                    i_best(t) = length(verified{t});
+                    disp_comb{t}(i_best(t),k) = 0;%set output of this generator to zero
+                    binary_comb{t}(i_best(t),k) = 0;%set output of this generator to zero
+                end
             end
         end
     end
@@ -225,9 +222,9 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
                 while make_up_gen<rem_e && r<length(sort_margin_cost(:,1))
                     t = sort_margin_cost(r,4);
                     add_gen = min(sort_margin_cost(r,5),rem_e);
-                    alt.Disp{t}(i_best(t),sort_margin_cost(r,3)) = alt.Disp{t}(i_best(t),sort_margin_cost(r,3)) + add_gen;
+                    disp_comb{t}(i_best(t),sort_margin_cost(r,3)) = disp_comb{t}(i_best(t),sort_margin_cost(r,3)) + add_gen;
                     %%edit storage dispatch at this timestep so that UpdateStorageState works correctly
-                    alt.Disp{t}(i_best(t),:) = stor_add(gen,alt.Disp{t}(i_best(t),:),add_gen,k);
+                    disp_comb{t}(i_best(t),:) = stor_add(gen,disp_comb{t}(i_best(t),:),add_gen,k);
                     make_up_gen = make_up_gen + add_gen;
                     if t>=t1 && t<t2
                         new_stor_power(t) = new_stor_power(t) - add_gen;
@@ -235,7 +232,7 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
                     r = r+1;
                 end
                 for t = t1:1:t2-1
-                    alt.Disp{t}(i_best(t),stor.(out)) = alt.Disp{t}(i_best(t),stor.(out))+new_stor_power(t)/length(stor.(out));
+                    disp_comb{t}(i_best(t),stor.(out)) = disp_comb{t}(i_best(t),stor.(out))+new_stor_power(t)/length(stor.(out));
                 end
             end
         end
@@ -243,21 +240,25 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
 end
 end%Ends function avoid_generation
 
-function [alt,i_best,locked,cant_move] = move_generation(gen,i_best,k,t1,t2,alt,gen_output,locked,inc,dt)
+function [binary_comb,disp_comb,cost_comb,verified,i_best,locked,cant_move] = move_generation(qp,gen,i_best,k,t1,t2,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,inc,dt)
 %need to re-do this for variable time steps
 [useful_stored_energy,~,~,spare_stor_cap,~] = stor_state(gen,gen_output,dt);
-if ismember(gen(k).Type,{'CHP Generator';'Electric Generator';})
-    if isfield(useful_stored_energy,'DC')
-        out = 'DC';
-    elseif isfield(useful_stored_energy,'E')
-        out = 'E';
-    end
-elseif strcmp(gen(k).Type,'Chiller')
-    out = 'C';
-elseif strcmp(gen(k).Type,'Heater')
-    out = 'H';
+switch gen(k).Type
+    case {'CHP Generator';'Electric Generator';}
+        if isfield(useful_stored_energy,'DC')
+            out = 'DC';
+        elseif isfield(useful_stored_energy,'E')
+            out = 'E';
+        end
+    case 'Chiller'
+        out = 'C';
+    case 'Heater'
+        out = 'H';
+    case 'Cooling Tower'
+        out = 'CW';      
 end
-n_s = length(alt.Disp);
+n_g = length(gen);
+n_s = length(disp_comb);
 cant_move = true;
 i_best_alt = i_best;
 
@@ -271,25 +272,41 @@ if isfield(useful_stored_energy,out) && any(useful_stored_energy.(out))>0
         t_stop = stops(find(stops<t1,1,'last'));
         %check if there is a feasible option to leave this generator on at earlier time steps
         for j = 0:1:n-1
-            opt = alt.Binary{t_stop+j}; %all feasible options tested at this time
+            opt = binary_comb{t_stop+j}; %all feasible options tested at this time
             locked_now = opt(i_best_alt(t_stop+j),:);
             locked_now(k) = true;
             new_locked = nonzeros((1:length(opt(:,1)))'.*ismember(opt,locked_now,'rows'));
             if~isempty(new_locked)
                 i_best_alt(t_stop+j) = new_locked(1);
+                if ~verified{t_stop+j}(new_locked(1))
+                    [cost_comb{t_stop+j},verified{t_stop+j},disp_comb{t_stop+j}] = test_more_cases(qp{t_stop+j},i_best_alt(t_stop+j),cost_comb{t_stop+j},verified{t_stop+j},disp_comb{t_stop+j},opt);
+                end
             end
             add_stor(t_stop+j:t1+j-1) = add_stor(t_stop+j:t1+j-1) + gen_output(t1+j+1,k);%need to hold this shifted energy in the storage from the previous time the generator shut down, until it had come on before
         end
         if ~any(i_best_alt(t_stop:t_stop+n-1) == i_best(t_stop:t_stop+n-1)) && all(add_stor<spare_stor_cap.(out))%possible to have generator on earlier
-            i_best = i_best_alt; %use the alternative index
             for j = 0:1:n-1
-                locked(t_stop+j+1,inc) = alt.Binary{t_stop+j}(i_best(t_stop+j),inc); %best alternative option tested at this time
-                alt.Disp{t_stop+j}(i_best(t_stop+j),k) = gen_output(t1+j+1,k);
+                locked(t_stop+j+1,inc) = binary_comb{t_stop+j}(i_best_alt(t_stop+j),inc); %best alternative option tested at this time
             end
             for t = t_stop+n:t2
                 locked(t+1,k) = false; %turn off
-                alt.Disp{t}(i_best(t),k) = 0;%set output of this generator to zero
+                new_case = nonzeros((1:length(binary_comb{t}(:,1)))'.*ismember(binary_comb{t},locked(t+1,:),'rows'));
+                if~isempty(new_case)
+                    i_best_alt(t) = new_case(1);
+                    if ~verified{t}(new_case(1))
+                        [cost_comb{t},verified{t},disp_comb{t}] = test_more_cases(qp{t},i_best_alt(t),cost_comb{t},verified{t},disp_comb{t},binary_comb{t});
+                    end
+                else
+                    disp_comb{t}(end+1,:) = disp_comb{t}(i_best_alt(t),:);
+                    binary_comb{t}(end+1,:) = binary_comb{t}(i_best_alt(t),:);
+                    cost_comb{t}(end+1) = cost_comb{t}(i_best_alt(t))-1e-3; %make cheaper than standard
+                    verified{t}(end+1) = false;
+                    i_best_alt(t) = length(verified{t});
+                    disp_comb{t}(i_best_alt(t),k) = 0;%set output of this generator to zero
+                    binary_comb{t}(i_best_alt(t),k) = 0;%set output of this generator to zero
+                end
             end
+            i_best = i_best_alt; %use the alternative index
             cant_move = false;
         end
     end
@@ -302,7 +319,7 @@ if isfield(useful_stored_energy,out) && any(useful_stored_energy.(out))>0
         end
         %check if there is a feasible option to leave this generator on at earlier time steps
         for j = 0:1:n-1
-            opt = alt.Binary{t_start+j}; %all feasible options tested at this time
+            opt = binary_comb{t_start+j}; %all feasible options tested at this time
             locked_now = opt(i_best_alt(t_start+j),:);
             locked_now(k) = true;
             new_locked = nonzeros((1:length(opt(:,1)))'.*ismember(opt,locked_now,'rows'));
@@ -314,12 +331,12 @@ if isfield(useful_stored_energy,out) && any(useful_stored_energy.(out))>0
         if ~any(i_best_alt(t_start:t_start+n-1) == i_best(t_start:t_start+n-1)) && all(rem_stor>useful_stored_energy.(out))%possible to have generator on later
             i_best = i_best_alt; %use the alternative index
             for j = 0:1:n-1
-                locked(t_start+j+1,inc) = alt.Binary{t_start+j}(i_best(t_start+j),inc); %best alternative option tested at this time
-                alt.Disp{t_start+j}(i_best(t_start+j),k) = gen_output(t1+j+1,k);
+                locked(t_start+j+1,inc) = binary_comb{t_start+j}(i_best(t_start+j),inc); %best alternative option tested at this time
+                disp_comb{t_start+j}(i_best(t_start+j),k) = gen_output(t1+j+1,k);
             end
             for t = t1:t_start-1
                 locked(t+1,k) = false; %turn 
-                alt.Disp{t}(i_best(t),k) = 0;%set output of this generator to zero
+                disp_comb{t}(i_best(t),k) = 0;%set output of this generator to zero
             end
             cant_move = false;
         end
@@ -327,109 +344,138 @@ if isfield(useful_stored_energy,out) && any(useful_stored_energy.(out))>0
 end
 end%Ends function move_generation
 
-function [i_best,locked,no_alt] = alt_generation(gen,i_best,k,t1,t2,start_cost,alt,gen_output,locked,dt)
+function [i_best,locked,no_alt,disp_comb,cost_comb,verified] = alt_generation(qp,gen,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt)
 [useful_stored_energy,stor_gen_avail,~] = stor_state(gen,gen_output,dt);
 no_alt = true;
-n_s = length(alt.Disp);
+n_s = length(dt);
+
+%determine any posible substitute generators
 n_g = length(start_cost);
 inc = false(1,n_g);
-for i = 1:1:n_g
-    if strcmp(gen(k).Type,'Chiller')
+switch gen(k).Type
+    case 'Chiller'
         out = 'C';
-        include = {'Chiller'};
-        if strcmp(gen(i).Type,'Chiller') || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Cooling'))
-            inc(i) = true;
+        for i = 1:1:n_g
+            if strcmp(gen(i).Type,'Chiller') || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Cooling'))
+                inc(i) = true;
+            end
         end
-    end
-    if strcmp(gen(k).Type,'Heater')
+    case 'Cooling Tower'
+        out = 'CW';
+        for i = 1:1:n_g
+            if strcmp(gen(i).Type,'Cooling Tower')
+                inc(i) = true;
+            end
+        end
+    case 'Heater'
         out = 'H';
-        include = {'Heater'};
-        if strcmp(gen(i).Type,'Heater') || strcmp(gen(i).Type,'CHP Generator')  || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Heat'))
-            inc(i) = true;
+        for i = 1:1:n_g
+            if strcmp(gen(i).Type,'Heater') || strcmp(gen(i).Type,'CHP Generator')  || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Heat'))
+                inc(i) = true;
+            end
         end
-    end
-    if strcmp(gen(k).Type,'CHP Generator') || strcmp(gen(k).Type,'Electric Generator')
+    case {'CHP Generator';'Electric Generator';}
         if isfield(useful_stored_energy,'DC')
             out = 'DC';
         elseif isfield(useful_stored_energy,'E')
             out = 'E';
         end
-        include = {'CHP Generator';'Electric Generator';};
-        d_heat = zeros(t2-t1,1);
-        spare_heat = zeros(t2-t1,1);
-        if strcmp(gen(i).Type,'CHP Generator') || strcmp(gen(i).Type,'Electric Generator') || strcmp(gen(i).Type,'Electric Storage')
-            inc(i) = true;
+        for i = 1:1:n_g
+            if strcmp(gen(i).Type,'CHP Generator') || strcmp(gen(i).Type,'Electric Generator') || strcmp(gen(i).Type,'Electric Storage')
+                inc(i) = true;
+            end
+            if strcmp(gen(k).Type,'CHP Generator') && (strcmp(gen(i).Type,'Heater') || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Heat')))
+                inc(i) = true;
+            end
         end
-        if strcmp(gen(k).Type,'CHP Generator') && (strcmp(gen(i).Type,'Heater') || (strcmp(gen(i).Type,'Thermal Storage') && strcmp(gen(i).Source,'Heat')))
-            inc(i) = true;
-        end
-    end
 end
 i_best_alt = i_best;
 d_cost = zeros(t2-t1,1);
 d_gen = zeros(t2-t1,1);
 alt_locked = locked;
+%for the time that the generator in question is on, try combinations that don't have it on.
 for t = t1:1:t2-1
-    opt = alt.Binary{t}; %all feasible options tested at this time
-    cost2 = alt.Cost{t}; %cost for these options
+    opt = binary_comb{t}; %all options at this time
+    %%run all unverified cases that replace the generator in question with either 1 or 2 or 3 others that are
+    % a) running within (t2-t1) steps before/after and have a marginal cost less than starting the generator in question 
+    % b) have a marginal cost + start-up cost less than starting the generator in question
+    need_test = [];
+    for c = 1:1:length(opt(:,1))
+        if ~verified{t}(c) && ~opt(c,k)
+            new_on = nonzeros((1:n_g).*((binary_comb{t}(c,:)-binary_comb{t}(i_best(t),:))>0));
+            d_c = cost_comb{t}(c)-cost_comb{t}(i_best(t));
+            if length(new_on)<=3 && all(inc(new_on)>0)
+                for j = 1:1:length(new_on)
+                    if ~any(locked(:,new_on(j))) 
+                        d_c = d_c + start_cost(new_on(j));
+                    end
+                end
+                if d_c<start_cost(k)
+                    need_test(end+1) = c;
+                end
+            end
+        end
+    end
+    [cost_comb{t},verified{t},disp_comb{t}] = test_more_cases(qp{t},need_test,cost_comb{t},verified{t},disp_comb{t},opt);
+    
+    %%determine the marginal cost of switching to the best possible option that doesn't use the generator in question
+    cost2 = cost_comb{t} - cost_comb{t}(i_best(t)); %cost for these options
     cost2(opt(:,k)) = inf;%make the cost infinite for all combinations with generator i
-    cost2(ismember(opt(:,inc),locked(t+1,inc),'rows')) = inf;%make the cost infinite if its not changing the status of any of the included generator type
+    cost2(~verified{t}) = inf;%make the cost infinite for untested combinations
+%     cost2(ismember(opt(:,inc),locked(t+1,inc),'rows')) = inf;%make the cost infinite if its not changing the status of any of the included generator type
     for j = 1:1:n_g
         if ~any(locked(t1:t2+1,j))%would be adding a startup
-            cost2 = cost2 + opt(:,j)*start_cost(j);
+            cost2 = cost2 + opt(:,j)*start_cost(j)/(t2-t1);
         end
     end
     if any(~isinf(cost2))
         [d_cost(t-t1+1),i_best_alt(t)] = min(cost2);
-        d_gen(t-t1+1) = alt.Disp{t}(i_best(t),k) - alt.Disp{t}(i_best_alt(t),k);
-        alt_locked(t+1,:) = alt.Binary{t}(i_best_alt(t),:);
+        d_gen(t-t1+1) = disp_comb{t}(i_best(t),k) - disp_comb{t}(i_best_alt(t),k);
+        alt_locked(t+1,:) = binary_comb{t}(i_best_alt(t),:);
     else
         d_cost = inf;%no feasible combinations without turning on a different generator (don't make changes to this segment)
         break
     end
 end
+
+%%If it wants to swap to have a different generator on now, don't constrain its maximum output by shutting it down immediately
+new_on = zeros(n_s,n_g);
+for t = t1:1:t2-1
+    new_on(t,:)= ((binary_comb{t}(i_best_alt(t),:)-binary_comb{t}(i_best(t),:))>0);
+end
+for i = 1:1:n_g
+    if all(new_on(t1:t2-1,i))
+        alt_locked(t2:end,i) = true;
+    end
+end
+%%check if the alternate operation strategy is feasible when put in sequence
 spare_gen = zeros(t2-t1,1);
 max_out = gen_limit(gen,gen_output,alt_locked,dt);
+heat_out = zeros(t2-t1,n_g);
 for i = 1:1:n_g
     if strcmp(gen(i).Type,'CHP Generator')
-        %convert GenOutput to heatOut
-        heat_out = zeros(t2-t1,1);
-        for t = t1:1:t2-1
-            cum_out = 0;
-            j = 1;
-            if  gen_output(t+1,i)>0
-                heat_out(t-t1+1) = heat_out(t-t1+1) - gen(i).QPform.constDemand.H;      
-            end
-            states = gen(i).QPform.states(1:nnz(~cellfun('isempty',gen(i).QPform.states(:,end))),end);
-            while j<=length(states)
-                d = min(gen_output(t+1,i) - cum_out,gen(i).QPform.(states{j}).ub(2));
-                cum_out = cum_out + d;
-                heat_out(t-t1+1) = heat_out(t-t1+1) + d*gen(i).QPform.output.H(j,2);
-                j = j+1;
-            end
+        heat_out(:,i) = chp_heat(gen(i).QPform,gen_output(t1+1:t2,i));%convert GenOutput to heatOut
+    end
+    if i~=k && disp_comb{t}(i_best_alt(t),i)>0
+        if strcmp(gen(k).Type,gen(i).Type) || (strcmp(gen(k).Type,'CHP Generator') && strcmp(gen(i).Type,'Electric Generator')) || (strcmp(gen(k).Type,'Electric Generator') && strcmp(gen(i).Type,'CHP Generator'))
+            spare_gen = spare_gen + max_out.(out)(t1+1:t2,i) - gen_output(t1+1:t2,i);%capacity is either UB or limited by ramping
         end
     end
-    if i~=k && ismember(gen(i).Type,include) && alt.Disp{t}(i_best_alt(t),i)>0
+    if strcmp(gen(k).Type,'Heater') && strcmp(gen(i).Type,'CHP Generator')
         for t = t1:1:t2-1
-            spare_gen(t-t1+1) = spare_gen(t-t1+1) + max_out.(out)(t+1,i) - gen_output(t+1,i);%capacity is either UB or limited by ramping
+            spare_gen(t-t1+1) = spare_gen(t-t1+1) + max_out.H(t+1,i) - heat_out(t-t1+1,i);
         end
-    elseif strcmp(gen(k).Type,'Heater') && strcmp(gen(i).Type,'CHP Generator')
-        for t = t1:1:t2-1
-            spare_gen(t-t1+1) = spare_gen(t-t1+1) + max_out.H(t+1,i) - heat_out(t-t1+1);
-        end
-    end
-    if strcmp(gen(k).Type,'CHP Generator')
-        if i==k
-            d_heat(t-t1+1) = heat_out(t-t1+1) - 0;
-        end
+    end  
+end
+if strcmp(gen(k).Type,'CHP Generator')
+    d_heat = heat_out(:,k);
+    spare_heat = zeros(t2-t1,1);
+    heat_out(:,k) = 0;
+    for i = 1:1:n_g
         if strcmp(gen(i).Type,'Heater')
-            for t = t1:1:t2-1
-                spare_heat(t-t1+1) = spare_heat(t-t1+1) + max_out.H(t+1,i) - gen_output(t+1,i);
-            end
+            spare_heat= spare_heat + max_out.H(t1+1:t2,i) - gen_output(t1+1:t2,i);
         elseif strcmp(gen(i).Type,'CHP Generator')
-            for t = t1:1:t2-1
-                spare_heat(t-t1+1) = spare_heat(t-t1+1) + max_out.H(t+1,i) - heat_out(t-t1+1);
-            end
+            spare_heat= spare_heat + max_out.H(t1+1:t2,i) - heat_out(:,i);
         end
     end
 end
@@ -451,30 +497,31 @@ if sum(d_cost)<start_cost(k) && all(d_gen<(spare_gen+useful1./dt(t1:t2-1))) && s
     if ~strcmp(gen(k).Type,'CHP Generator') || (all(d_heat<(spare_heat+useful3./dt(t1:t2-1))) && sum(d_heat-spare_heat)<useful4)
         i_best = i_best_alt; %use the alternative index
         for t = t1:1:t2-1
-            locked(t+1,inc) = alt.Binary{t}(i_best(t),inc); %best alternative option tested at this time
+            locked(t+1,inc) = binary_comb{t}(i_best(t),inc); %best alternative option tested at this time
         end
         no_alt = false;
     end
 end
 end%Ends function alt_generation
 
-function [i_best,locked,cant_keep_on] = leave_gen_on(gen,i_best,k,t1,t2,start_cost,alt,gen_output,locked,inc,dt)
+function [i_best,locked,cant_keep_on,disp_comb,cost_comb,verified] = leave_gen_on(qp,gen,i_best,k,t1,t2,start_cost,binary_comb,disp_comb,cost_comb,verified,gen_output,locked,dt)
 %% Find the cheapest feasible alternative dispatch that keeps this generator on (only use generators that were on previously or will be on)
 [~,~,~,spare_stor_cap,stor_slack_avail] = stor_state(gen,gen_output,dt);
-if ismember(gen(k).Type,{'CHP Generator';'Electric Generator';'Hydrogen Generator';})
-    if isfield(spare_stor_cap,'DC')
-        out = 'DC';
-    elseif isfield(spare_stor_cap,'E')
-        out = 'E';
-    end
-elseif strcmp(gen(k).Type,'Chiller')
-    out = 'C';
-elseif strcmp(gen(k).Type,'Heater')
-    out = 'H';
+switch gen(k).Type
+    case {'CHP Generator';'Electric Generator';}
+        if isfield(spare_stor_cap,'DC')
+            out = 'DC';
+        elseif isfield(spare_stor_cap,'E')
+            out = 'E';
+        end
+    case 'Chiller'
+        out = 'C';
+    case 'Heater'
+        out = 'H';
+    case 'Cooling Tower'
+        out = 'CW';      
 end
 cant_keep_on = true;
-n_s = length(alt.Disp);
-n_g = length(inc);
 %only allow generators that are on at begining or end to be involved (or that have smaller start-up cost)
 i_best_alt = i_best;
 d_cost = zeros(t2-t1,1);
@@ -483,21 +530,21 @@ slack_gen = zeros(t2-t1,1);
 if t1 == 1
     prev = gen_output(1,:);
 else
-    prev = alt.Disp{t1-1}(i_best(t1-1),:);
+    prev = disp_comb{t1-1}(i_best(t1-1),:);
 end
 for t = t1:1:t2-1
-    opt = alt.Binary{t}; %all feasible options tested at this time
-    cost2 = alt.Cost{t}; %cost for these options
-    cost2(~opt(:,k)) = inf;%make the cost infinite for all combinations without generator i
-    cost2(ismember(opt(:,inc),locked(t+1,inc),'rows')) = inf;%make the cost infinite if its not changing the status of any of the included generator type
-    for j = 1:1:n_g
-        if ~any(locked(t1:t2+1,j))%would be adding a startup
-            cost2 = cost2 + opt(:,j)*start_cost(j);
+    opt = binary_comb{t}; %all feasible options tested at this time
+    %%run unverified cases that just add the generator in question
+    locked_now = opt(i_best_alt(t),:);
+    locked_now(k) = true;
+    new_locked = nonzeros((1:length(opt(:,1)))'.*ismember(opt,locked_now,'rows'));
+    if~isempty(new_locked)
+        i_best_alt(t) = new_locked(1);
+        if ~verified{t}(new_locked(1))
+            [cost_comb{t},verified{t},disp_comb{t}] = test_more_cases(qp{t},i_best_alt(t),cost_comb{t},verified{t},disp_comb{t},opt);
         end
-    end
-    if any(~isinf(cost2))
-        [d_cost(t-t1+1),i_best_alt(t)] = min(cost2);
-        [d_gen(t-t1+1),slack_gen(t-t1+1)] = slack_cap(gen,alt.Disp{t}(i_best(t),:),alt.Disp{t}(i_best_alt(t),:),prev,k,sum(dt(t1:t)));
+        d_cost(t-t1+1) = cost_comb{t}(i_best_alt(t)) - cost_comb{t}(i_best(t));
+        [d_gen(t-t1+1),slack_gen(t-t1+1)] = slack_cap(gen,disp_comb{t}(i_best(t),:),disp_comb{t}(i_best_alt(t),:),prev,k,sum(dt(t1:t)));
     else
         d_cost = inf;%no feasible combinations keeping this generator active (don't make changes to this segment)
         break
@@ -512,7 +559,7 @@ end
 if sum(d_cost)<start_cost(k) && all(d_gen<(slack_gen+useful1./dt(t1:t2-1))) && sum(d_gen-slack_gen)<useful2 %sum of the marginal increase in cost is less than the start-up cost, there is spare capacity in the other generators & storage, and the cumulative loss of generation does not deplete the storage
     i_best = i_best_alt; %use the alternative index
     for t = t1:1:t2-1
-        locked(t+1,:) = alt.Binary{t}(i_best(t),:); %best alternative option tested at this time
+        locked(t+1,:) = binary_comb{t}(i_best(t),:); %best alternative option tested at this time
     end
     cant_keep_on = false;
 end
@@ -628,3 +675,44 @@ for i = 1:1:n_g
     end
 end
 end%Ends function stor_add
+
+function [cost_comb,verified,disp_comb] = test_more_cases(qp,need_test,cost_comb,verified,disp_comb,opt)
+parallel = false;
+if license('test','Distrib_Computing_Toolbox') 
+    parallel = true;
+end
+if ~isempty(need_test)
+    n_test = length(need_test);
+    if parallel %&& n_test>10
+        cost_par = cost_comb(need_test);
+        disp_comb_par = disp_comb(need_test,:);
+        opt_par = opt(need_test,:);
+        qp_par = qp;
+        parfor par_i = 1:n_test
+            qp_test_par = disable_generators_step(qp_par,opt_par(par_i,:)>0);%Disable generators here
+            [x_par, flag1] = call_solver(qp_test_par);
+            if flag1 == 1
+                cost_par(par_i) = 0.5*x_par'*qp_test_par.H*x_par + x_par'*qp_test_par.f + sum(qp_test_par.constCost.*(opt_par(par_i,:)>0));
+                disp_comb_par(par_i,:) = sort_solution_step(x_par,qp_test_par);
+            else
+                cost_par(par_i) = inf;
+            end
+        end
+        cost_comb(need_test) = cost_par;
+        verified(need_test) = true;
+        disp_comb(need_test,:) = disp_comb_par;
+    else
+        for j = 1:1:length(need_test)
+            c = need_test(j);
+            qp_test = disable_generators_step(qp,opt(c,:)>0);%Disable generators here
+            [x, flag1] = call_solver(qp_test);
+            if flag1 == 1
+                cost_comb(c) = 0.5*x'*qp_test.H*x + x'*qp_test.f + sum(qp_test.constCost.*(opt(c,:)>0));
+                disp_comb(c,:) = sort_solution_step(x,qp_test);
+            else
+                cost_comb(c) = inf;
+            end
+        end
+    end
+end
+end%ends function test_more_cases

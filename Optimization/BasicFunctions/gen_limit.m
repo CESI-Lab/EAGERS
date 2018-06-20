@@ -1,7 +1,7 @@
 function [max_out,constraint,spare_gen_cumulative] = gen_limit(gen,gen_output,binary,dt)
 %% Find Max output of each generator at each time
-[n,n_g] = size(binary);
-n_s = n - 1;
+n_g = length(gen);
+n_s = length(dt);
 ramp_up = zeros(n_s,n_g);
 ramp_down = zeros(n_s,n_g);
 upper_bound = zeros(1,n_g);
@@ -19,8 +19,8 @@ for i = 1:1:n_g
         upper_bound(i) = gen(i).Size;
     end
 end
-s= {'E';'H';'C';'Hy'};
-s2 = {{'CHP Generator';'Electric Generator';};{'Heater'};{'Chiller';};{'Electrolyzer';'Hydrogen Generator';}};
+s= {'E';'H';'C';'CW';'Hy'};
+s2 = {{'CHP Generator';'Electric Generator';};{'Heater'};{'Chiller';};{'Chiller';'CoolingTower'};{'Electrolyzer';'Hydrogen Generator';}};
 for k = 1:1:length(s)
     spare_gen = zeros(n_s,1);
     spare_gen_cumulative.(s{k}) = zeros(n_s,1);
@@ -68,31 +68,8 @@ for k = 1:1:length(s)
             spare_gen = spare_gen + (max_out.(s{k})(2:end,i) - gen_output(2:end,i));
         end
         if strcmp(s{k},'H') && strcmp(gen(i).Type,'CHP Generator')
-            heat_output = zeros(n_s+1,1);
-            %convert MaxOut.E to MaxOut.H
-            %Convert GenOutput to heatOutput
-            for t = 0:1:n_s
-                D = 0;
-                H = 0;
-                j = 1;
-                if max_out.E(t+1,i)>0
-                    heat_output(t+1) = -gen(i).QPform.constDemand.H;
-                    max_out.H(t+1,i) = -gen(i).QPform.constDemand.H;                
-                else
-                    heat_output(t+1) = 0;
-                    max_out.H(t+1,i) = 0;
-                end
-                states = gen(i).QPform.states(1:nnz(~cellfun('isempty',gen(i).QPform.states(:,end))),end);
-                while j<=length(states)
-                    d = min(gen_output(t+1,i) - D,gen(i).QPform.(states{j}).ub(2));
-                    D = D + d;
-                    heat_output(t+1) = heat_output(t+1) + d*gen(i).QPform.output.H(j,2);
-                    h = min(max_out.E(t+1,i) - H,gen(i).QPform.(states{j}).ub(2));
-                    H = H + h;
-                    max_out.H(t+1,i) = max_out.H(t+1,i) + h*gen(i).QPform.output.H(j,2);
-                    j = j+1;
-                end
-            end
+            heat_output = chp_heat(gen(i).QPform,gen_output(:,i));%Convert GenOutput to heatOutput
+            max_out.H(:,i) = max_out.H(:,i) + chp_heat(gen(i).QPform,max_out.E(:,i));%convert MaxOut.E to MaxOut.H
             spare_gen = spare_gen + (max_out.(s{k})(2:end,i) - heat_output(2:end));
         end
         if strcmp(gen(i).Type,'Utility') && isfield(gen(i).QPform.output,s{k})
@@ -103,6 +80,7 @@ for k = 1:1:length(s)
     for t = 1:1:n_s
         spare_gen_cumulative.(s{k})(t) = sum(spare_gen(1:t).*dt(1:t));
     end
+    %%allow for spare DC generation to supply AC power needs & vice versa
     if strcmp(s{k},'E') && any(strcmp('AC_DC',type))
         acdc = nonzeros((1:1:n_g)'.*strcmp('AC_DC',type));
         max_out.DC = zeros(n_s+1,n_g);

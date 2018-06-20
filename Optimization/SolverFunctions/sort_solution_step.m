@@ -2,7 +2,7 @@ function [dispatch,line_loss,excess_heat,excess_cool,hydro_soc,temperature,heati
 n_g = length(qp.constCost);
 n_b = length(qp.Organize.Building.r);
 n_l = length(qp.Organize.Transmission);
-n_ct = length(qp.Organize.cool_tower);
+n_fl = length(qp.Organize.fluid_loop);
 n_h = nnz(qp.Organize.Hydro);
 hydro_soc = zeros(1,n_h);
 excess_heat = zeros(1,nnz(qp.Organize.HeatVented));
@@ -10,7 +10,7 @@ excess_cool = zeros(1,nnz(qp.Organize.CoolVented));
 line_flows = zeros(1,n_l);
 line_loss = zeros(1,n_l);
 temperature = zeros(1,n_b);
-cool_tower = zeros(1,n_ct);
+fluid_loop = zeros(1,n_fl);
 heating = zeros(1,n_b);
 cooling = zeros(1,n_b);
 gen_disp = zeros(1,n_g);
@@ -42,16 +42,14 @@ for i = 1:1:n_l
 end
 
 for i = 1:1:n_b
-    temperature_set = qp.organize{1,i+n_g+n_l};
-    temperature(1,i) = x(temperature_set,1);
-    heating(1,i) = x(temperature_set+1,1) - qp.Organize.Building.H_Offset(1,i);
-    cooling(1,i) = x(temperature_set+2,1) - qp.Organize.Building.C_Offset(1,i);
+    temperature(1,i) = x(qp.organize{1,i+n_g+n_l},1);
+    heating(1,i) = x(qp.organize{1,i+n_g+n_l}+1,1) + qp.Organize.Building.H_Offset(1,i);
+    cooling(1,i) = x(qp.organize{1,i+n_g+n_l}+2,1) + qp.Organize.Building.C_Offset(1,i);
 end
-for i = 1:1:n_ct
-    state = qp.organize{1,i+n_g+n_l+n_b};
-    cool_tower(1,i) = x(state,1);
+for i = 1:1:n_fl
+    fluid_loop(1,i) = x(qp.organize{1,i+n_g+n_l+n_b},1);
 end
-dispatch = [gen_disp,line_flows,temperature,cool_tower];
+dispatch = [gen_disp,line_flows,temperature,fluid_loop];
 %pull out any dumped heat
 for i = 1:1:length(qp.Organize.HeatVented)
     if qp.Organize.HeatVented(i)>0

@@ -1,7 +1,7 @@
 function scale_cost = update_cost(timestamp,gen)
 n_s = length(timestamp);
 n_g = length(gen);
-source = {zeros(n_g,1)};
+source = cell(n_g,1);
 utility_rate = zeros(n_s,n_g);
 for i = 1:1:n_g
     if strcmp(gen(i).Type,'Utility')
@@ -47,7 +47,7 @@ for i = 1:1:length(gen)
     if strcmp(gen(i).Type,'Utility')
         scale_cost(:,i) = utility_rate(:,i);
     elseif isempty(strfind(gen(i).Type,'Storage')) && ~strcmp(gen(i).Source, 'Renewable') && ~strcmp(gen(i).Type, 'Hydro') %not storage or renewable or hydro
-        util_index = nonzeros((1:n_g).*strcmp(gen(i).Source,source));
+        util_index = nonzeros((1:n_g)'.*strcmp(gen(i).Source,source));
         if isempty(util_index)
             scale_cost(:,i) = 1; %no utility (don't scale costs)
         else

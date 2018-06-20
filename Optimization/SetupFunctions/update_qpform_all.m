@@ -23,9 +23,15 @@ for i = 1:1:n_g
             gen(i).QPform = load_piecewise(gen(i),n);
             gen(i).VariableStruct.dX_dt = ss_response(gen(i),[])/scaletime;
             gen(i).QPform.Ramp.b = gen(i).VariableStruct.dX_dt*[1;1]; %-output1+output2=ramp up %output1-output2=-rampdown
-        case {'Solar';'Wind'}
-            gen(i).QPform.output.E = 1;%there are no states or outputs for solar because renewable outputs are handled on the demand side
+        case 'Solar'
             gen(i).QPform.states = [];
+            if ~isfield(network,'DirectCurrent')
+                gen(i).QPform.output.E = 1;%there are no states or outputs for solar because renewable outputs are handled on the demand side
+            else 
+                gen(i).QPform.output.DC = 1;
+            end
+        case 'Wind'
+            
         case {'Electric Storage'}
             [gen(i).QPform,gen(i).VariableStruct.dX_dt] = load_storage(gen(i),scaletime);
             if ~isfield(network,'DirectCurrent')
@@ -62,7 +68,7 @@ for i = 1:1:n_b
     qp_form.Cap = air_capacitance;
     qp_form.H2E = 1/buildings(i).VariableStruct.COP_H;
     qp_form.C2E = 1/buildings(i).VariableStruct.COP_C;
-    qp_form.Cooling = false; %initial condition is that heating and cooling are converted to electricity, this can change in buildSubNet if there are local chillers or heaters
+    qp_form.Cooling = false; %initial condition is that heating and cooling are converted to electricity, this can change in locate_buildings if there are local chillers or heaters
     qp_form.Heating = false;
     qp_form.Discomfort = buildings(i).Area*buildings(i).VariableStruct.occupancy; %cost of exceeding comfort band
     buildings(i).QPform = qp_form;
@@ -214,6 +220,7 @@ if strcmp(gen.Type,'Chiller')
     qp_form.output.CW(1:n_a,1) = 1+ a(keep_A);
     qp_form.output.CW(1:n_b,2) = 1+ b(keep_B);
     qp_form.constDemand.(source) = c_0*upper_bound;
+    qp_form.constDemand.CW = -c_0*upper_bound;%heat added to water loop appears as a negative demand for energy in the water loop
     a = a*0;
     b = b*0;
     c_0 = 0;
@@ -221,6 +228,7 @@ elseif strcmp(gen.Type,'Cooling Tower')
     qp_form.output.E(1:nnz(keep_A),1) = -a(keep_A);
     qp_form.output.E(1:nnz(keep_B),2) = -b(keep_B);
     qp_form.constDemand.E = c_0*upper_bound;
+    qp_form.constDemand.CW = -c_0*upper_bound;%heat added to water loop appears as a negative demand for energy in the water loop
     a = a*0;
     b = b*0;
     c_0 = 0;
@@ -401,7 +409,7 @@ end%Ends function load_storage
 
 function qp_form = load_hydro_storage(gen,scale)
 % this function loads the parameters for a hydroelectric plant.
-eff = gen.VariableStruct.MaxGenCapacity/(gen.VariableStruct.MaxGenFlow*gen.VariableStruct.MaxHead/0.01181);%Power (kW)/ideal power in kW
+eff = gen.VariableStruct.MaxGenCapacity/(gen.VariableStruct.MaxGenFlow*gen.VariableStruct.MaxHead*84.674);%Power (kW)/ideal power in kW
 qp_form.Stor.Size = gen.Size*scale;
 qp_form.Stor.SelfDischarge  = 0; %needs to be evaporative losses
 qp_form.Stor.DischEff = 1; %100% efficient

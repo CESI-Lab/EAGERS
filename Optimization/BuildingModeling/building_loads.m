@@ -85,7 +85,10 @@ else
 end
 
 %% Interior lighting load values
-B_Loads.InteriorLighting = Build.Area*Build.VariableStruct.InteriorLights/1000*Profile.interiorlights.*(1 - Build.VariableStruct.DaylightPercent*SolarGain.VisibleLight/max(SolarGain.VisibleLight)); % kW of lighting load
+B_Loads.InteriorLighting = Build.Area*Build.VariableStruct.InteriorLights/1000*Profile.interiorlights;% kW of lighting load
+if any(SolarGain.VisibleLight>0)
+    B_Loads.InteriorLighting = B_Loads.InteriorLighting.*(1 - Build.VariableStruct.DaylightPercent*SolarGain.VisibleLight/max(SolarGain.VisibleLight)); %daylighting
+end
 
 %% Internal gains
 internalGainOccupants = Build.Area * Build.VariableStruct.occupancy * Profile.occupancy * 0.120; % heat from occupants (120 W)

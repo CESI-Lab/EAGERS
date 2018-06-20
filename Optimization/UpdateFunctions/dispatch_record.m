@@ -1,16 +1,17 @@
-function [si,date,gen,building,cool_tower,design,dispatch,predicted] = dispatch_record(gen,building,cool_tower,subnet,options,test_data,si,date,forecast,solution,design,dispatch,predicted)
+function [si, date, gen, building, fluid_loop, design, dispatch, predicted] ...
+    = dispatch_record(gen, building, fluid_loop, subnet, options, test_data, si, date, forecast, solution, design, dispatch, predicted)
 % Records the last dispatch and steps forward by a single step or a full day
 n_s = length(date)-1;
 n_g = length(gen);
 n_b = length(building);
-n_ct = length(cool_tower);
+n_fl = length(fluid_loop);
 dt = (24*3600) * (date(2:end) - date(1:end-1)); % duration of each time segment [seconds]
 if strcmp(options.method,'Planning')%assumes forecast is perfect
     date = round(864000*(date+options.Horizon/24))/864000;%%count forward by length of the horizon, rounded to nearest second
-    actual_data = get_data(test_data,forecast.Timestamp,[]);
+    actual_data = get_data(test_data,forecast.Timestamp,[],[]);
 elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')   
     date = round(864000*(date+options.Resolution/24))/864000;%% count forward 1 step, rounded to nearest second
-    actual_data = get_data(test_data,date(1),[]);
+    actual_data = get_data(test_data,date(1),[],[]);
 end
 if strcmp(options.method,'Planning')%assumes forecast is perfect
     
@@ -25,8 +26,8 @@ if strcmp(options.method,'Planning')%assumes forecast is perfect
         building(i).Timestamp = date(1);
         design.Buildings(si+1:si+n_s,i) = Tzone(2:end);
     end
-    for i = 1:1:n_ct
-        cool_tower(i).fluid_temperature = cooling_tower_simulate(cool_tower(i),gen,subnet.CoolingWater.Equipment{i},solution.Dispatch(end,:));
+    for i = 1:1:n_fl
+        fluid_loop(i).fluid_temperature = fluid_loop_step(gen,subnet.CoolingWater.Equipment{i},fluid_loop(i),fluid_loop(i).fluid_temperature,solution.Dispatch(2:end,:),dt);
     end
     for i = 1:1:n_g
         gen(i).CurrentState(1) = solution.Dispatch(end,i);
@@ -86,6 +87,7 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
     predicted.GenDisp(:,:,si-1) = solution.Dispatch(2:end,:);
     predicted.LineFlows(:,:,si-1) = solution.LineFlows;
     predicted.Buildings(:,:,si-1) = solution.Buildings.Temperature;
+    predicted.fluid_loop(:,:,si-1) = solution.fluid_loop;
     predicted.hydroSOC(:,:,si-1) = solution.hydroSOC;
     
     %%copy select fields of actual data and forecasted data into saved dispatch and predicted
@@ -120,10 +122,11 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
         building(i).Tzone = Tzone(2);
         building(i).Twall = Twall(2);
         building(i).Timestamp = date(1);
-        dispatch.Buildings(si,:) = Tzone(2);
+        dispatch.Buildings(si,i) = Tzone(2);
     end
-    for i = 1:1:n_ct
-        cool_tower(i).fluid_temperature = cooling_tower_simulate(cool_tower(i),gen,subnet.CoolingWater.Equipment{i},solution.Dispatch(2,:));
+    for i = 1:1:n_fl
+        fluid_loop(i).fluid_temperature = fluid_loop_step(gen,subnet.CoolingWater.Equipment{i},fluid_loop(i),fluid_loop(i).fluid_temperature,solution.Dispatch(2,:),dt(1));
+        dispatch.fluid_loop(si,i) = fluid_loop(i).fluid_temperature;
     end
     if isfield(solution,'hydroSOC') && ~isempty(solution.hydroSOC)
         dispatch.hydroSOC(si,:) = solution.hydroSOC(1,:);

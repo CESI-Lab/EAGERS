@@ -1,23 +1,27 @@
-function locked = verify_ramping(gen,subnet,qp,locked,optimal_state,dt)
+function locked = verify_ramping(gen,subnet,qp,optimal_state,dt)
 %Premise, it may not be possible to follow the output from the step-by-step
 %dispatch due to ramp rate limitations. The ramp rates will limit the 
 %cumulative energy generation. Storage or spare capacity in other generators 
 %can make up the difference without turning something on. 
 %Otherwise, something must turn on.
-n_g = length(locked(1,:));
+n_g = length(gen);
+n_s = length(dt);
+locked = true(n_s+1,n_g);
+for i = 1:1:n_g
+    if ~qp.Organize.Enabled(i)
+        locked(:,i)=false;
+    end
+end
 network_names = fieldnames(qp.Organize.Balance);
 %% make sure it can shut down in time from initial condition
 for i = 1:1:n_g
     if qp.Organize.Dispatchable(i) ==1
         locked(optimal_state(:,i)==0,i)=false;%Identify when optimal dispatch has things off
         if optimal_state(1,i)>0 && ~all(locked(:,i))
-            r = qp.Organize.Ramping(i)+1;
+            r = qp.Organize.Ramping(1,i)+1;
             d = optimal_state(1,i);
             t = 1;
             while d>0
-                if r>length(qp.b)
-                    disp('error in verify_ramping');
-                end
                 d = d - qp.b(r);
                 if d>0 && ~locked(t+1,i)
                     locked(t+1,i) = true;

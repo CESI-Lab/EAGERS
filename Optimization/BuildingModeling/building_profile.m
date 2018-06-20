@@ -73,14 +73,16 @@ if NetGain < 0 && (min(TsetH,Build.VariableStruct.ColdAirSet) - Tdb)*Cp_amb*MinF
     %% Actively heating  
     if Build.VariableStruct.swFixFan %small office
         Tsupply =  TsetH - NetGain/(Flow*Cp_amb*dt); % temperature of supply air to provide this cooling
-    elseif strcmp(Build.Name,'LO_DC_240_1zone_noFC') && TsetH < 19
-        Damper = 0;
-        Flow = MinFlow;
     else
         Tsupply = TsetH - NetGain/(Flow*Cp_amb*dt); % temperature of supply air to provide this heating
         Tsupply = min(65,Tsupply); % temperature of supply air to provide this heating 
-        Flow = max(MinFlow,NetGain/((TsetH - Tsupply)*Cp_build*dt)); % mass flow of air to provide this heating
-        Damper = MinFlow/Flow;
+        Flow = NetGain/((TsetH - Tsupply)*Cp_build*dt); % mass flow of air to provide this heating
+        if strcmp(Build.Name,'LO_DC_240_1zone_noFC') && TsetH < 19%no external air on weekends/night
+            Damper = 0;
+        else
+            Flow = max(MinFlow,Flow);
+            Damper = MinFlow/Flow;
+        end
     end
 else
     NetGain = zone_thermal_load(Build,Twall,Tdb,TsetC,InternalGains,ExternalGains,dt);

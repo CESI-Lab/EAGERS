@@ -1,10 +1,43 @@
-function b_forecast = forecast_building(weather,date,b_forecast,buildings)
+function [buildings,b_forecast] = forecast_building(weather,date,buildings,prev_data,hist_prof,options)
 % This function estimates the energy profile of a building 
-% Build is a structure of building parameters
-% Weather is an hourly weather profile (dry bulb, wet bulb, and relative humidity)
-% Date is a vector of points in datenum format at which you are requesting the electric cooling & heating power
+% weather is an hourly weather profile (dry bulb, wet bulb, and relative humidity)
+% date is a vector of points in datenum format at which you are requesting the electric cooling & heating power
+% buildings is a structure of building parameters for each building
 n_b = length(buildings);
 n_s = length(date);
+b_forecast.ExternalGains = zeros(length(date),n_b);
+for i = 1:1:n_b
+    sgain = solar_gain(buildings(i),date,buildings(i).QPform.Location,weather);
+    b_forecast.ExternalGains(:,i) = sgain.Walls + sgain.Roof;
+    if strcmp(options.forecast,'Building')
+        b_loads = building_loads(buildings(i),date,sgain);
+        b_forecast.InternalGains(:,i) = b_loads.InternalGains;
+        b_forecast.NonHVACelectric(:,i) = b_loads.Equipment + b_loads.InteriorLighting + b_loads.ExteriorLighting + b_loads.OtherLoads;
+        if isfield(b_loads,'DCloads')
+            b_forecast.DCloads = b_loads.DCloads;
+        end
+    end
+end
+
+%%Need warm-up period if not currently running the model
+for i = 1:1:n_b
+    if  abs(round(864000*(buildings(i).Timestamp+options.Resolution/24))/864000 - date(1))>1e-5
+        if length(date) == 1
+            wu_date = linspace(date(1) + options.Resolution/24,date(1)+1,24)';
+        else
+            wu_date = linspace(date(1),date(1)+1 - options.Resolution/24,24)';
+        end
+        if isempty(hist_prof)
+            f_names = fieldnames(prev_data.Weather);
+            for f = 1:1:length(f_names)
+                wu_weather.(f_names{f}) = interp1(prev_data.Timestamp,prev_data.Weather.(f_names{f}),wu_date);
+            end
+        else
+            wu_weather = weather_forecast(prev_data,hist_prof,wu_date);
+        end
+        buildings(i) = building_warmup(buildings(i),wu_weather,options.Resolution/24,wu_date,6);
+    end
+end
 b_forecast.E0 = zeros(n_s,n_b);
 b_forecast.C0 = zeros(n_s,n_b);
 b_forecast.H0 = zeros(n_s,n_b);
@@ -21,7 +54,7 @@ for i = 1:1:n_b
     [cooling, heating, fan_power,zone,wall,damper] = building_profile(buildings(i),date,b_forecast.InternalGains(:,i),b_forecast.ExternalGains(:,i),weather.Tdb,weather.RH,buildings(i).Tzone,buildings(i).Twall);
     b_forecast.Tmin(:,i) = load_sched(buildings(i),date,'TsetH') - 0.5*buildings(i).VariableStruct.Comfort;
     b_forecast.Tmax(:,i) = load_sched(buildings(i),date,'TsetC') + 0.5*buildings(i).VariableStruct.Comfort;
-    [temperature_to_heat,temperature_to_cool] = equilib_temperature(buildings(i),date,weather,wall,b_forecast.InternalGains(:,i),b_forecast.ExternalGains(:,i),b_forecast.Tmin(:,i),b_forecast.Tmax(:,i));
+    [temperature_to_heat,temperature_to_cool] = equilib_temperature(buildings(i),date,weather,zone(2:end),wall(2:end),cooling,heating,b_forecast.InternalGains(:,i),b_forecast.ExternalGains(:,i),b_forecast.Tmin(:,i),b_forecast.Tmax(:,i));
     b_forecast.E0(:,i) = b_forecast.NonHVACelectric(:,i) + fan_power(:,i);
     b_forecast.C0(:,i) = cooling(:,i) ;
     b_forecast.H0(:,i) = heating(:,i);
@@ -43,7 +76,7 @@ for i = 1:1:n_b
 end
 end%Ends function forecast_building
 
-function [temperature_to_heat,temperature_to_cool] = equilib_temperature(build,date,weather,wall,internal_gains,external_gains,min_temp,max_temp)
+function [temperature_to_heat,temperature_to_cool] = equilib_temperature(build,date,weather,zone,wall,cooling,heating,internal_gains,external_gains,min_temp,max_temp)
 rho_Air = 1.225; % kg/m^3
 n = 20;
 n_s = length(date);
@@ -66,20 +99,22 @@ for t = 1:1:n_s
     temperature_range = linspace(min_temp(t)-2*build.VariableStruct.Comfort,max_temp(t)+2*build.VariableStruct.Comfort,n)';
     net_gain = zone_thermal_load(build,wall(t),weather.Tdb(t),temperature_range,internal_gains(t),external_gains(t),dt(t));
     need_heat = (min(temperature_range,build.VariableStruct.ColdAirSet) - weather.Tdb(t))*amb_spec_heat(t)*min_flow*dt(t) - net_gain;
-    if all(need_heat)>0
+    if all(need_heat>0)
         temperature_to_heat(t) = temperature_range(1);
-    elseif all(need_heat)<0
+    elseif all(need_heat<0)
         temperature_to_heat(t) = temperature_range(end);
     else
-        temperature_to_heat(t) = interp1(temperature_range,need_heat,0);
+        temperature_to_heat(t) = interp1(need_heat,temperature_range,0);
     end
+    temperature_to_heat = max(temperature_to_heat,zone(t)-heating(t)*build.QPform.UA);
     need_cool = (weather.Tdb(t) - temperature_range)*amb_spec_heat(t)*min_flow*dt(t) + net_gain;
-    if all(need_cool)>0
+    if all(need_cool>0)
         temperature_to_cool(t) = temperature_range(end);
-    elseif all(need_cool)<0
+    elseif all(need_cool<0)
         temperature_to_cool(t) = temperature_range(1);
     else
-        temperature_to_cool(t) = interp1(temperature_range,need_cool,0);
+        temperature_to_cool(t) = interp1(need_cool,temperature_range,0);
     end
+    temperature_to_cool = min(temperature_to_cool,zone(t)+cooling(t)*build.QPform.UA);
 end
 end%Ends function equilib_temperature

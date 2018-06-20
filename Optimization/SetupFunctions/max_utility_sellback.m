@@ -1,4 +1,4 @@
-function gen = max_utility_sellback(gen,subnet,d_fields,d_max)
+function gen = max_utility_sellback(gen,subnet,test_data)
 %identify upper bound for utility states (helps with scaling)
 n_g = length(gen);
 max_dc_gen = 0;
@@ -36,8 +36,8 @@ for i = 1:1:n_g
         elseif strcmp(out,'W')
             net = 'Hydro';
         end
-        if any(strcmp(out,d_fields))
-            gen(i).QPform.X.ub = 10*d_max.(out);%max Purchase
+        if isfield(test_data,'Demand') && isfield(test_data.Demand,out)
+            gen(i).QPform.X.ub = 10*max(sum(test_data.Demand.(out),2));%max Purchase
         else
             gen(i).QPform.X.ub = 1e6; %arbitrary upper bound that is not inf
         end

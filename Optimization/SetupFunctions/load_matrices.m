@@ -1,9 +1,9 @@
-function qp = load_matrices(gen,building,cool_tower,subnet,optimoptions,op,dt)
+function qp = load_matrices(gen,building,fluid_loop,subnet,optimoptions,op,dt)
 %builds constant matrices for multi-time-step optimization
 %Demands, initial conditions, and utility costs must updated prior to optimization
 n_g = length(gen);
 n_b = length(building);
-n_ct = length(cool_tower);
+n_fl = length(fluid_loop);
 n_l = 0;
 networkNames = fieldnames(subnet);
 for net = 1:1:length(networkNames)
@@ -16,26 +16,26 @@ else
     n_s = 0;
 end
 
-organize.States=cell(1,n_g+n_l+n_b+n_ct);
-organize.Dispatchable = zeros(1,n_g);
+organize.States=cell(1,n_g+n_l+n_b+n_fl);
+organize.Dispatchable = false(1,n_g);
 organize.Transmission = zeros(n_l,1);
 organize.Hydro = [];
 organize.Building.r = zeros(n_b,1);
 organize.Building.req = zeros(n_b,1);
-organize.cool_tower = zeros(n_ct,1);
+organize.fluid_loop = zeros(n_fl,1);
 organize.dt = dt;
-organize.Out_vs_State = cell(1,n_g+n_l+n_b+n_ct);
-qp.organize = cell(n_s+1,n_g+n_l+n_b+n_ct);
+organize.Out_vs_State = cell(1,n_g+n_l+n_b+n_fl);
+qp.organize = cell(n_s+1,n_g+n_l+n_b+n_fl);
 qp.constCost = zeros(1,n_g);
 qp.excessHeat = optimoptions.excessHeat;
 qp.excessCool = optimoptions.excessCool;
 
 if n_s>0
-    [qp,organize,ic] = count_ic(gen,qp,organize,n_g,n_b,n_l,n_ct);
+    [qp,organize,ic] = count_ic(gen,qp,organize,n_g,n_b,n_l,n_fl);
 else
     ic = 0;
 end
-[qp,organize,lb,ub] = count_states(gen,subnet,optimoptions,qp,organize,n_g,n_b,n_l,n_ct,ic,op,n_s);
+[qp,organize,lb,ub] = count_states(gen,subnet,optimoptions,qp,organize,n_g,n_b,n_l,n_fl,ic,op,n_s);
 
 %% Expand by the number of time steps
 % # of states per time step is xL 
@@ -97,7 +97,7 @@ end
 qp.Aeq = line_equalities(subnet,qp.Aeq,organize,n_s,n_g);
 qp.A = line_inequalities(subnet,qp.A,organize,n_s,n_g);
 [qp.Aeq,qp.A,H,qp.f,organize] = building_constraints(building,qp.Aeq,qp.A,H,qp.f,organize,dt,n_g,n_l,n_s);
-[qp.Aeq,qp.A,H,qp.f,organize] = cooling_tower_constraints(gen,cool_tower,subnet,qp.Aeq,qp.A,H,qp.f,organize,dt,n_l,n_b,n_s);
+[qp.Aeq,qp.A,H,qp.f,organize] = fluid_loop_constraints(gen,fluid_loop,subnet,qp.Aeq,qp.A,H,qp.f,organize,dt,n_l,n_b,n_s);
 
 %convert to sparse matrices
 qp.H = spalloc(total_states,total_states,total_states);
@@ -144,7 +144,11 @@ function [qp,organize,lb,ub] = count_states(gen,subnet,optimoptions,qp,organize,
 % state for spinning reserve shortfall (target - cumulative of all active generators) and SR provided as ancillary service
 % repeat order of generators and lines for t = 2:nS
 lb =[]; ub = [];
-organize.SpinReserveStates = zeros(n_g+2,1);
+if optimoptions.SpinReserve
+    organize.SpinReserveStates = zeros(1,n_g+2);
+else
+    organize.SpinReserveStates = [];
+end
 organize.Fit = op;
 for i = 1:1:n_g
     gen_i = gen(i).QPform;
@@ -154,18 +158,18 @@ for i = 1:1:n_g
         fit = 1;
     end
     if ~isempty(gen_i.states)
-        if n_s == 0 && isfield(gen(i).QPform,'Stor') %single step (convert storage to generator)
+        if n_s == 0 && isfield(gen_i,'Stor') %single step (convert storage to generator)
             if ismember(gen(i).Type,{'Hydro Storage'})
                 s = 1;% Storage treated as generator with 1 state
                 lb(end+1,1) = gen_i.X.lb; 
                 ub(end+1,1) = gen_i.X.ub; % Upper bound is MaxGenCapacity
-                if isfield(gen(i).QPform,'S') %spill flow
+                if isfield(gen_i,'S') %spill flow
                     s = 2;
                     lb(end+1,1) = gen_i.S.lb; 
                     ub(end+1,1) = gen_i.S.ub; 
                 end
             else
-                if ~isfield(gen(i).QPform,'Y')
+                if ~isfield(gen_i,'Y')
                     s = 1;% Ideal storage treated as generator with 1 states (addtl power output relative to 1st dispatch)
                     lb(end+1,1) = -gen_i.Ramp.b(1);
                     ub(end+1,1) = gen_i.Ramp.b(2);
@@ -183,15 +187,15 @@ for i = 1:1:n_g
                 ub(end+1,1) = gen_i.(states{k}).ub(fit);
             end
             if ismember(gen(i).Type,{'Electric Generator';'CHP Generator';'Heater';'Chiller';'Cooling Tower';'Electrolyzer';'Hydrogen Generator';})
-                if isfield(gen(i).QPform,'constCost') 
-                     qp.constCost(i) = gen(i).QPform.constCost;
+                if isfield(gen_i,'constCost') 
+                     qp.constCost(i) = gen_i.constCost;
                 end
                 if isfield(gen(i).VariableStruct,'StartCost') && gen(i).VariableStruct.StartCost>0
-                    organize.Dispatchable(i) = 1;
-                elseif isfield(gen(i).QPform,'constDemand')
-                    organize.Dispatchable(i) = 1;
-                elseif qp.constCost(i)>0 || gen(i).QPform.(gen(i).QPform.states{1,end}).lb(end)>0 % first state has a non-zero lower bound for second optimization or a nonzero cost at an output of zero
-                    organize.Dispatchable(i) = 1;
+                    organize.Dispatchable(i) = true;
+                elseif isfield(gen_i,'constDemand')
+                    organize.Dispatchable(i) = true;
+                elseif qp.constCost(i)>0 || gen_i.(gen_i.states{1,end}).lb(end)>0 % first state has a non-zero lower bound for second optimization or a nonzero cost at an output of zero
+                    organize.Dispatchable(i) = true;
                 end
             end
         end
@@ -201,7 +205,7 @@ for i = 1:1:n_g
             organize.Out_vs_State{1,i} = [1,-1];
         elseif strcmp(gen(i).Type,'AC_DC')
             organize.Out_vs_State{1,i} = [1,-1];%Value is thus the total transfer from AC to DC
-        elseif isfield(gen(i).QPform,'Stor')
+        elseif isfield(gen_i,'Stor')
             qp.organize{min(n_s+1,2),i} = x_l+1; %output state for storage is only SOC (Power in the case of Hydro)
             organize.Out_vs_State{1,i} = 1;
         else
@@ -215,8 +219,8 @@ for i = 1:1:n_g
                     lb(end+1,1) = 0;
                     ub(end+1,1) = gen(i).VariableStruct.MaxGenCapacity;
                 elseif strcmp(gen(i).Type,'Electric Storage')
-                    lb(end+1,1) = -gen(i).QPform.Stor.PeakCharge;
-                    ub(end+1,1) = gen(i).QPform.Stor.PeakDisch;
+                    lb(end+1,1) = -gen_i.Stor.PeakCharge;
+                    ub(end+1,1) = gen_i.Stor.PeakDisch;
                 else
                     lb(end+1,1) = 0;
                     ub(end+1,1) = gen(i).Size;
@@ -264,6 +268,7 @@ if strcmp(param,'H')
 elseif strcmp(param,'C')
     net = 'DistrictCool';
 end
+e_vented = [];
 if any(strcmp(net,fieldnames(subnet))) && vent == 1
     %%find maximum heat production possible
     maxGen = 0;
@@ -288,7 +293,7 @@ if any(strcmp(net,fieldnames(subnet))) && vent == 1
     %%assume heat can be lost any any node in the network that has a device producing heat
     n = length(subnet.(net).nodes);
     ventNodes = 0;
-    e_vented =zeros(n,1); %matrix for the state associated with venting heat at each district heating node, at each time step
+    e_vented =zeros(1,n); %matrix for the state associated with venting heat at each district heating node, at each time step
     for i = 1:1:n
         genI = subnet.(net).Equipment{i};%%identify generators at this node
         for j = 1:1:length(genI)
@@ -302,10 +307,6 @@ if any(strcmp(net,fieldnames(subnet))) && vent == 1
     xL = xL+ventNodes;
     lb(end+1:end+ventNodes,1) = 0;
     ub(end+1:end+ventNodes,1) = maxGen;
-elseif any(strcmp(net,fieldnames(subnet)))
-    e_vented = zeros(length(subnet.(net).nodes),1);
-else
-    e_vented = [];
 end
 end%Ends function vented_energy
 
@@ -369,9 +370,9 @@ for net = 1:1:length(network_names)
         end
     end
 end
-nG = length(gen);
-organize.Equalities = zeros(nG,2);
-for i = 1:1:nG
+n_g = length(gen);
+organize.Equalities = zeros(n_g,2);
+for i = 1:1:n_g
     %link is a field if there is more than one state and the states are linked by an inequality or an equality
     if isfield(gen(i).QPform,'link') && isfield(gen(i).QPform.link,'eq')
         [m,~] = size(gen(i).QPform.link.eq);
@@ -382,19 +383,19 @@ end
 ec = [];
 if n_s>0
     if ~strcmp(end_soc,'Flexible')
-        for i = 1:1:nG
+        for i = 1:1:n
             if isfield(gen(i).QPform,'Stor')
                 ec(end+1) = i;%%Special case of final state-of-charge equal to initial state or fixed value
             end
         end
     end
 else
-    organize.SpinRow = zeros(nG,1);
+    organize.SpinRow = zeros(1,n_g);
     if ismember('Hydro',network_names)
-        organize.HydroInequalities = zeros(nG,1);
+        organize.HydroInequalities = zeros(n,1);
     end
     include = {'Electric Generator';'CHP Generator';'Hydrogen Generator';'Electric Storage';'Hydro Storage';};
-    for i = 1:1:nG
+    for i = 1:1:n
         if strcmp(gen(i).Type,'Hydro Storage')
             organize.Hydro(end+1) = i;
             organize.HydroEqualities(i) = req+1;
@@ -427,9 +428,9 @@ if ismember('Electrical',fieldnames(subnet)) && sr
 end
 if n_s>0
     %Ramping & Generator Inequalities
-    organize.Ramping = zeros(n_g,1);
+    organize.Ramping = zeros(1,n_g);
     organize.Inequalities = zeros(n_g,2);
-    organize.SpinRow = zeros(n_g,1);
+    organize.SpinRow = zeros(1,n_g);
     for i = 1:1:n_g
         if isfield(gen(i).QPform,'Ramp') 
             organize.Ramping(i) = r+1; 
@@ -447,7 +448,7 @@ if n_s>0
     end
 else %single time step matrices
     %charging penalty eqn
-    organize.Inequalities = zeros(n_g,1);
+    organize.Inequalities = zeros(1,n_g);
     for i = 1:1:n_g
         if isfield(gen(i).QPform,'Stor') && ~strcmp(gen(i).Type,'Hydro Storage')
             organize.Inequalities(i) = r+1;
@@ -502,7 +503,7 @@ for net = 1:1:length(network_names)
                 %link is a field if there is more than one state and the states are linked by an inequality or an equality
                 if isfield(gen_i,'link') && isfield(gen_i.link,'eq')
                     req2 = organize.Equalities(equip(k),1);
-                    for j = 1:1:length(req2)
+                    for j = 1:1:organize.Equalities(equip(k),2)
                         for t = 1:1:n_s
                             Aeq((t-1)*t1_balances+req2+(j-1),(t-1)*t1_states+states) = gen_i.link.eq(j,:);
                         end
@@ -544,13 +545,13 @@ for net = 1:1:length(network_names)
                 end
             end
             %%any heat loss term to balance equality
-            if strcmp('DistrictHeat',network_names{net}) && organize.HeatVented(n)~=0
+            if  ~isempty(organize.HeatVented) && strcmp('DistrictHeat',network_names{net}) && organize.HeatVented(n)~=0
                 for t = 1:1:n_s
                     Aeq((t-1)*t1_balances+req,(t-1)*t1_states+organize.HeatVented(n)) = -1;
                 end
             end
             %%any cool loss term to balance equality
-            if strcmp('DistrictCool',network_names{net}) && organize.CoolVented(n)~=0
+            if  ~isempty(organize.CoolVented) && strcmp('DistrictCool',network_names{net}) && organize.CoolVented(n)~=0
                 for t = 1:1:n_s
                     Aeq((t-1)*t1_balances+req,(t-1)*t1_states+organize.CoolVented(n)) = -1;
                 end
@@ -572,26 +573,33 @@ for i = 1:1:length(subnet.Hydro.lineNames)
     k = strfind(name,'_');
     downriver(end+1) = {name(k(2)+1:end)};% node names of the downriver node
 end
-%% Mass balance
+
 for i = 1:1:n_g
     if strcmp(gen(i).Type,'Hydro Storage')
+        states = organize.States{i};
         n = gen(i).QPform.Hydro.subnetNode;
         req = organize.Balance.Hydro(n);
-        index_dr = gen(i).QPform.DownRiverSegment;%lines leaving this node, i.e. this node is the upriver node (should be at most 1)
-        if any(strcmp(subnet.Hydro.nodes{n}(1),downriver))
-            index_ur = subnet.Hydro.lineNumber(subnet.Hydro.UpRiverNodes{n});
+        index_dr = gen(i).QPform.Hydro.down_river;%lines leaving this node, i.e. this node is the upriver node (should be at most 1)
+        if any(strcmp(subnet.Hydro.nodes{n},downriver))
+            index_ur = subnet.Hydro.lineNumber(subnet.Hydro.up_river{n});
         else
             index_ur = []; %no upstream nodes
         end
-        req2 = organize.Equalities(i,1); %equality for converting power to flow (adding spill flow) = outflow
         for t = 1:1:n_s
+            %% Mass balance
+            Aeq((t-1)*t1_balances+req,(t-1)*t1_states+states(2)) = -12.1/dt(t); %SOC at t in acre-ft / hours converted to ft^3/s:  43560 ft^3/acre-ft * 1 hr / 3600s = 12.1 cfs per acre-ft/hr
+            if t==1
+                Aeq(req,organize.IC(i)+1) = 12.1/dt(t);%SOC at IC is 1 after dam power IC
+            else
+                Aeq((t-1)*t1_balances+req,(t-2)*t1_states+states(2)) = 12.1/dt(t);
+            end
             %river segments flowing into this node
             for j = 1:1:length(index_ur)
-                T = subnet.Hydro.lineTime(subnet.Hydro.UpRiverNodes{n}(j));
+                T = subnet.Hydro.lineTime(subnet.Hydro.up_river{n}(j));
                 tt = sum(dt(1:t));
-                if tt<T                            
+                if tt<=T                            
                     %Do nothing; the inflow rate will be updated in update_matrices
-                elseif tt>=T && tt<=T+dt(1)%between initial condition & first step
+                elseif tt>T && tt<=T+dt(1)%between initial condition & first step
                     frac = (tt-T)/dt(1);%portion of flow from step 1, remainder from  SourceSink + (1-frac)*Inflow(t=1) : subtracted from beq in update matrices
                     Aeq((t-1)*t1_balances+req,organize.States{n_g+index_ur(j)})= frac; % Qupriver at step 1, 
                 else
@@ -599,24 +607,15 @@ for i = 1:1:n_g
                     while tt>(T+sum(dt(1:step)))
                         step = step+1;
                     end
-                    frac = abs((tt-(T+sum(dt(1:step))))/dt(step));%portion of flow from step, remainder from previous step
+                    frac = (tt-(T+sum(dt(1:step-1))))/dt(step);%portion of flow from step, remainder from previous step
                     Aeq((t-1)*t1_balances+req,(step-1)*t1_states+organize.States{n_g+index_ur(j)})= frac; % Qupriver at t - floor(T)
                     Aeq((t-1)*t1_balances+req,(step-2)*t1_states+organize.States{n_g+index_ur(j)})= (1-frac); % Qupriver at t - ceil(T)
                 end 
             end 
             %water flow out of the node
             Aeq((t-1)*t1_balances+req,(t-1)*t1_states+organize.States{n_g+index_dr})= -1; %Qdownriver,  
-
-            states = organize.States{i};
-            %SOC of the reservior in 1000 acre ft.
-            Aeq((t-1)*t1_balances+req,(t-1)*t1_states+states(2)) = -12.1/dt(t); %SOC at t in acre-ft / hours converted to 1000 ft^3/s:  12100 ft^3/s * 3600s = 1000 acre ft
-            if t==1
-                Aeq(req,organize.IC(i)+1) = 12.1/dt(t);%SOC at IC is 1 after dam power IC
-            else
-                Aeq((t-1)*t1_balances+req,(t-2)*t1_states+states(2)) = 12.1/dt(t); %SOC at t-1 in acre-ft / hours converted to 1000 ft^3/s:  12100 ft^3/s * 3600s = 1000 acre ft
-            end
             %% convert power to outflow (other part of balance is done in Generator Equalities when doing the electric network, this is the - Qdownriver
-            Aeq((t-1)*t1_balances+req2,(t-1)*t1_states+organize.States{n_g+index_dr})= -1; % Power/(eff*head*84.76) + Spill - Qdownriver = 0
+            Aeq((t-1)*t1_balances+ organize.Equalities(i,1),(t-1)*t1_states+organize.States{n_g+index_dr})= -1; % Power/(eff*head*84.76) + Spill - Qdownriver = 0
         end 
     else
         %% add water district here
@@ -728,7 +727,7 @@ for net = 1:1:length(network_names)
                     %link is a field if there is more than one state and the states are linked by an inequality or an equality
                     if isfield(gen_i,'link') && isfield(gen_i.link,'eq')
                         req2 = organize.Equalities(i,1);
-                        for j = 1:1:length(req2)
+                        for j = 1:1:organize.Equalities(i,2)
                             qp.Aeq(req2+(j-1),states) = gen_i.link.eq(j,:);
                             qp.beq(req2+(j-1)) = gen_i.link.beq(j);
                         end
@@ -1049,10 +1048,10 @@ else
         Aeq(req,states(3)) = -1;%subtract building cooling needs from cooling energy balance
         r = organize.Building.r(i);
         %heating inequality % H = H0 + Hbar where H_bar>=  UA*(Ti-Tset_H) + Cap*(Ti - T(i-1))/dt where dt is in seconds
-        % Done in update1Step because of dt: % A(r,states(1)) = (Building(i).QPform.UA+Building(i).QPform.Cap*dt);
+        % Done in update1Step because of dt: % A(r,states(1)) = (Building(i).QPform.UA+Building(i).QPform.Cap/dt);
         A(r,states(2)) = -1;
         %Cooling inequality % Cooling = C0 + C_bar where C_bar>= UA*(Tset_C-Ti) + Cap*(T(i-1)-Ti)/dt where dt is in seconds
-        % Done in update1Step because of dt: % A(r+1,states(1)) = (Building(i).QPform.UA-Building(i).QPform.Cap*dt);
+        % Done in update1Step because of dt: % A(r+1,states(1)) = (Building(i).QPform.UA-Building(i).QPform.Cap/dt);
         A(r+1,states(3)) = -1;
         %Upper bound inequality
         A(r+2,states(1)) = 1;% Upper buffer >= Ti - (Tset + Comfort width/2)
@@ -1069,9 +1068,9 @@ else
 end
 end%Ends function building_constraints
 
-function [Aeq,A,H,f,organize] = cooling_tower_constraints(gen,cool_tower,subnet,Aeq,A,H,f,organize,dt,n_l,n_b,n_s)
+function [Aeq,A,H,f,organize] = fluid_loop_constraints(gen,fluid_loop,subnet,Aeq,A,H,f,organize,dt,n_l,n_b,n_s)
 n_g = length(gen);
-n_ct = length(cool_tower);
+n_ct = length(fluid_loop);
 if n_s>0
     t1Balances = organize.t1Balances;
     t1States = organize.t1States;
@@ -1079,19 +1078,18 @@ if n_s>0
         %1st order temperature model: 0 = -T(k) + T(k-1) + dt/Capacitance*(energy balance)
         state = organize.States{n_g+n_l+n_b+i};
         req = organize.Balance.CoolingWater(i);
-        organize.cool_tower.req(i) = req;
-        capacitance = cool_tower(i).fluid_capacity*cool_tower(i).fluid_capacitance; %Water capacity in kg and thermal capacitance in kJ/kg*K to get kJ/K
-        for t = 1:1:n_s
-            Aeq((t-1)*t1Balances+req,:) = Aeq((t-1)*t1Balances+req,:)*dt(t)/capacitance; %energy balance for chillers & cooling tower fans already put in this row of Aeq
-            Aeq((t-1)*t1Balances+req,(t-1)*t1States+state) = -1; %-T(k)
+        organize.fluid_loop(i) = req;
+        capacitance = fluid_loop(i).fluid_capacity*fluid_loop(i).fluid_capacitance; %Water capacity in kg and thermal capacitance in kJ/kg*K to get kJ/K
+        for t = 1:1:n_s%energy balance for chillers & cooling tower fans already put in this row of Aeq
+            Aeq((t-1)*t1Balances+req,(t-1)*t1States+state) = -capacitance/(3600*dt(t)); %-T(k)
             if t == 1
-                Aeq(req,organize.IC(n_g+n_l+n_b+i)) = 1;%T(k-1)
+                Aeq(req,organize.IC(n_g+n_l+n_b+i)) = capacitance/(3600*dt(t));%T(k-1)
             else
-                Aeq((t-1)*t1Balances+req,(t-2)*t1States+state) = 1;%T(k-1)
+                Aeq((t-1)*t1Balances+req,(t-2)*t1States+state) = capacitance/(3600*dt(t));%T(k-1)
             end
         end        
-        delta_temperature = cool_tower(i).nominal_supply_temperature - cool_tower(i).nominal_return_temperature;
-        pump_power = cool_tower(i).pump_power_per_kgs/(delta_temperature*cool_tower(i).fluid_capacitance);
+        delta_temperature = fluid_loop(i).nominal_supply_temperature - fluid_loop(i).nominal_return_temperature;
+        pump_power = fluid_loop(i).pump_power_per_kgs/(delta_temperature*fluid_loop(i).fluid_capacitance);
         equip = subnet.CoolingWater.Equipment{i};
         for k = 1:1:length(equip)
             j = equip(k);
@@ -1110,9 +1108,9 @@ else
         %1st order temperature model: T(k) = T(k-1) + dt/Capacitance*(energy balance)
         % done in update1Step because of dt: % Aeq(req,chiller/ fan states) = (HeatRejected)/Building(i).QPform.Cap*dt;
         req = organize.Balance.CoolingWater(i);
-        organize.cool_tower.req(i) = req;
-        delta_temperature = cool_tower(i).nominal_supply_temperature - cool_tower(i).nominal_return_temperature;
-        pump_power = cool_tower(i).pump_power_per_kgs/(delta_temperature*cool_tower(i).fluid_capacitance);
+        organize.fluid_loop(i) = req;
+        delta_temperature = fluid_loop(i).nominal_supply_temperature - fluid_loop(i).nominal_return_temperature;
+        pump_power = fluid_loop(i).pump_power_per_kgs/(delta_temperature*fluid_loop(i).fluid_capacitance);
         equip = subnet.CoolingWater.Equipment{i};
         for k = 1:1:length(equip)
             j = equip(k);
@@ -1124,4 +1122,4 @@ else
         end
     end
 end
-end%Ends function cooling_tower_constraints
+end%Ends function fluid_loop_constraints

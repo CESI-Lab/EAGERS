@@ -1,4 +1,18 @@
-function [cost,npc,scaled_monthly_costs] = design_costs(gen,design,options,years,equip_costs,discount_rate)
+function [cost, npc, scaled_monthly_costs] = design_costs(gen, design, options, years, equip_costs, discount_rate, dispatchFlag)
+%DESIGN_COSTS
+
+% Set infinite cost for infeasible dispatch.
+% dispatchFlag:
+%   0 -- feasible
+%   1, 2, 3 -- infeasible
+if dispatchFlag > 0
+    cost = Inf;
+    npc = Inf;
+    scaled_monthly_costs = Inf;
+    return
+end
+
+% Rest of function.
 gen_disp = design.GeneratorState;
 fuel_input = zeros(size(gen_disp));
 
@@ -14,10 +28,10 @@ for i = 1:1:n_g
         end
         cap = gen(i).Output.Capacity*gen(i).Size;
     elseif strcmp(gen(i).Type,'Electrolyzer')
-        eff = gen(i).Output.Hydrogen; 
+        eff = gen(i).Output.Hydrogen;
         cap = gen(i).Output.Capacity*gen(i).Size;
     elseif strcmp(gen(i).Type,'Heater')
-        eff = gen(i).Output.Heat; 
+        eff = gen(i).Output.Heat;
         cap = gen(i).Output.Capacity*gen(i).Size;
     elseif strcmp(gen(i).Type,'Utility') && strcmp(gen(i).Source,'Electricity')
         electric_use = gen_disp(:,i);
@@ -52,7 +66,7 @@ operations_and_maintenance = zeros(n,1);
 finance_monthly = zeros(n,1);
 capital_cost = zeros(n,1);
 for i = 1:1:n
-    if ~isempty(equip_costs(i).Name)
+    if ~isempty(equip_costs(i).Cost)
         capital_cost(i) = equip_costs(i).Cost;
         operations_and_maintenance(i) = equip_costs(i).OandM; %yearly maintenance cost
         loan_amount = equip_costs(i).Cost*equip_costs(i).Financed/100; %principle loan amount
@@ -88,9 +102,9 @@ cost = monthly_costs;
 %find net present cost
 months = 12*years;
 escalator = ones(months,6);
-escalator_electric = ProjectUtilityCost('electric','Commercial',years,'WA')';
+escalator_electric = utility_cost_projection('electric','Commercial',years,'WA')';
 escalator_electric = escalator_electric/escalator_electric(1);
-escalator_gas = ProjectUtilityCost('gas','Commercial',years,'WA')';
+escalator_gas = utility_cost_projection('gas','Commercial',years,'WA')';
 escalator_gas = escalator_gas/escalator_gas(1);
 escalator(:,4) = escalator_electric;
 escalator(:,5) = escalator_electric;
