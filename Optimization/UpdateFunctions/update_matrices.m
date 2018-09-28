@@ -1,7 +1,7 @@
 function qp = update_matrices(gen,buildings,fluid_loop,subnet,options,qp,date,scale_cost,margin_cost,forecast,ec)
 % gen is the set of generators in the project
 % building is the set of buildings in the project
-% fluid_lop is the set of fluid loops, e.g. cooling tower water loop
+% fluid_loop is the set of fluid loops, e.g. cooling tower water loop
 % subnet is the agregated networks
 % options are the optimization options
 % qp is the optimization problem 
@@ -271,6 +271,18 @@ if ~isempty(subnet.Electrical.lineNames)
             qp.f(s3) = 0.001; %Adding .1 cent/kWhr cost to every Electric line penalty to differentiate from spill flow
         end
     end 
+end
+%Adding lower bounds for Hydro lines that have seasonality constraints
+if ~isempty(subnet.Hydro.lineNames)
+    for k = 1:1:length(subnet.Hydro.lineNames)
+        line = subnet.Hydro.lineNumber(k);
+        states = qp.Organize.States{n_g+line};
+        t_states = states:qp.Organize.t1States:((n_s-1)*qp.Organize.t1States+states);
+        months = datevec(date(2:end));
+        months = months(:,2);
+        qp.lb(t_states,1) = subnet.Hydro.lineMinimum(k);
+%         qp.lb(t_states,1) = subnet.Hydro.lineMinimum{k}(months,1);
+    end
 end
 end%Ends function update_mat_hydro
 

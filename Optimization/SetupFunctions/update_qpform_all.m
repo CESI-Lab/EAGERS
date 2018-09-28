@@ -410,6 +410,9 @@ end%Ends function load_storage
 function qp_form = load_hydro_storage(gen,scale)
 % this function loads the parameters for a hydroelectric plant.
 eff = gen.VariableStruct.MaxGenCapacity/(gen.VariableStruct.MaxGenFlow*gen.VariableStruct.MaxHead*84.674);%Power (kW)/ideal power in kW
+if isnan(eff) || eff == 0
+    eff = 1;
+end
 qp_form.Stor.Size = gen.Size*scale;
 qp_form.Stor.SelfDischarge  = 0; %needs to be evaporative losses
 qp_form.Stor.DischEff = 1; %100% efficient

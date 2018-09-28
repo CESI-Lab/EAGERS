@@ -20,6 +20,7 @@ organize.States=cell(1,n_g+n_l+n_b+n_fl);
 organize.Dispatchable = false(1,n_g);
 organize.Transmission = zeros(n_l,1);
 organize.Hydro = [];
+organize.HydroEqualities = [];
 organize.Building.r = zeros(n_b,1);
 organize.Building.req = zeros(n_b,1);
 organize.fluid_loop = zeros(n_fl,1);
@@ -109,7 +110,7 @@ qp.A = sparse(qp.A);
 qp.Organize = organize; %indices (rows and columns) associated with each generator, allowing generators to be removed later
 end%Ends function build_matrices
 
-function [qp,organize,ic] = count_ic(gen,qp,organize,n_g,n_b,n_l,n_ct)
+function [qp,organize,ic] = count_ic(gen,qp,organize,n_g,n_b,n_l,n_fl)
 % IC for each generator & storage
 ic = 0; % row index of the initial condition constraint in the Aeq matrix and beq vector
 for i = 1:1:n_g
@@ -128,14 +129,14 @@ for i = 1:1:n_b %all buildings have an initial temperature state
     qp.organize{1,n_g+n_l+i} = ic; %output state organized into matrix of time vs. generator (IC)   
     organize.IC(n_g+n_l+i) = ic;
 end
-for i = 1:1:n_ct %all cooling tower water loops have an initial temperature state
+for i = 1:1:n_fl %all fluid water loops have an initial temperature state
     ic = ic+1;%initial condition state
     qp.organize{1,n_g+n_l+n_b+i} = ic; %output state organized into matrix of time vs. generator (IC)   
     organize.IC(n_g+n_l+n_b+i) = ic;
 end
 end%Ends function count_ic
 
-function [qp,organize,lb,ub] = count_states(gen,subnet,optimoptions,qp,organize,n_g,n_b,n_l,n_ct,x_l,op,n_s)
+function [qp,organize,lb,ub] = count_states(gen,subnet,optimoptions,qp,organize,n_g,n_b,n_l,n_fl,x_l,op,n_s)
 %% organize the order of non-initial condition states 
 % states for each generator/storage at t = 1
 % spinning reserve for generator/storage at t = 1 if option is selected
@@ -251,7 +252,7 @@ for i = 1:1:n_b %all single zone buildings have 5 states
     lb(end+1:end+5,1) = [10; 0; 0; 0; 0;];%Dont let building below 10 degrees C
     ub(end+1:end+5,1) = [35; 1e5; 1e5; 10; 10;];%Building stays below 35 degrees C, and excess temperature is less than 10 degrees
 end
-for i = 1:1:n_ct %all cooling tower cold water loops have 1 state
+for i = 1:1:n_fl %all fluid loops have 1 state
     organize.States(n_g+n_l+n_b+i) = {x_l+1};
     qp.organize{min(n_s+1,2),n_g+n_l+n_b+i} = x_l+1; %output state for building is temperature
     organize.Out_vs_State{1,n_g+n_l+n_b+i} = 1;
@@ -395,10 +396,10 @@ else
         organize.HydroInequalities = zeros(n,1);
     end
     include = {'Electric Generator';'CHP Generator';'Hydrogen Generator';'Electric Storage';'Hydro Storage';};
-    for i = 1:1:n
+    for i = 1:1:length(gen)
         if strcmp(gen(i).Type,'Hydro Storage')
             organize.Hydro(end+1) = i;
-            organize.HydroEqualities(i) = req+1;
+            organize.HydroEqualities(end+1) = req+1;
             req = req+1;
         end
         if ismember('Electrical',network_names) && sr && ismember(gen(i).Type,include)%spinning reserve: no ramping constraint for single time step, so SR can be an equalities 
@@ -791,7 +792,7 @@ if isfield(subnet,'Hydro')
         index_ur = upLines(strcmp(subnet.Hydro.nodes{n},upriver));%lines leaving this node, i.e. this node is the upriver node (should be at most 1)
         line_out = subnet.Hydro.lineNumber(index_ur);
         if strcmp(gen(i).Type,'Hydro Storage')
-            req = organize.HydroEqualities(i);
+            req = organize.HydroEqualities(n);
             states = organize.States{i};
             Aeq(req,states(1)) = gen(i).QPform.Stor.Power2Flow;
             Aeq(req,organize.States{n_g+line_out})= -1; %Qdownriver (in excess of original solution from multi-time step),  
@@ -1070,11 +1071,11 @@ end%Ends function building_constraints
 
 function [Aeq,A,H,f,organize] = fluid_loop_constraints(gen,fluid_loop,subnet,Aeq,A,H,f,organize,dt,n_l,n_b,n_s)
 n_g = length(gen);
-n_ct = length(fluid_loop);
+n_fl = length(fluid_loop);
 if n_s>0
     t1Balances = organize.t1Balances;
     t1States = organize.t1States;
-    for i = 1:1:n_ct
+    for i = 1:1:n_fl
         %1st order temperature model: 0 = -T(k) + T(k-1) + dt/Capacitance*(energy balance)
         state = organize.States{n_g+n_l+n_b+i};
         req = organize.Balance.CoolingWater(i);
@@ -1104,7 +1105,7 @@ if n_s>0
     end
 else
     %single step optimization
-    for i = 1:1:n_ct
+    for i = 1:1:n_fl
         %1st order temperature model: T(k) = T(k-1) + dt/Capacitance*(energy balance)
         % done in update1Step because of dt: % Aeq(req,chiller/ fan states) = (HeatRejected)/Building(i).QPform.Cap*dt;
         req = organize.Balance.CoolingWater(i);

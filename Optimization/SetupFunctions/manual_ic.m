@@ -1,7 +1,7 @@
-function [gen,building,cool_tower] = manual_ic(gen,building,cool_tower,subnet)
+function [gen,building,fluid_loop] = manual_ic(gen,building,fluid_loop,subnet)
 n_g = length(gen);
 n_b = length(building);
-n_ct = length(cool_tower);
+n_fl = length(fluid_loop);
 list = {};
 list2 = {};
 sizes = {};
@@ -63,7 +63,7 @@ for i = 1:1:n_b
     building(i).Twall = 20;
     building(i).Timestamp = 0;
 end
-for i = 1:1:n_ct
-    cool_tower(i).fluid_temperature = 29.44; %85F
+for i = 1:1:n_fl
+    fluid_loop(i).fluid_temperature = 29.44; %85F
 end
 end%Ends function manual_ic

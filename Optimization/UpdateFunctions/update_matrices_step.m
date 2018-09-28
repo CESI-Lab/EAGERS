@@ -6,44 +6,46 @@ function qp = update_matrices_step(gen,building,fluid_loop,subnet,options,qp,for
 % temperatures is the building and cooling tower water loop temperatures
 qp.solver = options.solver;
 n_g = length(gen);
-n_b = length(building);
-n_l = length(qp.Organize.Transmission);
-n_fl = length(fluid_loop);
 
-upper_bound = zeros(1,n_g);
-dx_dt = zeros(1,n_g);
-qp.Organize.Enabled = true(1,n_g);%which components are enabled
+%% determine which components are enabled
+qp.Organize.Enabled = true(1,n_g);
 for i = 1:1:n_g
-    if ~isempty(gen(i).QPform.states)
-        if strcmp(gen(i).Type,'Hydro Storage')
-            %%do something to set UB
-        else
-            states = gen(i).QPform.states(1:nnz(~cellfun('isempty',gen(i).QPform.states(:,end))),end);
-            for j = 1:1:length(states)
-                upper_bound(i) = upper_bound(i) + gen(i).QPform.(states{j}).ub(end);
-            end
-        end
-    end
-    if isfield(gen(i).VariableStruct,'dX_dt')
-        dx_dt(i) = gen(i).VariableStruct.dX_dt;
-    end
     if ~gen(i).Enabled
         qp.Organize.Enabled(i) = false;
     end
 end
-if strcmp(limit, 'unconstrained')
-    min_power = 0*upper_bound;
-    max_power = upper_bound;
-elseif strcmp(limit, 'constrained')
-    min_power = max(0,ic(1:n_g)-dx_dt*dt(t));
-    max_power = min(upper_bound,ic(1:n_g)+dx_dt*dt(t));
-else
-    min_power = max(0,ic(1:n_g)-dx_dt*sum(dt(1:t)));
-    max_power = min(upper_bound,ic(1:n_g)+dx_dt*sum(dt(1:t)));
+%% update the demands and self-discharge losses
+qp = update_mat_demand_step(gen,qp,subnet,options,forecast,first_profile,ic,dt,t);
+
+%% Building inequalities & equality
+qp = update_mat_building_step(building,qp,forecast,temperatures,dt,t);
+%% Fluid loop equality
+qp = update_fluid_loop_step(fluid_loop,qp,temperatures,dt,t);
+
+%% Update upper and lower bounds based on ramping constraint (if applicable)
+[min_power,max_power] = constrain_min_max(gen,limit,ic,dt,t);
+qp = update_gen_limit(gen,qp,min_power,max_power);
+
+%% update storage bounds
+if ~isempty(first_profile)
+    qp = update_storage_bounds(gen,qp,stor_power,first_profile,dt,t);
 end
 
-network_names = fieldnames(subnet);
+%% Adding cost for Line Transfer Penalties to differentiate from spillway flow 
+qp = update_mat_hydro_step(gen,qp,subnet);
+
+%% update costs
+qp = update_mat_cost_step(gen,qp,first_profile,stor_power,scale_cost,marginal,dt,t);
+
+%% update spinning reserve
+qp = update_spin_reserve_step(qp,options,forecast,dt,t);
+
+end%ends function update_matrices_step
+
+function qp = update_mat_demand_step(gen,qp,subnet,options,forecast,first_profile,ic,dt,t)
 %% update demands and storage self-discharge
+n_g = length(gen);
+network_names = fieldnames(subnet);
 for nn = 1:1:length(network_names)
     net = network_names{nn};
     abrev = subnet.(net).abbreviation;
@@ -88,8 +90,73 @@ for nn = 1:1:length(network_names)
         end
     end
 end  
+end%Ends function update_mat_demand_step
 
-%% Building inequalities & equality
+function qp = update_mat_cost_step(gen,qp,first_profile,stor_power,scale_cost,marginal,dt,t)
+n_g = length(gen);
+H = diag(qp.H);%convert to vector
+for i = 1:1:n_g
+    states = qp.Organize.States{i}; %states of this generator
+    switch gen(i).Type
+        case 'Utility'
+            if strcmp(gen(i).Source,'Electricity')
+                qp.f(states(1)) = qp.f(states(1))*scale_cost(i)*dt(t);
+                if gen(i).VariableStruct.SellBackRate == -1
+                    qp.f(states(2)) = qp.f(states(2))*scale_cost(i)*dt(t); %sellback is a fixed percent of purchase costs (percent set wehn building matrices)
+                else
+                    %constant sellback rate was taken care of when building the matrices
+                end
+            end
+        case {'Electric Generator';'CHP Generator';'Chiller';'Heater';}%all generators and utilities
+            H(states) = H(states)*scale_cost(i)*dt(t);
+            qp.f(states) = qp.f(states)*scale_cost(i)*dt(t);
+        case {'Electric Storage';'Thermal Storage';'Hydro Storage';}%all  storage
+            stor_cat = fieldnames(gen(i).QPform.output);
+            %penalize deviations from the expected storage output
+            a = 1; %sets severity of quadratic penalty
+            %scale the penalty by a) larger of 5% capcity and 2x the
+            %expected change in stored capacity, b) lesser of a) and
+            %remaining space in storage
+            MaxCharge = 0.05*gen(i).QPform.Stor.UsableSize/dt(t);
+            if ~isempty(first_profile)
+                MaxCharge = max(MaxCharge,2*abs(stor_power(i)));
+                if gen(i).QPform.Stor.UsableSize>first_profile(t+1,i)
+                    MaxCharge = min((gen(i).QPform.Stor.UsableSize-first_profile(t+1,i))/dt(t),MaxCharge);
+                end
+                if first_profile(t+1,i)>0
+                    MaxCharge = min(0.5*first_profile(t+1,i)/dt(t),MaxCharge);
+                end
+            end
+            qp.f(states(1)) = marginal.(stor_cat{1});
+            H(states(1)) = a*2*qp.f(states(1))/MaxCharge;  %factor of 2 because its solving C = 0.5*x'*H*x + f'*x
+            if length(states)>1
+                qp.f(states(2)) = 1e-6; %small penalty on charging state so that if there are no other generators it keeps the charging constraint as an equality
+            end
+    end 
+end 
+qp.H = diag(H);%convert back to matrix
+qp.constCost = qp.constCost.*scale_cost*dt(t);
+end%Ends function update_mat_cost_step
+
+function qp = update_spin_reserve_step(qp,options,forecast,dt,t)
+n_g = length(qp.Organize.Dispatchable);
+if options.SpinReserve
+    sr_short = qp.Organize.SpinReserveStates(1,n_g+1);%cumulative spinning reserve shortfall 
+    sr_ancillary = qp.Organize.SpinReserveStates(1,n_g+2);%Ancillary spinning reserve value (negative cost) 
+    if options.SpinReservePerc>5 %more than 5% spinning reserve
+        spin_cost = 2*dt(t)./(options.SpinReservePerc/100*sum(forecast.Demand.E(t,:),2));% -shortfall + SRancillary - SR generators - SR storage <= -SR target
+    else
+        spin_cost = 2*dt(t)./(0.05*sum(forecast.Demand.E(t,:),2));% -shortfall + SRancillary - SR generators - SR storage <= -SR target
+    end
+    qp.H(sr_short,sr_short) = spin_cost;%effectively $2 per kWh at point where shortfall = spin reserve percent*demand or $2 at 5%
+    qp.f(sr_short) = 0.05*dt(t); % $0.05 per kWh
+end
+end%Ends function update_spin_reserve_step
+
+function qp = update_mat_building_step(building,qp,forecast,temperatures,dt,t)
+n_b = length(building);
+n_g = length(qp.Organize.Dispatchable);
+n_l = length(qp.Organize.Transmission);
 for i = 1:1:n_b
     states = qp.Organize.States{n_g+n_l+i};
     %Heating cooling offsets (value through dead_band)    
@@ -124,7 +191,13 @@ for i = 1:1:n_b
     qp.b(qp.Organize.Building.r(i)+2) = forecast.Building.Tmax(t,i);%upper buffer inequality, the longer the time step the larger the penaly cost on the state is.
     qp.b(qp.Organize.Building.r(i)+3) = -forecast.Building.Tmin(t,i);%lower buffer inequality
 end
-%% Cooling Tower water loop equality
+end%Ends function update_mat_building_step
+
+function qp = update_fluid_loop_step(fluid_loop,qp,temperatures,dt,t)
+n_b = length(qp.Organize.Building.r);
+n_g = length(qp.Organize.Dispatchable);
+n_l = length(qp.Organize.Transmission);
+n_fl = length(fluid_loop);
 for i = 1:1:n_fl
     %1st order temperature model: 0 = -T(k) + T(k-1) + dt/Capacitance*(energy balance)
     state = qp.Organize.States{n_g+n_l+n_b+i};
@@ -135,15 +208,56 @@ for i = 1:1:n_fl
     qp.Aeq(req,state) = -capacitance/(3600*dt(t)); %-T(k)
     qp.beq(req) = -temperatures.fluid_loop(i)*capacitance/(3600*dt(t));%-T(k-1)
 end
+end%Ends function update_fluid_loop_step
 
-%% Update upper and lower bounds based on ramping constraint (if applicable)
-if ~isempty(first_profile)
-    for i = 1:1:n_g
-        states = qp.Organize.States{i};
-        if ismember(gen(i).Type,{'Utility';'Electric Generator';'CHP Generator';'Chiller';'Heater';})%all generators and utilities
-            if min_power(i)>sum(qp.lb(states))
+
+function [min_power,max_power] = constrain_min_max(gen,limit,ic,dt,t)
+n_g = length(gen);
+upper_bound = zeros(1,n_g);
+dx_dt = zeros(1,n_g);
+for i = 1:1:n_g
+    switch gen(i).Type
+        case 'Hydro Storage'
+            %%do something to set UB
+        case 'Utility'
+            if strcmp(gen(i).Source,'Electricity')
+                states = gen(i).QPform.states;
+                for j = 1:1:length(states)
+                    upper_bound(i) = upper_bound(i) + gen(i).QPform.(states{j}).ub(end);
+                end
+            end
+        case {'Electric Generator';'CHP Generator';'Chiller';'Heater';}
+            states = gen(i).QPform.states(1:nnz(~cellfun('isempty',gen(i).QPform.states(:,end))),end);
+            for j = 1:1:length(states)
+                upper_bound(i) = upper_bound(i) + gen(i).QPform.(states{j}).ub(end);
+            end
+        otherwise
+            %do nothing
+    end
+    if isfield(gen(i).VariableStruct,'dX_dt')
+        dx_dt(i) = gen(i).VariableStruct.dX_dt;
+    end
+end
+if strcmp(limit, 'unconstrained')
+    min_power = 0*upper_bound;
+    max_power = upper_bound;
+elseif strcmp(limit, 'constrained')
+    min_power = max(0,ic(1:n_g)-dx_dt*dt(t));
+    max_power = min(upper_bound,ic(1:n_g)+dx_dt*dt(t));
+else
+    min_power = max(0,ic(1:n_g)-dx_dt*sum(dt(1:t)));
+    max_power = min(upper_bound,ic(1:n_g)+dx_dt*sum(dt(1:t)));
+end
+end%Ends function constrain_min_max
+
+function qp = update_gen_limit(gen,qp,min_power,max_power)
+n_g = length(gen);
+for i = 1:1:n_g
+    switch gen(i).Type
+        case {'Utility';'Electric Generator';'CHP Generator';'Chiller';'Heater';}%all generators and utilities
+            states = qp.Organize.States{i};
+            if min_power(i)>sum(qp.lb(states))%raise the lower bounds
                 qp.Organize.Dispatchable(i) = false; %can't shut off
-                %raise the lower bounds
                 power_add = min_power(i) - sum(qp.lb(states));
                 for f = 1:1:length(states) %starting with lb of 1st state in generator, then moving on
                     gap = qp.ub(states(f)) - qp.lb(states(f));
@@ -164,37 +278,56 @@ if ~isempty(first_profile)
                     end
                 end
             end
-        elseif any(strcmp(gen(i).Type,{'Electric Storage';'Thermal Storage';'Hydro Storage';}))
+        case {'Hydro Storage';}
+            states = qp.Organize.States{i};
+            qp.lb(states(1)) = min_power(i);
+            qp.ub(states(1)) = max_power(i);
+    end
+end
+end%Ends function update_gen_limit
+
+function qp = update_storage_bounds(gen,qp,stor_power,first_profile,dt,t)
+n_g = length(gen);
+for i = 1:1:n_g
+    states = qp.Organize.States{i};
+    switch gen(i).Type
+        case {'Electric Storage';'Thermal Storage';'Hydrogen Storage';}
             %update storage output range to account for what is already scheduled
-            if isfield(gen(i).QPform.output,'H')
-                req = qp.Organize.Balance.DistrictHeat; %rows of Aeq associated with heat demand
-            elseif isfield(gen(i).QPform.output,'E')
-                req = qp.Organize.Balance.Electrical;
-            elseif isfield(gen(i).QPform.output,'C')
-                req = qp.Organize.Balance.DistrictCool; %rows of Aeq associated with cool demand
+            f = fieldnames(gen(i).QPform.output);
+            switch f{1}
+                case 'H'
+                    req = qp.Organize.Balance.DistrictHeat; %rows of Aeq associated with heat demand
+                case 'E'
+                    req = qp.Organize.Balance.Electrical;
+                case 'DC'
+                    req = qp.Organize.Balance.DirectCurrent;
+                case 'C'
+                    req = qp.Organize.Balance.DistrictCool; %rows of Aeq associated with cool demand
             end
             s = states(1);
-            qp.lb(s) = qp.lb(s) - stor_power(i);%change in storage for this power output
-            qp.ub(s) = qp.ub(s) - stor_power(i);%change in storage for this power output
-            chargingSpace = max(0,sum((gen(i).QPform.Stor.UsableSize-first_profile(t+1,i)).*qp.Aeq(req,s))/dt(t));%you can't charge more than you have space for
-            qp.lb(s) = max(qp.lb(s), -chargingSpace);
-            qp.ub(s) = min(qp.ub(s), first_profile(t+1,i)/dt(t));%you can't discharge more than you have stored            
+            chargingSpace = max(0,sum((gen(i).QPform.Stor.UsableSize-first_profile(t+1,i)).*qp.Aeq(req,s))/dt(t));%you can't charge more than you have space for            
+            qp.lb(s) = max(qp.lb(s) - stor_power(i), -chargingSpace);%change in storage for this power output
+            qp.ub(s) = min(qp.ub(s) - stor_power(i), first_profile(t+1,i)/dt(t));%you can't discharge more than you have stored            
             if qp.Organize.SpinRow(i)~=0 %update spinning reserve (max additional power from storage
                 qp.beq(qp.Organize.SpinRow{i}) = qp.ub(s);
             end
-        end
-        if strcmp(gen(i).Type,{'Hydro Storage';})
+        case 'Hydro Storage'
+            s = states(1);
+            qp.lb(s) = qp.lb(s) - stor_power(i);%change in storage for this power output
+            qp.ub(s) = qp.ub(s) - stor_power(i);%change in storage for this power output
             %update the equality with NewPower*conversion + spill - Outflow = nominal PowerGen Flow
-            qp.beq(qp.Organize.HydroEqualities(i)) = -first_profile(i)*gen(i).QPform.Stor.Power2Flow;
-        end
-        qp.lb(states) = min(qp.lb(states),qp.ub(states)); %fix rounding errors
+            h = nonzeros((1:length(qp.Organize.Balance.Hydro))'.*(i==qp.Organize.Balance.Hydro));
+            qp.beq(qp.Organize.HydroEqualities(h)) = -first_profile(i)*gen(i).QPform.Stor.Power2Flow;
     end
+    qp.lb(states) = min(qp.lb(states),qp.ub(states)); %fix rounding errors
 end
+end%Ends function update_storage_bounds
 
-%% Adding cost for Line Transfer Penalties to differentiate from spillway flow 
+function qp = update_mat_hydro_step(gen,qp,subnet)
 %%also want to penalize spill flow to conserve water for later, spill flow
 %%is just to meet instream requirments when the power gen needs to be low
 if isfield(subnet,'Hydro') && ~isempty(subnet.Electrical.lineNames)
+    n_g = length(gen);
     for k = 1:1:length(subnet.Electrical.lineNames)
         line = subnet.Electrical.lineNumber(k);
         states = qp.Organize.States{n_g+line};
@@ -212,58 +345,4 @@ if isfield(subnet,'Hydro') && ~isempty(subnet.Electrical.lineNames)
         end
     end
 end 
-
-%% update costs
-H = diag(qp.H);%convert to vector
-for i = 1:1:n_g
-    if ~isempty(qp.Organize.States{i})
-        states = qp.Organize.States{i}; %states of this generator
-        if strcmp(gen(i).Type,'Utility') && strcmp(gen(i).Source,'Electricity') 
-            qp.f(states(1)) = qp.f(states(1))*scale_cost(i)*dt(t);
-            if gen(i).VariableStruct.SellBackRate == -1
-                qp.f(states(2)) = qp.f(states(2))*scale_cost(i)*dt(t); %sellback is a fixed percent of purchase costs (percent set wehn building matrices)
-            else
-                %constant sellback rate was taken care of when building the matrices
-            end
-        elseif ismember(gen(i).Type,{'Electric Generator';'CHP Generator';'Utility';'Chiller';'Heater';})%all generators and utilities
-            H(states) = H(states)*scale_cost(i)*dt(t);
-            qp.f(states) = qp.f(states)*scale_cost(i)*dt(t);
-        elseif ismember(gen(i).Type,{'Electric Storage';'Thermal Storage';'Hydro Storage';})%all  storage
-            stor_cat = fieldnames(gen(i).QPform.output);
-            %penalize deviations from the expected storage output
-            a = 1; %sets severity of quadratic penalty
-            %scale the penalty by a) larger of 5% capcity and 2x the
-            %expected change in stored capacity, b) lesser of a) and
-            %remaining space in storage
-            MaxCharge = 0.05*gen(i).QPform.Stor.UsableSize/dt(t);
-            if ~isempty(first_profile)
-                MaxCharge = max(MaxCharge,2*abs(stor_power(i)));
-                if gen(i).QPform.Stor.UsableSize>first_profile(t+1,i)
-                    MaxCharge = min((gen(i).QPform.Stor.UsableSize-first_profile(t+1,i))/dt(t),MaxCharge);
-                end
-                if first_profile(t+1,i)>0
-                    MaxCharge = min(0.5*first_profile(t+1,i)/dt(t),MaxCharge);
-                end
-            end
-            qp.f(states(1)) = marginal.(stor_cat{1});
-            H(states(1)) = a*2*qp.f(states(1))/MaxCharge;  %factor of 2 because its solving C = 0.5*x'*H*x + f'*x
-            if length(states)>1
-                qp.f(states(2)) = 1e-6; %small penalty on charging state so that if there are no other generators it keeps the charging constraint as an equality
-            end
-        end
-    end
-end 
-qp.constCost = qp.constCost.*scale_cost*dt(t);
-if options.SpinReserve
-    sr_short = qp.Organize.SpinReserveStates(1,n_g+1);%cumulative spinning reserve shortfall at t = 1 --> nS
-    sr_ancillary = qp.Organize.SpinReserveStates(1,n_g+2);%Ancillary spinning reserve value (negative cost) at t = 1 --> nS
-    if options.SpinReservePerc>5 %more than 5% spinning reserve
-        spin_cost = 2*dt(t)./(options.SpinReservePerc/100*sum(forecast.Demand.E(t,:),2));% -shortfall + SRancillary - SR generators - SR storage <= -SR target
-    else
-        spin_cost = 2*dt(t)./(0.05*sum(forecast.Demand.E(t,:),2));% -shortfall + SRancillary - SR generators - SR storage <= -SR target
-    end
-    H(sr_short) = spin_cost;%effectively $2 per kWh at point where shortfall = spin reserve percent*demand or $2 at 5%
-    qp.f(sr_short) = 0.05*dt(t); % $0.05 per kWh
-end
-qp.H = diag(H);%convert back to matrix
-end%ends function update_matrices_step
+end%Ends function update_mat_hydro_step

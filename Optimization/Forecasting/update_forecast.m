@@ -1,7 +1,19 @@
-function [forecast,gen,buildings] = update_forecast(gen,buildings,cool_tower,subnet,options,date,hist_prof,prev_data,now_data,future_data)
-%Date is the date number, Time is a vector of times (in hours)
+function [forecast,gen,buildings] = update_forecast(gen,buildings,fluid_loop,subnet,options,date,test_data,dispatch)
+freq = max(1,round(options.Horizon/24)); %period of repetition (1 = 1 day) This is how far back the forecasting methods are able to see. It is irrelevant if the forecast is perfect
+res = options.Resolution/24;
+n_o = round(freq/res)+1;
+prev_data = get_data(test_data,linspace((date(1) - 2*res - freq),date(1)-2*res,n_o)',[],[]);
+
+if isfield(test_data,'HistProf')
+    hist_prof = test_data.HistProf;
+else
+    hist_prof = [];
+end
 if length(date) == 1
-    forecast = now_data;
+    forecast = get_data(test_data,date(1),[],[]);
+    if ~isempty(buildings)
+        buildings = building_warmup(buildings,options,date,prev_data,hist_prof);
+    end
 else
     switch options.forecast
         case 'ARMA'
@@ -13,11 +25,11 @@ else
         case 'NeuralNet'
             %
         case 'Surface'
-            Weather = weather_forecast(prev_data,hist_prof,date);
-            forecast = surface_forecast(prev_data,hist_prof.Demand,date,Weather.Tdb,[]);
-            forecast.Weather = Weather;
+            weather = weather_forecast(prev_data,hist_prof,date);
+            forecast = surface_forecast(prev_data,hist_prof.Demand,date,weather.DrybulbC,[]);
+            forecast.Weather = weather;
         case 'Perfect'
-            forecast = future_data;
+            forecast = get_data(test_data,date,[],[]);
         case 'Building'
             forecast.Timestamp = date;
             forecast.Weather = weather_forecast(prev_data,hist_prof,date);
@@ -25,26 +37,41 @@ else
 end
 if strcmp(options.method,'Dispatch') && length(date)>1
     %make 1st hour forecast "perfect"
-    f = fieldnames(future_data);
+    next_data = get_data(test_data,date(1),[],[]);
+    f = fieldnames(next_data);
     for j = 1:1:length(f)
-        if isstruct(future_data.(f{j}))
-            S = fieldnames(future_data.(f{j}));
+        if isstruct(next_data.(f{j}))
+            S = fieldnames(next_data.(f{j}));
             for i = 1:1:length(S)
-                forecast.(f{j}).(S{i})(1,:) = future_data.(f{j}).(S{i})(1,:);
+                forecast.(f{j}).(S{i})(1,:) = next_data.(f{j}).(S{i})(1,:);
             end
         else
-            forecast.(f{j})(1,:) = future_data.(f{j})(1,:);
+            forecast.(f{j})(1,:) = next_data.(f{j})(1,:);
         end
     end
 end
-if ~isempty(buildings) && ~strcmp(options.solver,'NREL')
-    [buildings,forecast.Building] = forecast_building(forecast.Weather,date,buildings,prev_data,hist_prof,options);
+if ~isempty(buildings) 
+    [buildings,forecast] = forecast_building(forecast,date,buildings,options);
 end
-if isfield(forecast,'Weather') && isfield(forecast.Weather,'irradDireNorm')
-    forecast.Renewable = renewable_output(gen,subnet,date,forecast.Weather.irradDireNorm);
+if isfield(forecast,'Weather') && isfield(forecast.Weather,'DNIWm2')
+    forecast.Renewable = renewable_output(gen,subnet,date,forecast.Weather.DNIWm2);
 end
 if isfield(subnet,'Hydro')
-    forecast.Hydro.InFlow = forecast_hydro(date,forecast.Hydro.SourceSink,subnet,prev_data,now_data);
+    now_data = get_data(test_data,date(1)-res,[],[]);
+    if ~isempty(dispatch) && isfield(dispatch,'LineFlows')
+        xi = max(1,nnz((dispatch.Timestamp-1e-6)<prev_data.Timestamp(1) & dispatch.Timestamp>0));
+        xf = nnz((dispatch.Timestamp-1e-6)<=now_data.Timestamp & dispatch.Timestamp>0);
+        yi = 1 + nnz(prev_data.Timestamp<dispatch.Timestamp(1));
+        prev_data.Hydro.OutFlow = zeros(size(prev_data.Hydro.InFlow));
+        now_data.Hydro.OutFlow = zeros(size(now_data.Hydro.InFlow));
+        for n = 1:1:length(subnet.Hydro.lineNumber)
+            prev_data.Hydro.OutFlow(yi:end,n) = interp1(dispatch.Timestamp(xi:xf),dispatch.LineFlows(xi:xf,subnet.Hydro.lineNumber(n)),prev_data.Timestamp(yi:end));
+            now_data.Hydro.OutFlow(n) = dispatch.LineFlows(xf,subnet.Hydro.lineNumber(n));
+        end
+        forecast.Hydro.InFlow = forecast_hydro(date,forecast.Hydro.SourceSink,subnet,prev_data,now_data);
+    else
+        %%estimate history for InFlow
+    end
 end
 
 if options.SpinReserve

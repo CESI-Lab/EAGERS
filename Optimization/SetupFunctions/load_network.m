@@ -61,12 +61,12 @@ for net = 1:1:length(network_names)
                     end
                 end
                 subnet.(network_names{net}).Load(n) = {L};
-                Connect = {};
+                connected_nodes = {};
                 for j=1:1:length(connect(:,1))
                     if ~any(strcmp(connect{j,2},aNodes))%imperfect transmission, need a line
                         [J, cNodes,~] = agregated_node(network,connect{j,2},network_names{net});
                         pconnected = node_names{J};%name of node that the connected node will be agregated into if it is perfectly connected to any others
-                        Connect(end+1) = {pconnected};
+                        connected_nodes(end+1) = {pconnected};
                         if J>i %new line connection, otherwise this was handled previously in the reverse direction
                             [eff, limit,dir] = line_prop(network,subnet.(network_names{net}).nodes{n},cNodes,network_names{net});%find forward & reverse transmission efficiency & limit
                             if strcmp(dir,'none') %no transmission (zero efficiency)
@@ -90,7 +90,7 @@ for net = 1:1:length(network_names)
                         end
                     end
                 end
-                subnet.(network_names{net}).connections{n} = Connect;
+                subnet.(network_names{net}).connections{n} = connected_nodes;
             end
         end
     end
@@ -269,12 +269,12 @@ for i = 1:1:nodes
                 end
             end
         end        
-        subnet.Hydro.nodes(n) = {network(i).name};
+        subnet.Hydro.nodes(n) = {{network(i).name}};
         subnet.Hydro.Location(n) = location(i);
         subnet.Hydro.connections(n) = {network(i).Hydro.connections};
         subnet.Hydro.Load(n) = {[]};%not empty if there is a water diversion for irrigation etc
         subnet.Hydro.lineNumber(n,1) = line_number;
-        subnet.Hydro.lineMinimum(n,1) = network(i).Hydro.InstreamFlow;
+        subnet.Hydro.lineMinimum(n,1) = 0;%update minimum instream flow later: network(i).Hydro.InstreamFlow;
         subnet.Hydro.lineLimit(n,1) = inf;     
         subnet.Hydro.Equipment{n} = gen_at_node;
         hydro_node(n) = {network(i).name}; %node names of the upriver node (origin of line segment)
@@ -311,7 +311,7 @@ for nn = 1:1:length(network_names)
         node_m = subnet.(net).nodes{n};
         for k = 1:1:length(node_m)
             for i = 1:1:n_b
-                if any(strcmp(build_location{i,1},node_m))
+                if any(strcmp(build_location{i,1},node_m(k)))
                     build(end+1) = i;
                     if strcmp(net,'Electrical')
                         buildings(i).QPform.Electrical.subnetNode = n;
@@ -342,7 +342,7 @@ for nn = 1:1:length(network_names)
                                 end
                             end
                         end
-                        if ~isempty(subnet.DistrictHeat.connections{n}) %connected to heaters at a different node
+                        if ~isempty(subnet.DistrictCool.connections{n}) %connected to heaters at a different node
                             buildings(i).QPform.Cooling = true;
                         end
                         if buildings(i).QPform.Cooling

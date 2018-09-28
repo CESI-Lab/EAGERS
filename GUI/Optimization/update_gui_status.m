@@ -70,7 +70,7 @@ if ~isempty(handles)
         history.LineFlows = dispatch.LineFlows(s_i-back_steps:s_i,:);
         history.Buildings = dispatch.Buildings(s_i-back_steps:s_i,:);
         history.fluid_loop = dispatch.fluid_loop(s_i-back_steps:s_i,:);
-        history.hydroSOC = dispatch.hydroSOC(s_i-back_steps:s_i,:);
+        history.hydroSOC = dispatch.Hydro.SOC(s_i-back_steps:s_i,:);
         history.Timestamp = dispatch.Timestamp(s_i-back_steps:s_i,:);
         solution.Timestamp = date;
         n_plot = length(fieldnames(subnet));

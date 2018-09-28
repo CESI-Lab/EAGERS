@@ -1,7 +1,7 @@
 function test_weather = interpolate_weather(weather,date)
-test_weather.Name = weather.Name;
+test_weather.filename = weather.filename;
 if ~isfield(weather,'Timestamp')%Assume it is a typical meteorological year
-    weather.Timestamp = linspace(datenum([2017,1,1,8760/length(weather.Tdb),0,0]),datenum([2018,1,1]),length(weather.Tdb))';
+    weather.Timestamp = linspace(datenum([2017,1,1,8760/length(weather.DrybulbC),0,0]),datenum([2018,1,1]),length(weather.DrybulbC))';
 end
 n_s = length(date);
 s = fieldnames(weather);
@@ -14,7 +14,7 @@ end
 if date(1)>=weather.Timestamp(1) && date(end)<=weather.Timestamp(end)
     for j = 1:1:length(s)
         if isnumeric(weather.(s{j}))
-            test_weather.(s{j}) = interp1(weather.Timestamp,weather.(s{j}),date)'; 
+            test_weather.(s{j}) = interp1(weather.Timestamp,weather.(s{j}),date); 
         end
     end
 else %need to move solar data timestamp to line up with TestData timestamp

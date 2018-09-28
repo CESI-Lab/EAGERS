@@ -98,7 +98,7 @@ if any(any(~locked))
             if ~locked(2,i)
                 x_keep(qp.organize{1,i}) = false; %removes states associated with this generator.
                 qp.organize{1,i} = [];
-                rm_states(1,i+1:end) = rm_states(1,i+1:end) + 1;
+                rm_states(1,i:end) = rm_states(1,i:end) + 1;
                 rm_states(2:end,:) = rm_states(2:end,:) + 1;
                 req_keep(qp.Organize.IC(i)) = false;
                 qp.Organize.IC(i) = 0;
@@ -140,7 +140,7 @@ if any(any(~locked))
                 end
                 x_keep(s_rm) = false; %removes states associated with this generator.
                 %keep track of the cumulative states removed
-                rm_states(t+1,i+1:end) = rm_states(t+1,i+1:end) + length(s_rm);
+                rm_states(t+1,i:end) = rm_states(t+1,i:end) + length(s_rm);
                 if t<n_s
                     rm_states(t+2:end,:) = rm_states(t+2:end,:) + length(s_rm);
                 end
@@ -158,7 +158,11 @@ if any(any(~locked))
                             r_keep(qp.Organize.Ramp_down(t+1,i)) = false;% ramp down constraint
                         end
                     else %simplify the ramping constraint when ramping to/from zero
-                        s = qp.organize{t+1,i}+rm_states(t+1,i);%state that is simply set equal to zero
+                        if i == 1
+                            s = qp.organize{t+1,i}+rm_states(t,end);%state that is simply set equal to zero
+                        else
+                            s = qp.organize{t+1,i}+rm_states(t+1,i-1);%state that is simply set equal to zero
+                        end
                         r_up = qp.Organize.Ramp_up(t,i);
                         r_down = qp.Organize.Ramp_down(t,i);
                         r_keep(r_up) = false;% ramp up constraint from previous condition
@@ -178,7 +182,7 @@ if any(any(~locked))
                             qp.b(r_up2) = max(qp.b(r_up2),-1.001*qp.A(r_up2,s)*qp.lb(s));% ramp up constraint
                         end
                         qp.lb(s) = 0;
-                        qp.ub(s) = .01;
+                        qp.ub(s) = 0;
                     end
                 end
                 if qp.Organize.SpinRow(t,i)>0

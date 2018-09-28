@@ -1,22 +1,22 @@
-function [Cooling, Heating, FanPower,Tzone,Twall,Damper] = building_profile(Build,Date,InternalGains,ExternalGains,Tdb,RH,Tzone_init,Twall_init)
+function [Cooling, Heating, FanPower,Tzone,Twall,Damper] = building_profile(building,date,int_gain,ext_gain,Tdb,RH,Tzone_init,Twall_init)
 % This function estimates the energy profile of a building (electric, heating and cooling kW)
 % Build is a structure of building parameters
 % Weather is an hourly weather profile (dry bulb, wet bulb, and relative humidity)
 % Date is a vector of points in datenum format at which you are requesting the electric cooling & heating power
 
-nS = length(Date); % number timesteps
+nS = length(date); % number timesteps
 Tzone = zeros(nS+1,1);
 Twall = zeros(nS+1,1);
 Tsupply = zeros(nS,1);
 Tzone(1) = Tzone_init;
 Twall(1) = Twall_init;
-TsetC = load_sched(Build,Date,'TsetC');
-TsetH = load_sched(Build,Date,'TsetH');
+TsetC = load_sched(building.Schedule,date,'TsetC');
+TsetH = load_sched(building.Schedule,date,'TsetH');
 if nS == 1
     dt = 1;
 else
-    dt1 = Date(2) - Date(1);
-    dt = (24*3600) * (Date - [Date(1)-dt1;Date(1:end-1)]); % duration of each time segment [seconds]
+    dt1 = date(2) - date(1);
+    dt = (24*3600) * (date - [date(1)-dt1;date(1:end-1)]); % duration of each time segment [seconds]
 end
 
 Cooling = zeros(nS,1);
@@ -29,19 +29,19 @@ Damper = zeros(nS,1);
 %as the building moves between the heat setpoint and the cooling setpoint
 %note the conversion factor of 5.68 hft^2*F/Btu per 1 m^2*K/W
 for t = 1:1:nS  
-    if ~Build.VariableStruct.swOffPeakHvac && (TsetC(t) > 26 || TsetH(t) < 19) && (TsetC(max(1,t-round(3600/dt(t)))) > 26 || TsetH(max(1,t-round(3600/dt(t)))) < 19)
+    if ~building.VariableStruct.swOffPeakHvac && (TsetC(t) > 26 || TsetH(t) < 19) && (TsetC(max(1,t-round(3600/dt(t)))) > 26 || TsetH(max(1,t-round(3600/dt(t)))) < 19)
         %%HVAC is 'off'
         Tsupply(t) = nan;
-        if strcmp(Build.Name,'SmallOffice') && Tzone(t)<21.5
+        if strcmp(building.Name,'SmallOffice') && Tzone(t)<21.5
             Heating(t) = 0.25*3.7382; %constant heating with no air flow (why does Eplus do this?)
         end
     else
-        [Damper(t),AirFlow(t),Tsupply(t)] = hvac_logic(Build,Tzone(t),Twall(t),Tdb(t),RH(t),TsetC(t),TsetH(t),InternalGains(t),ExternalGains(t),dt(t));
+        [Damper(t),AirFlow(t),Tsupply(t)] = hvac_logic(building,Tzone(t),Twall(t),Tdb(t),RH(t),TsetC(t),TsetH(t),int_gain(t),ext_gain(t),dt(t));
     end
-    [Heating(t),Cooling(t),Tzone(t+1),Twall(t+1)] = building_response(Build,Tdb(t),RH(t),dt(t),InternalGains(t),ExternalGains(t),Cooling(t),Heating(t),Tsupply(t),AirFlow(t),Damper(t),Tzone(t),Twall(t));
+    [Heating(t),Cooling(t),Tzone(t+1),Twall(t+1)] = building_response(building,Tdb(t),RH(t),dt(t),int_gain(t),ext_gain(t),Cooling(t),Heating(t),Tsupply(t),AirFlow(t),Damper(t),Tzone(t),Twall(t));
 end
 Cooling(abs(Cooling) < 1e-2) = 0;
-FanPower = AirFlow*Build.VariableStruct.FanPower;
+FanPower = AirFlow*building.VariableStruct.FanPower;
 end%Ends function building_profile
 
 function [Damper,AirFlow,Tsupply] = hvac_logic(Build,Tzone,Twall,Tdb,RH,TsetC,TsetH,InternalGains,ExternalGains,dt)

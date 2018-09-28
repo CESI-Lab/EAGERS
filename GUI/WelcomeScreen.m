@@ -114,6 +114,9 @@ model_dir=strrep(which('WelcomeScreen.m'),fullfile('GUI','WelcomeScreen.m'),'');
 projList = get(handles.ProjectList,'String');
 projName = projList{get(handles.ProjectList,'Value')};
 load(fullfile(model_dir,'Projects',projName));
+if ~isfield(Plant.optimoptions,'EnergyPlus')
+    Plant.optimoptions.EnergyPlus = false;
+end
 load_test_data
 mainFig = [];
 close
@@ -126,6 +129,9 @@ model_dir=strrep(which('WelcomeScreen.m'),fullfile('GUI','WelcomeScreen.m'),'');
 list=get(handles.ProjectList,'string');
 plantSel = list{get(handles.ProjectList,'value')};
 load(fullfile(model_dir,'Projects',plantSel))
+if ~isfield(Plant.optimoptions,'EnergyPlus')
+    Plant.optimoptions.EnergyPlus = false;
+end
 load_test_data
 mainFig = [];
 close

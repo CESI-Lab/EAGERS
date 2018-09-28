@@ -7,7 +7,8 @@ n_l = length(qp.Organize.Transmission);
 n_h = nnz(qp.Organize.Hydro);
 n_fl = length(qp.Organize.fluid_loop);
 solution.Dispatch = zeros(n_s+1,n_g);
-solution.hydroSOC = zeros(n_s,n_h);
+
+
 solution.excessHeat = [];
 solution.excessCool = [];
 solution.LineFlows = zeros(n_s,n_l);
@@ -35,10 +36,28 @@ for i = 1:1:n_g
         end
     end
 end
-for i = 1:1:length(qp.Organize.Hydro)%Get SOC of each generator into a matrix for all time steps
-    for t = 1:1:n_s
-        solution.hydroSOC(t,i) = x(qp.organize{t+1,qp.Organize.Hydro(i)}+1,1)+qp.Organize.hydroSOCoffset(i);
+if ~isempty(qp.Organize.Hydro)
+    solution.hydroSOC = zeros(n_s,n_h);
+    solution.hydroSpillFlow = zeros(n_s,n_h);
+    solution.hydroGenFlow = zeros(n_s,n_h);
+    solution.hydroOutFlow = zeros(n_s,n_h);
+    for i = 1:1:length(qp.Organize.Hydro)
+        [~,b,c] = find(qp.Aeq(qp.Organize.Equalities(:,qp.Organize.Hydro(i),1),:));%a = row (only pulling out equalities with this hydro generator), b = column (state index), c = value (power2flow, 1, -1  for each time step)
+        for t = 1:1:n_s
+            %Get SOC of each generator into a matrix for all time steps
+            solution.hydroSOC(t,i) = x(b(3*t-2)+1,1)+qp.Organize.hydroSOCoffset(i);
+            %Get spill Flow into a matrix for all time steps
+            solution.hydroSpillFlow(t,i) = x(b(3*t-1),1);
+            solution.hydroGenFlow(t,i) = x(b(3*t-2),1)*c(3*t-2);
+            solution.hydroOutFlow(t,i) = x(b(3*t));
+        end
     end
+%     instant_perc_for_gen = solution.hydroGenFlow./solution.hydroOutFlow;
+%     average_perc_for_gen = sum(solution.hydroGenFlow)./sum(solution.hydroOutFlow);
+%     ub_hydro = qp.ub(cell2mat(qp.organize(2:end,qp.Organize.Hydro)));
+%     useful_spilled_capacity =  min(ub_hydro,1./instant_perc_for_gen.*solution.Dispatch(2:end,qp.Organize.Hydro)) - solution.Dispatch(2:end,qp.Organize.Hydro);
+%     instant_perc_max_hydro_gen = solution.Dispatch(2:end,qp.Organize.Hydro)./(useful_spilled_capacity+solution.Dispatch(2:end,qp.Organize.Hydro));
+%     average_perc_max_hydro_gen = sum(solution.Dispatch(2:end,qp.Organize.Hydro))./sum(useful_spilled_capacity+solution.Dispatch(2:end,qp.Organize.Hydro));
 end
 for i = 1:1:n_l
     for t = 1:1:n_s

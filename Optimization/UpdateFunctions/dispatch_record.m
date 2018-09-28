@@ -16,8 +16,8 @@ end
 if strcmp(options.method,'Planning')%assumes forecast is perfect
     
     for i = 1:1:n_b
-        [Tzone,Twall] = building_simulate(building(i),forecast.Weather.Tdb,...
-            forecast.Weather.RH,dt,forecast.Building.InternalGains(:,i),...
+        [Tzone,Twall] = building_simulate(building(i),forecast.Weather.DrybulbC,...
+            forecast.Weather.RHum,dt,forecast.Building.InternalGains(:,i),...
             forecast.Building.ExternalGains(:,i),solution.Buildings.Cooling(:,i),...
             solution.Buildings.Heating(:,i),forecast.Building.AirFlow(:,i),...
             forecast.Building.Damper(:,i),building(i).Tzone,building(i).Twall);
@@ -62,9 +62,10 @@ if strcmp(options.method,'Planning')%assumes forecast is perfect
         design.LBRelax(si+1:si+n_s) = solution.LBRelax;
     end
     if isfield(solution,'hydroSOC') && ~isempty(solution.hydroSOC)
-        design.hydroSOC(si+1:si+n_s,:) = solution.hydroSOC;
+        design.Hydro.SOC(si+1:si+n_s,:) = solution.hydroSOC;
+        design.Hydro.spillFlow(si+1:si+n_s,:) = solution.hydroSpillFlow;
         for n = 1:1:length(subnet.Hydro.nodes)
-            design.OutFlow(si+1:si+n_s,n) = solution.LineFlows(:,subnet.Hydro.lineNumber(n));
+            design.Hydro.OutFlow(si+1:si+n_s,n) = solution.LineFlows(:,subnet.Hydro.lineNumber(n));
         end
     end
     si = si + n_s; %if 24 hours, take 24 steps
@@ -114,8 +115,8 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
         predicted.LBRelax(si) = solution.LBRelax;
     end
     for i = 1:1:n_b
-        [Tzone,Twall] = building_simulate(building(i),actual_data.Weather.Tdb(1),...
-            actual_data.Weather.RH(1),dt(1),actual_data.Building.InternalGains(1,i),...
+        [Tzone,Twall] = building_simulate(building(i),actual_data.Weather.DrybulbC(1),...
+            actual_data.Weather.RHum(1),dt(1),forecast.Building.InternalGains(1,i),...
             forecast.Building.ExternalGains(1,i),solution.Buildings.Cooling(1,i),...
             solution.Buildings.Heating(1,i),forecast.Building.AirFlow(1,i),...
             forecast.Building.Damper(1,i),building(i).Tzone,building(i).Twall);
@@ -129,10 +130,11 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
         dispatch.fluid_loop(si,i) = fluid_loop(i).fluid_temperature;
     end
     if isfield(solution,'hydroSOC') && ~isempty(solution.hydroSOC)
-        dispatch.hydroSOC(si,:) = solution.hydroSOC(1,:);
+        dispatch.Hydro.SOC(si,:) = solution.hydroSOC(1,:);
+        dispatch.Hydro.spillFlow(si,:) = solution.hydroSpillFlow(1,:);
         predicted.hydroSOC(:,:,si) = solution.hydroSOC;
         for n = 1:1:length(subnet.Hydro.nodes)
-            dispatch.OutFlow(si,n) = solution.LineFlows(1,subnet.Hydro.lineNumber(n));
+            dispatch.Hydro.OutFlow(si,n) = solution.LineFlows(1,subnet.Hydro.lineNumber(n));
         end
     end
 end

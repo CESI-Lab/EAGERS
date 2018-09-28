@@ -224,38 +224,37 @@ set(handles.editMeasureSecondary,'string','--')
 set(handles.Interval,'string',Plant.optimoptions.Interval);
 set(handles.Horizon, 'string', Plant.optimoptions.Horizon);
 set(handles.Resolution, 'string', Plant.optimoptions.Resolution);
+set(handles.SimBuilding,'value',Plant.optimoptions.EnergyPlus);
 
+set(handles.uipanelSolverMethod, 'Visible', 'on');
+set(handles.changingtimesteps, 'Visible', 'on');
+set(handles.OtherOptions, 'Visible', 'on');
+set(handles.constant, 'value', strcmp(Plant.optimoptions.tspacing,'constant'));
+set(handles.linear, 'value', strcmp(Plant.optimoptions.tspacing, 'linear'));
+set(handles.logarithm, 'value', strcmp(Plant.optimoptions.tspacing, 'logarithm'));
+set(handles.manual, 'value', strcmp(Plant.optimoptions.tspacing, 'manual'));
+set(handles.scaletime, 'string', Plant.optimoptions.scaletime);
+set(handles.excessHeat, 'value', Plant.optimoptions.excessHeat);
+set(handles.excessCool, 'value', Plant.optimoptions.excessCool);
 if strcmp(Plant.optimoptions.solver,'NREL')
-    set(handles.uipanelSolverMethod, 'Visible', 'off');
+    set(handles.nrel_gurobi, 'value', true);
     set(handles.changingtimesteps, 'Visible', 'off');
     set(handles.OtherOptions, 'Visible', 'off');
+elseif strcmp(Plant.optimoptions.solver,'ANN')
+    set(handles.ANNradiobutton, 'value', true);
 else
-    set(handles.uipanelSolverMethod, 'Visible', 'on');
-    set(handles.changingtimesteps, 'Visible', 'on');
-    set(handles.OtherOptions, 'Visible', 'on');
-    set(handles.constant, 'value', strcmp(Plant.optimoptions.tspacing,'constant'));
-    set(handles.linear, 'value', strcmp(Plant.optimoptions.tspacing, 'linear'));
-    set(handles.logarithm, 'value', strcmp(Plant.optimoptions.tspacing, 'logarithm'));
-    set(handles.manual, 'value', strcmp(Plant.optimoptions.tspacing, 'manual'));
-    set(handles.scaletime, 'string', Plant.optimoptions.scaletime);
-    set(handles.excessHeat, 'value', Plant.optimoptions.excessHeat);
-    set(handles.excessCool, 'value', Plant.optimoptions.excessCool);
-    if strcmp(Plant.optimoptions.solver,'ANN')
-        set(handles.ANNradiobutton, 'value', true);
-    else
-        set(handles.NoMixedInteger, 'value', ~Plant.optimoptions.MixedInteger);
-        set(handles.MixedInteger, 'value', Plant.optimoptions.MixedInteger);
-    end
-    set(handles.SpinReserve, 'value', Plant.optimoptions.SpinReserve);
-    set(handles.SpinReservePerc, 'string', Plant.optimoptions.SpinReservePerc);
-    set(handles.Topt, 'string', Plant.optimoptions.Topt);
-    set(handles.Tmpc, 'string', Plant.optimoptions.Tmpc);
+    set(handles.NoMixedInteger, 'value', ~Plant.optimoptions.MixedInteger);
+    set(handles.MixedInteger, 'value', Plant.optimoptions.MixedInteger);
 end
+set(handles.SpinReserve, 'value', Plant.optimoptions.SpinReserve);
+set(handles.SpinReservePerc, 'string', Plant.optimoptions.SpinReservePerc);
+set(handles.Topt, 'string', Plant.optimoptions.Topt);
+set(handles.Tmpc, 'string', Plant.optimoptions.Tmpc);
 
-nG = length(Plant.Generator);
+n_g = length(Plant.Generator);
 str = {};
 stor = [];
-for i = 1:1:nG
+for i = 1:1:n_g
     if ismember(Plant.Generator(i).Type,{'Electric Storage';'Thermal Storage'; 'Hydro Storage';})
         str{end+1} = Plant.Generator(i).Name;
         stor(end+1) = i;
@@ -277,18 +276,21 @@ else
 end
 
 if isfield(Plant,'Building') && ~isempty(Plant.Building)
-    Plant.optimoptions.forecast ='Building';
-    set(handles.ForecastMethod,'Visible','off');
+%     Plant.optimoptions.forecast ='Building';
+%     set(handles.ForecastMethod,'Visible','off');
+    set(handles.Building, 'Visible','on');
 else
-    set(handles.ForecastMethod,'Visible','on');
-    set(handles.ARMA, 'value', false);
-    set(handles.ARIMA, 'value', false);
-    set(handles.NeuralNet, 'value', false);
-    set(handles.Surface, 'value', false);
-    set(handles.Perfect, 'value', false);
-    set(handles.Building, 'value',false);
-    set(handles.(Plant.optimoptions.forecast), 'value', true);
+    set(handles.Building, 'Visible','off');
 end
+set(handles.ForecastMethod,'Visible','on');
+set(handles.ARMA, 'value', false);
+set(handles.ARIMA, 'value', false);
+set(handles.NeuralNet, 'value', false);
+set(handles.Surface, 'value', false);
+set(handles.Perfect, 'value', false);
+set(handles.Building, 'value',false);
+set(handles.(Plant.optimoptions.forecast), 'value', true);
+
  
 % --- Executes on button press in Switch.
 function Switch_Callback(hObject, eventdata, handles)
@@ -361,6 +363,7 @@ for i = 1:1:nPlot
         'Visible',vis{i},...
         'UserData',i);
     if tab==1
+        callback = strcat('@(hObject,eventdata)DISPATCH(',quote,'show_different_storage_Callback',quote,',hObject)');
         handles.(strcat(name,'StorageSelect',num2str(i))) = uicontrol('Style', 'popupmenu', 'String', networkNames{i},...
             'Units','characters',...
             'Position', [Pos(i,1)+40,Pos(i,2)+Pos(i,4)+.25,30,2],...
@@ -369,6 +372,7 @@ for i = 1:1:nPlot
             'FontUnits','points',...
             'FontWeight','normal',...
             'Parent', handles.(strcat('uipanelMain',num2str(tab))),...
+            'Callback',eval(callback),...
             'Visible','off');
     end
 end
@@ -729,7 +733,7 @@ end
 
 % --- Executes on button press in Start.
 function Start_Callback(hObject, eventdata, handles)
-global Plant TestData  mainFig  %Virtual RealTime 
+global Plant TestData  %Virtual RealTime 
 %Virtual: Running a simulation only, set to zero when the end of the test data set is reached
 % if get(handles.VirtualMode,'Value') ==1 
 %     Virtual = 1;
@@ -744,47 +748,67 @@ global Plant TestData  mainFig  %Virtual RealTime
 %     RealTime = 1;
 %     Plant.optimoptions.mode = 'controller';
 % end
-mainFig = gcf;
-set(handles.Start,'Value',1);%reset start button
-set(handles.Stop,'Value',0);%reset stop button
 
 handles = guihandles;
 date = TestData.Timestamp(1) + get(handles.sliderStartDate,'Value');
-if strcmp(Plant.optimoptions.solver,'NREL')
-    CoSimulation(date,handles) %send to a different function that links to energy plus co-simulation
-else
-    if ~isfield(Plant,'Building')
-        Plant.Building = [];
+
+set(handles.Start,'Value',1);%reset start button
+set(handles.Stop,'Value',0);%reset stop button
+if Plant.optimoptions.EnergyPlus
+    %% Start EnergyPlus cosimulation
+    dir = strrep(which('run_simulation.m'),fullfile('run_simulation.m'),'');
+    cd(fullfile(dir,'NRELmethod'))
+    installMlep
+    ep = mlepProcess;
+    %% need to automate the building and weather file selection
+    ep.arguments = {'B_2ndCoSim_v2', Plant.Weather.filename};
+    ep.acceptTimeout = 6000;
+    [status, msg] = ep.start;  
+    if status ~= 0
+        error('Could not start EnergyPlus: %s.', msg);
     end
+    [status, msg] = ep.acceptSocket;
+    if status ~= 0
+        error('Could not connect to EnergyPlus: %s.', msg);
+    end
+else
+    ep = [];
+end
+if ~isfield(Plant,'Building')
+    Plant.Building = [];
+end
+if strcmp(Plant.optimoptions.solver,'NREL')
+    [Plant.Generator,Plant.Building,Plant.Dispatch,Plant.Predicted] = ...
+        run_simulation_NREL(Plant.Generator,Plant.Building,TestData,Plant.optimoptions,date,handles,ep); %send to a different function that links to energy plus co-simulation
+else
     if ~isfield(Plant,'fluid_loop') 
         Plant.fluid_loop = [];
     end
+    data = [];
     if isfield(Plant,'Data') 
         data = Plant.Data;
-    else
-        data = [];
     end
-    TestData = update_test_data(TestData,data,Plant.Generator,Plant.optimoptions);
+    weather = [];
+    if isfield(Plant,'Data') 
+        weather = Plant.Data;
+    end
+    TestData = update_test_data(TestData,data,weather,Plant.optimoptions);
     num_steps = 0;
     s_i = 1;
     if isfield(Plant,'Dispatch') && isfield(Plant.Dispatch,'Timestamp')
         if any(Plant.Dispatch.Timestamp)
-            s_i = nnz(Plant.Dispatch.Timestamp)-1;
-            if s_i>1 && any(abs(Plant.Dispatch.Timestamp(s_i-1:s_i) - date)<1e-7) %resuming after sucessful hitting stop button
+            s_i = 1+floor((date-Plant.Dispatch.Timestamp(1))*24/Plant.optimoptions.Resolution);
+            if s_i>1 && abs(Plant.Dispatch.Timestamp(s_i) - date)<1e-7 %resuming after sucessful hitting stop button
                 num_steps = length(Plant.Dispatch.Timestamp); %number of simulation steps
             end
         end
-    else
-        [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,~] = initialize_optimization(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Network,Plant.optimoptions,TestData);
-        Plant.Dispatch = [];
     end
-    if ~isfield(Plant,'Design')
-        Plant.Design = [];
+    if num_steps == 0
+        [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,~,num_steps,Plant.Dispatch,Plant.Predicted,Plant.Design,flag] = ...
+            initialize_optimization(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Network,Plant.optimoptions,TestData,date);
     end
-    if ~isfield(Plant,'Predicted')
-        Plant.Predicted = [];
-    end
-    [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Design,Plant.Dispatch,Plant.Predicted] = run_simulation(date,num_steps,s_i,handles,TestData,TestData.HistProf,Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,Plant.Design,Plant.Dispatch,Plant.Predicted);
+    [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Design,Plant.Dispatch,Plant.Predicted] = ...
+        run_simulation(date,num_steps,s_i,handles,TestData,Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,Plant.Design,Plant.Dispatch,Plant.Predicted,ep);
     if isfield(Plant.Dispatch,'OutFlow')
         TestData.Hydro.OutFlow = Plant.Dispatch.OutFlow;
     end
@@ -903,6 +927,9 @@ if get(handles.LineGraph,'Value')==1
 else
     set(handles.StackedGraph,'Value',1); %was already pressed
 end
+slider_callback([])
+
+function show_different_storage_Callback(hObject)
 slider_callback([])
 
 % --- Executes on button press in AutoControl.
@@ -1046,13 +1073,7 @@ else
     if ~isfield(Plant,'fluid_loop')
         Plant.fluid_loop = [];
     end
-    freq = 1; %period of repetition (1 = 1 day)
-    res = Plant.optimoptions.Resolution/24;
-    n_o = round(freq/res)+1;
-    prev_data = get_data(TestData,linspace((date_1 - res - freq),date_1-res,n_o)',[],[]);
-    now_data = get_data(TestData,date_1,[],[]);
-    future_data = get_data(TestData,date(2:end),[],[]);
-    [forecast,Plant.Generator,Plant.Building] = update_forecast(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.optimoptions,date(2:end),TestData.HistProf,prev_data,now_data,future_data);%% function that creates demand vector with time intervals coresponding to those selected
+    [forecast,Plant.Generator,Plant.Building] = update_forecast(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.optimoptions,date(2:end),TestData,[]);%% function that creates demand vector with time intervals coresponding to those selected
     n_plot = length(fieldnames(Plant.subNet));
     if isfield(TestData,'Demand')
         outs =  fieldnames(TestData.Demand);
@@ -1211,6 +1232,8 @@ function NoMixedInteger_Callback(hObject, eventdata, handles)
 function MixedInteger_Callback(hObject, eventdata, handles)
 function uipanelSolverMethod_SelectionChangedFcn(hObject, eventdata, handles)
 global Plant
+set(handles.changingtimesteps, 'Visible', 'on');
+set(handles.OtherOptions, 'Visible', 'on');
 switch get(eventdata.NewValue,'Tag')
     case 'NoMixedInteger'
         Plant.optimoptions.MixedInteger = false;
@@ -1221,6 +1244,13 @@ switch get(eventdata.NewValue,'Tag')
     case 'ANNradiobutton'
         Plant.optimoptions.MixedInteger = false;
         Plant.optimoptions.solver = 'ANN';
+    case 'nrel_gurobi'
+        set(handles.changingtimesteps, 'Visible', 'off');
+        set(handles.OtherOptions, 'Visible', 'off');
+        Plant.optimoptions.MixedInteger = false;
+        Plant.optimoptions.solver = 'NREL';
+        Plant.optiomptions.EnergyPlus = true;
+        set(handles.SimBuilding,'value',true)
 end
 
 % --- Executes when selected object is changed in SpinningReserve.
@@ -1274,6 +1304,8 @@ end
 
 % --- Executes on button press in SimBuilding.
 function SimBuilding_Callback(hObject, eventdata, handles)
+global Plant
+Plant.optiomptions.EnergyPlus = get(handles.SimBuilding,'value');
 
 function Topt_Callback(hObject, eventdata, handles)
 global Plant
@@ -1303,6 +1335,9 @@ Plant.subNet = [];
 
 function ForecastMethod_SelectionChangeFcn(hObject, eventdata, handles)
 global Plant TestData
+if isfield(Plant,'Building') && ~isempty(Plant.Building) && ~isfield(TestData,'Building')
+    TestData.Building = load_test_building(Plant.Building,Plant.Network,TestData.Timestamp,TestData.Weather);
+end
 switch get(eventdata.NewValue,'Tag')
     case 'ARMA'
         Plant.optimoptions.forecast = 'arma';
@@ -1316,13 +1351,8 @@ switch get(eventdata.NewValue,'Tag')
         Plant.optimoptions.forecast = 'Perfect';
     case 'Building'
         Plant.optimoptions.forecast= 'Building';
+        TestData = rmfield(TestData,'Building');
 end
-if isfield(Plant,'Data') 
-    data = Plant.Data;
-else
-    data = [];
-end
-TestData = update_test_data(TestData,data,Plant.Generator,Plant.optimoptions);
 
 function editCommandOnOff_Callback(hObject, eventdata, handles)
 recordComm(handles)

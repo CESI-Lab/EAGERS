@@ -1,13 +1,12 @@
-function solution = solver_nrel(gen,options,ic,T0,forecast,scale_cost)
+function solution = solver_nrel(gen,options,T0,forecast,scale_cost)
 dt = options.Resolution*3600;% time step for discrete model, seconds
 n_s = options.Horizon/options.Resolution;% # of time steps in optimization
 N_sch = options.Horizon; % assumes hourly scheduling
-forecast.internal_gain = forecast.Demand.IntGain;
 
 % Initial conditions for building and equipment status
-Pfc_f0 = ic(1)*1000;%initial fuel cell power converted from kW to W
+Pfc_f0 = gen(1).CurrentState(1)*1000;%initial fuel cell power converted from kW to W
 Pfc_h0 = 0;
-Eb0 = ic(5)*1000*3600;%initial state of charge converted from kWh to J
+Eb0 = gen(5).CurrentState(1)*1000*3600;%initial state of charge converted from kWh to J
 u0 = 0;
 
 dt_h = 60*60; % Time step for scheduling period
@@ -16,8 +15,8 @@ N_state = 3600/dt*N_sch; % Number of thermal dynamics model steps
 
 
 Toa = forecast.Weather.Tdb(N_perhour:N_perhour:n_s); % outside air temperature
-Pl_h = forecast.internal_gain(N_perhour:N_perhour:n_s)*1e3;%internal heating gains in watts
-Pl_e = forecast.Demand.E(N_perhour:N_perhour:n_s)*1e3;%non HVAC electric load in watts
+Pl_h = forecast.Building.InternalGains(N_perhour:N_perhour:n_s)*1e3;%internal heating gains in watts
+Pl_e = forecast.Building.NonHVACelectric(N_perhour:N_perhour:n_s)*1e3;%non HVAC electric load in watts
 
 % alpha = 0.4; % outdoor air ratio
 m_oa = 0.3; % outdoor air flow rate, kg/s
@@ -227,7 +226,9 @@ cvx_end
 solution.Dispatch = zeros(n_s+1,5); 
 solution.heat_recovery = zeros(n_s,1); 
 solution.Buildings.Heating = zeros(n_s,1); 
-solution.Dispatch(1,:) = ic;
+for i = 1:1:length(gen)
+    solution.Dispatch(1,i) = gen(i).CurrentState(1);
+end
 solution.Dispatch(2:end,5)= Eb/1000/3600;   %battery state of charge (converted from J to kWh)
 for t = 1:1:N_sch
     index = 2+(t-1)*N_perhour:1+t*N_perhour;

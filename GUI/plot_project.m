@@ -289,67 +289,92 @@ n_s = length(timestamps);
 dt = (timestamps(2:end) - timestamps(1:end-1))*24;
 data = zeros(n_s,n_g+n_b);
 data_2 = zeros(n_s,n_g+n_b);
+gen_type = cell(n_g,1);
 for i = 1:1:n_g
     if isfield(gen(i).QPform.output,S) 
+        gen_type(i) = {gen(i).Type};
         if ~isempty(dispatch)
             data(:,i) = [dispatch.Dispatch(:,i);predicted.Dispatch(2:end,i)];
         else
             data(:,i) = predicted.Dispatch(:,i);
         end
-        switch gen(i).Type
-            case 'Utility'
-                %do nothing sellback acounted for in sort_solution
-            case 'AC_DC'
-                data(:,i) = data(:,i)*gen(i).QPform.output.(S)(1); 
-            case {'Electric Generator';'Heater';'Solar';'Wind';}
-                data(:,i) = data(:,i)*gen(i).QPform.output.(S);                
-            case 'CHP Generator'
-                %overwrite electric power with heat recovery
-                if strcmp(S,'H')
-                    data(:,i) = chp_heat(gen(i).QPform,data(:,i));
-                end
-            case 'Chiller'
-                %overwrite cooling power with input
-                if strcmp(S,'E') || strcmp(S,'H')
-                    data(:,i) = -chill_input(gen(i),data(:,i));
-                elseif strcmp(S,'CW') 
-                    data(:,i) = data(:,i) + chill_input(gen(i),data(:,i));
-                end
-            case 'Hydrogen Generator'
-                
-            case 'Electrolyzer'
-                
-            case 'Cooling Tower'
-                if strcmp(S,'E')
-                    data(:,i) = -cool_tower_input(gen(i),data(:,i));
-                elseif strcmp(S,'CW') 
-                    data(:,i) = data(:,i)*gen(i).QPform.output.(S);  
-                end
-            case {'Thermal Storage';'Hydrogen Storage';'Electric Storage';}
-                %compute state of charge and overwrite with power
-                soc = data(:,i);
-                if isfield(gen(i).VariableStruct,'MaxDOD')
-                    soc = soc+ gen(i).Size*(1-gen(i).VariableStruct.MaxDOD/100); %add the unusable charge
-                end
-                data(2:end,i) = (soc(1:end-1) - soc(2:end))./dt; %%need to factor in efficiency
-                data_2(:,i) = soc;
-            case {'Hydro Storage';}
-                if strcmp(S,'E')
-                    data(:,i) = data(:,i)*gen(i).QPform.output.(S)(1);
-                else
-                    n = gen(i).QPform.Hydro.down_river;
-                    flow_now = gen(i).CurrentState(1)*gen(i).QPform.Stor.Power2Flow;
-                    if isempty(dispatch)
-                        data(:,i) = [flow_now;predicted.LineFlows(:,n)];%Outflow is after Power Produced
-                        data_2(:,i) = predicted.Dispatch(:,i); %state-of-charge
-                    else
-                        data(:,i) = [dispatch.LineFlows(:,n);predicted.LineFlows(:,n)];%Outflow is after Power Produced
-                        data_2(:,i) = [dispatch.Dispatch(:,i);predicted.Dispatch(2:end,i)]; %state-of-charge
-                    end
-                end
+    else
+        gen_type(i) = {'not_included'};
+    end
+end
+%% 'AC_DC'
+ac_dc = nonzeros((1:n_g)'.*strcmp('AC_DC',gen_type));
+for j = 1:1:length(ac_dc)
+    data(:,ac_dc(j)) = data(:,ac_dc(j))*gen(ac_dc(j)).QPform.output.(S)(1);
+end
+%% 'Electric Generator';'Heater';'Solar';'Wind'
+g_inc = nonzeros((1:n_g)'.*ismember(gen_type,{'Electric Generator';'Heater';'Solar';'Wind'}));
+for j = 1:1:length(g_inc)
+    data(:,g_inc(j)) = data(:,g_inc(j))*gen(g_inc(j)).QPform.output.(S);
+end
+%% 'CHP Generator'
+chp = nonzeros((1:n_g)'.*strcmp('CHP Generator',gen_type));
+for j = 1:1:length(chp)
+    if strcmp(S,'H')
+        data(:,chp(j)) = chp_heat(gen(chp(j)).QPform,data(:,chp(j)));
+    else
+        data(:,chp(j)) = data(:,chp(j))*gen(chp(j)).QPform.output.(S);
+    end
+end
+%% 'Chiller'
+chl = nonzeros((1:n_g)'.*strcmp('Chiller',gen_type));
+for j = 1:1:length(chl)
+    if strcmp(S,'E') || strcmp(S,'H')
+        data(:,chl(j)) = -chill_input(gen(chl(j)),data(:,chl(j)));
+    elseif strcmp(S,'CW') 
+        data(:,chl(j)) = data(:,chl(j)) + chill_input(gen(chl(j)),data(:,chl(j)));
+    end
+end
+%% 'Cooling Tower'
+clt = nonzeros((1:n_g)'.*strcmp('Cooling Tower',gen_type));
+for j = 1:1:length(clt)
+    if strcmp(S,'E')
+        data(:,clt(j)) = -cool_tower_input(gen(clt(j)),data(:,clt(j)));
+    elseif strcmp(S,'CW') 
+        data(:,clt(j)) = data(:,clt(j))*gen(clt(j)).QPform.output.(S);  
+    end
+end
+%% 'Thermal Storage';'Hydrogen Storage';'Electric Storage'
+g_inc = nonzeros((1:n_g)'.*ismember(gen_type,{'Thermal Storage';'Hydrogen Storage';'Electric Storage';}));
+for j = 1:1:length(g_inc)
+    data(:,g_inc(j)) = data(:,g_inc(j))*gen(g_inc(j)).QPform.output.(S);
+    %compute state of charge and overwrite with power
+    soc = data(:,g_inc(j));
+    if isfield(gen(g_inc(j)).VariableStruct,'MaxDOD')
+        soc = soc+ gen(g_inc(j)).Size*(1-gen(g_inc(j)).VariableStruct.MaxDOD/100); %add the unusable charge
+    end
+    data(2:end,g_inc(j)) = (soc(1:end-1) - soc(2:end))./dt; %%need to factor in efficiency
+    data_2(:,g_inc(j)) = soc;
+end
+%% 'Hydro Storage'
+hyd = nonzeros((1:n_g)'.*strcmp('Hydro Storage',gen_type));
+if strcmp(S,'W')
+    if isempty(dispatch)
+        data_2(2:end,hyd) = predicted.hydroSOC; %state-of-charge
+    else
+        data_2(:,hyd) = [dispatch.hydroSOC;predicted.hydroSOC]; %state-of-charge
+    end
+end
+for j = 1:1:length(hyd)
+    if strcmp(S,'E')
+        data(:,hyd(j)) = data(:,hyd(j))*gen(hyd(j)).QPform.output.(S)(1);
+    else
+        n = gen(hyd(j)).QPform.Hydro.down_river;
+        
+        if isempty(dispatch)
+            flow_now = gen(hyd(j)).CurrentState(1)*gen(hyd(j)).QPform.Stor.Power2Flow;
+            data(:,hyd(j)) = [flow_now;predicted.LineFlows(:,n)];%Outflow is after Power Produced
+        else
+            data(:,hyd(j)) = [dispatch.LineFlows(:,n);predicted.LineFlows(:,n)];%Outflow is after Power Produced
         end
     end
 end
+
 n_b = length(buildings);
 if strcmp(S,'BT')
     for i = 1:1:n_b
@@ -393,7 +418,10 @@ if strcmp(mode,'Result') && nnz(sum(data_2(index_start:end,:),1))>2
                 stor_names(end+1) = names(i);
             end
         end
-        set(handles(4),'Visible','on','value',1,'string',stor_names)
+        if length(stor_names)>1
+            val = min(length(stor_names),get(handles(4),'Value'));
+            set(handles(4),'Visible','on','value',val,'string',stor_names)
+        end
     end
     stor_num = get(handles(4),'value');%select only 1 storage at a time
     j = 0;

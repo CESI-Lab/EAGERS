@@ -36,7 +36,9 @@ if strcmp(mode,'Design')
     design.LineFlows = zeros(num_steps,n_l);
     design.Buildings = zeros(num_steps,n_b);
     design.fluid_loop = zeros(num_steps,n_fl);
-    design.hydroSOC = zeros(num_steps,n_d);
+    design.Hydro.SOC = zeros(num_steps,n_d);
+    design.Hydro.spillFlow = zeros(num_steps,n_d);
+    design.Hydro.OutFlow = zeros(num_steps,n_d);
     design.LBRelax = ones(num_steps,1);%degree to which you relax the lower bound when doing cQP
     for j = 1:1:length(f)
         if isstruct(test_data.(f{j}))
@@ -58,7 +60,9 @@ elseif strcmp(mode,'Dispatch')
     dispatch.LineFlows = zeros(num_steps,n_l);
     dispatch.Buildings = zeros(num_steps,n_b);
     dispatch.fluid_loop = zeros(num_steps,n_fl);
-    dispatch.hydroSOC = zeros(num_steps,n_d);
+    dispatch.Hydro.SOC = zeros(num_steps,n_d);
+    dispatch.Hydro.spillFlow = zeros(num_steps,n_d);
+    dispatch.Hydro.OutFlow = zeros(num_steps,n_d);
     predicted.GenDisp = zeros(n_s,n_g,num_steps);
     predicted.LineFlows = zeros(n_s,n_l,num_steps);
     predicted.Buildings = zeros(n_s,n_b,num_steps);

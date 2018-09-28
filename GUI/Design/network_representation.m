@@ -1,14 +1,7 @@
-function handles = network_representation(handles)
+function handles = network_representation(gen,buildings,network,handles)
 %% create diagram of equipment and network
 %%collect networks, nodes and equipment
-global testSystems SYSINDEX
-gen = testSystems(SYSINDEX).Generator;
-network = testSystems(SYSINDEX).Network;
-buildings = [];
-if isfield(testSystems(SYSINDEX),'Building')
-    buildings = testSystems(SYSINDEX).Building;
-end
-[gen, buildings] = update_qpform_all(gen,buildings,network,testSystems(SYSINDEX).optimoptions.scaletime);% updates the QPform field in all generators and buildings
+[gen, buildings] = update_qpform_all(gen,buildings,network,1);% updates the QPform field in all generators and buildings
 [subnet, gen, buildings] = load_network(network,gen,buildings);
 
 n_g = length(gen);
@@ -17,7 +10,7 @@ gen_names = cell(n_g,1);
 for i = 1:1:n_g
     gen_names(i,1) = {gen(i).Name};
 end
-[l_norm,node_names] = normalized_node_location(network);
+[l_norm,node_names,h_norm] = normalized_node_location(network);
 nn_list = {'Electrical';'DistrictHeat';'DistrictCool';'Hydro';'DirectCurrent';'CoolingWater';'Transmission1';'Hydrogen';'LiqHydrogen';'Heating2';};
 nn_abrev = {'E';'H';'C';'W';'DC';'CW';'E1';'Hy';'LH2';'H2';};
 nn_color = [.9 .9 .9; 1 .6 .6; .3 .75 .93; .85 .7 .1; .76 .87 .78; 0 1 1; 1 .6 .78; 1 .4 .4; 0 .8 1; 1 .2 .4;];
@@ -62,32 +55,51 @@ for f = 1:length(network_names)
         'Position', [10,4,80,40],'Tag', strcat('axes_',network_names{f}),...
         'Parent',handles.(strcat('panel_',network_names{f})),'NextPlot','add',...
         'Xlim',[10,90],'Ylim',[4,44],'TickLength',[0,0],'XTick',[],'YTick',[],'Visible','on');
-    for i = 1:1:nodes%add popup  menu to each network panel
-        n_name_fix = strrep(strrep(strrep(node_names{i},' ','_'),',',''),'-','_');
-        n_e = length(network(i).Equipment);
-        list={};
-        list(1) = node_names(i);
-        for j = 1:1:n_e
-            equip = network(i).Equipment{j};
-            r = strfind(equip,'.');
-            equip_name = equip(r+1:end);
-            k = nonzeros((1:n_g)'.*strcmp(equip_name,gen_names));
-            outs = gen_outs(gen(k(1)),nn_abrev');
-            if any(outs==f)
-                list(end+1) = {equip_name};
+    if ~strcmp(network_names{f},'Hydro')
+        loc = l_norm;
+        for i = 1:1:nodes%add popup  menu to each network panel
+            n_name_fix = strrep(strrep(strrep(node_names{i},' ','_'),',',''),'-','_');
+            if ~isempty(network(i).(network_names{f}))
+                n_e = length(network(i).Equipment);
+                list={};
+                list(1) = node_names(i);
+                for j = 1:1:n_e
+                    equip = network(i).Equipment{j};
+                    r = strfind(equip,'.');
+                    equip_name = equip(r+1:end);
+                    k = nonzeros((1:n_g)'.*strcmp(equip_name,gen_names));
+                    outs = gen_outs(gen(k(1)),nn_abrev');
+                    if any(outs==f)
+                        list(end+1) = {equip_name};
+                    end
+                end
+                if length(list)>1
+                    handles.(strcat('node_',n_name_fix,'_',network_names{f},'_menu')) = uicontrol('Style', 'popupmenu', 'String', list,'Units','characters','FontSize', 10,'Position', [loc(i,1)-7.5 loc(i,2)-1 15 2],'BackgroundColor','white',...
+                        'Tag',strcat('node_',n_name_fix,'_',network_names{f},'_menu'),'Parent', handles.(strcat('panel_',network_names{f})),'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'node_menu',quote,',hObject,eventdata,guidata(hObject))')),'Visible','on');%popup menu with node name and all equipment
+                end
             end
         end
-        if length(list)>1
-            handles.(strcat('node_',n_name_fix,'_',network_names{f},'_menu')) = uicontrol('Style', 'popupmenu', 'String', list,'Units','characters','FontSize', 10,'Position', [l_norm(i,1)-7.5 l_norm(i,2)-1 15 2],'BackgroundColor','white',...
-                'Tag',strcat('node_',n_name_fix,'_',network_names{f},'_menu'),'Parent', handles.(strcat('panel_',network_names{f})),'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'node_menu',quote,',hObject,eventdata,guidata(hObject))')),'Visible','on');%popup menu with node name and all equipment
-        end
+    else
+        loc = h_norm;
+%         for i = 1:1:nodes
+%             if ~isempty(network(i).Hydro)
+%                 n_name_fix = strrep(strrep(strrep(node_names{i},' ','_'),',',''),'-','_');
+%                 equip = network(i).Equipment{1};
+%                 r = strfind(equip,'.');
+%                 equip_name = equip(r+1:end);
+%                 handles.(strcat('node_',n_name_fix)) = uicontrol('Style', 'pushbutton','String',equip_name,...
+%                     'Units','characters','Position', [loc(i,1)-6 loc(i,2)-1 12 1.25],'BackgroundColor',[.85 .7 .1],...
+%                     'Tag',strcat('node_',n_name_fix),'Parent',handles.(strcat('panel_',network_names{f})),...
+%                     'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'edit_system',quote,',hObject,eventdata,guidata(hObject))')),'Visible','on');%button for equipment
+%             end
+%         end
     end
     %% add lines
-    add_lines(network_names{f},subnet,node_names,l_norm,handles.(strcat('axes_',network_names{f})))
+    add_lines(network_names{f},subnet,node_names,loc,handles.(strcat('axes_',network_names{f})))
 end
 %create a panel for each node and add buttons for each piece of equipment
 for i = 1:1:nodes
-    n_name_fix = strrep(strrep(strrep(node_names{i},' ','_'),',',''),'-','_');
+    n_name_fix = strrep(strrep(strrep(strrep(node_names{i},' ','_'),',',''),'-','_'),'.','');
     if isfield(handles,strcat('node_',n_name_fix))
         delete(handles.(strcat('node_',n_name_fix)));
     end
@@ -105,20 +117,30 @@ for i = 1:1:nodes
     nn_col = nn_color(nn_inc,:);
     n_net = length(nn_inc);
     x_pos = 10 + 80*(1:n_net)'/(n_net+1);
-    
+
     for k = 1:1:n_net%create bus bars
-        handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)})) = uicontrol('Style', 'pushbutton',...
-            'Units','characters','Position', [x_pos(k)-1.5 4 3 40],'BackgroundColor',nn_col(k,:),...
-            'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)}),'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
-        handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_text')) = uicontrol('Style','text',...
-            'Units','characters','Position', [x_pos(k)-7.5 44 15 1.5],'BackgroundColor',[.94 .94 .94],...
-            'String',network_names{nn_inc(k)},'HorizontalAlignment','center','FontSize',10,...
-            'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_text'),'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
-        handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_load')) = uicontrol('Style', 'pushbutton','String','Demand',...
-            'Units','characters','Position', [x_pos(k)-6 2 12 2],'BackgroundColor',[0,0,0],'ForegroundColor',[1,1,1],...
-            'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_load'),...
-            'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'load_demands',quote,',hObject,eventdata,guidata(hObject))')),...
-            'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
+        if strcmp(network_names{nn_inc(k)},'Hydro')
+            equip = network(i).Equipment{1};
+            r = strfind(equip,'.');
+            equip_name = equip(r+1:end);
+            handles.(strcat('node_',n_name_fix,'Hydro')) = uicontrol('Style', 'pushbutton','String',equip_name,...
+                'Units','characters','Position', [h_norm(i,1)-6 h_norm(i,2)-1 12 1.25],'BackgroundColor',[.85 .7 .1],...
+                'Tag',strcat('node_',n_name_fix,'Hydro'),'Parent',handles.(strcat('panel_',network_names{f})),...
+                'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'edit_system',quote,',hObject,eventdata,guidata(hObject))')),'Visible','on');%button for equipment
+        else
+            handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)})) = uicontrol('Style', 'pushbutton',...
+                'Units','characters','Position', [x_pos(k)-1.5 4 3 40],'BackgroundColor',nn_col(k,:),...
+                'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)}),'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
+            handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_text')) = uicontrol('Style','text',...
+                'Units','characters','Position', [x_pos(k)-7.5 44 15 1.5],'BackgroundColor',[.94 .94 .94],...
+                'String',network_names{nn_inc(k)},'HorizontalAlignment','center','FontSize',10,...
+                'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_text'),'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
+            handles.(strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_load')) = uicontrol('Style', 'pushbutton','String','Demand',...
+                'Units','characters','Position', [x_pos(k)-6 2 12 2],'BackgroundColor',[0,0,0],'ForegroundColor',[1,1,1],...
+                'Tag',strcat('node_',n_name_fix,'_',network_names{nn_inc(k)},'_load'),...
+                'Callback',eval(strcat('@(hObject,eventdata)MainScreen1(',quote,'load_demands',quote,',hObject,eventdata,guidata(hObject))')),...
+                'Parent', handles.(strcat('node_',n_name_fix)),'Visible','on');%bus bar for energy balance
+        end
     end
     %add equipment
     n_e = length(network(i).Equipment);
@@ -132,7 +154,7 @@ for i = 1:1:nodes
         r = strfind(equip,'.');
         equip_name = equip(r+1:end);
         e_name2 = strrep(strrep(strrep(equip_name,' ','_'),',',''),'-','_');
-        e_name2 = strrep(strrep(e_name2,'(',''),')','');
+        e_name2 = strrep(strrep(strrep(e_name2,'(',''),')',''),'.','');
         k = nonzeros((1:n_g)'.*strcmp(equip_name,gen_names));
         outs = gen_outs(gen(k(1)),net_at_node);
         if ~isempty(outs)
@@ -191,7 +213,7 @@ if nodes == 1
 else
     uistack(handles.network_select,'top')
     set(handles.network_select,'Visible','on');
-    set(handles.(strcat('panel_',network_names{1})),'Visible','on');
+    set(handles.(strcat('panel_',network_names{get(handles.network_select,'Value')})),'Visible','on');
 end
 end%ends function network_representation
 
@@ -199,8 +221,9 @@ function add_lines(net,subnet,node_names,l_norm,h)
 %add new lines or remove lines from any previous network plotted
 l_names = subnet.(net).lineNames;
 nn = length(node_names);
-for i = 1:1:nn
-    
+l_size = 3*ones(length(l_names),1);
+if isfield(subnet.(net),'lineEff')
+    l_size = log(1+2*subnet.(net).lineEff);
 end
 for i = 1:1:length(l_names)
     %deconstruct name to find nodes that are connected
@@ -209,19 +232,20 @@ for i = 1:1:length(l_names)
     n2_name = l_names{i}(r(2)+1:end);
     n1 = nonzeros((1:nn)'.*strcmp(n1_name,node_names));
     n2 = nonzeros((1:nn)'.*strcmp(n2_name,node_names));
-    plot(h,[l_norm(n1,1);l_norm(n2,1);],[l_norm(n1,2);l_norm(n2,2);],'linewidth',2);
+    plot(h,[l_norm(n1,1);l_norm(n2,1);],[l_norm(n1,2);l_norm(n2,2);],'linewidth',l_size(i));
 end
 ag_nodes = length(subnet.(net).nodes);
 for n = 1:1:ag_nodes
     c_nodes = subnet.(net).nodes{n};
     if length(c_nodes)>1 %interconnected perfect nodes
-        for i = 1:1:(length(c_nodes)-1)
-            n1 = nonzeros((1:nn)'.*strcmp(c_nodes{i},node_names));
+        n1 = nonzeros((1:nn)'.*strcmp(c_nodes{1},node_names));
+%         for i = 1:1:(length(c_nodes)-1)
+%             n1 = nonzeros((1:nn)'.*strcmp(c_nodes{i},node_names));
             for j = 2:1:length(c_nodes)
                 n2 = nonzeros((1:nn)'.*strcmp(c_nodes{j},node_names));
-                plot(h,[l_norm(n1,1);l_norm(n2,1);],[l_norm(n1,2);l_norm(n2,2);],'linewidth',3);
+                plot(h,[l_norm(n1,1);l_norm(n2,1);],[l_norm(n1,2);l_norm(n2,2);],'k','linewidth',3);
             end
-        end
+%         end
     end
 end
 end%Ends function add_remove_lines

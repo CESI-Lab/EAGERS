@@ -41,7 +41,7 @@ if any(~locked)
                 qp.Organize.SpinReserveStates(1,i) = 0;
             end
             x_keep(s_rm) = false; %removes states associated with this generator.
-            rm_states(1,i+1:end) = rm_states(1,i+1:end) + length(s_rm);
+            rm_states(1,i:end) = rm_states(1,i:end) + length(s_rm);
             if ~isempty(qp.Organize.Equalities) && qp.Organize.Equalities(i,1)>0%remove any associated equality constraints
                 eq = qp.Organize.Equalities(i,1) + (0:(qp.Organize.Equalities(i,2)-1));
                 req_keep(eq) = false;%equality constraints

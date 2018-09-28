@@ -6,7 +6,11 @@ if isfield(subnet,'DirectCurrent')
     for n = 1:1:length(subnet.DirectCurrent.nodes)
         equip = subnet.DirectCurrent.Equipment{n};
         for j = 1:1:length(equip)
-            if ~strcmp(gen(equip(j)).Type,'AC_DC')
+            if strcmp(gen(equip(j)).Type,'Hydro Storage')
+                max_dc_gen = max_dc_gen + gen(equip(j)).VariableStruct.MaxGenCapacity;
+            elseif strcmp(gen(equip(j)).Type,'Electric Storage')
+                max_dc_gen = max_dc_gen + gen(equip(j)).QPform.Stor.PeakDisch;
+            elseif ~strcmp(gen(equip(j)).Type,'AC_DC')
                 max_dc_gen = max_dc_gen+ max(0,gen(equip(j)).Size*gen(equip(j)).QPform.output.DC(1));
             end
         end
@@ -17,8 +21,12 @@ if isfield(subnet,'Electrical')
     for n = 1:1:length(subnet.Electrical.nodes)
         equip = subnet.Electrical.Equipment{n};
         for j = 1:1:length(equip)
-            if ~strcmp(gen(equip(j)).Type,'AC_DC')
-                max_ac_gen = max_ac_gen+ max(0,gen(equip(j)).Size*gen(equip(j)).QPform.output.E(1));
+            if strcmp(gen(equip(j)).Type,'Hydro Storage')
+                max_ac_gen = max_ac_gen + gen(equip(j)).VariableStruct.MaxGenCapacity;
+            elseif strcmp(gen(equip(j)).Type,'Electric Storage')
+                max_ac_gen = max_ac_gen + gen(equip(j)).QPform.Stor.PeakDisch;
+            elseif ~strcmp(gen(equip(j)).Type,'AC_DC')
+                max_ac_gen = max_ac_gen + max(0,gen(equip(j)).Size*gen(equip(j)).QPform.output.E(1));
             end
         end
     end

@@ -86,9 +86,9 @@ else
             if isfield(testSystems(SYSINDEX),'Building')   
                 buildings = testSystems(SYSINDEX).Building;
             end
-            cool_tower = [];
-            if isfield(testSystems(SYSINDEX),'cool_tower') 
-                cool_tower = testSystems(SYSINDEX).cool_tower;
+            fluid_loop = [];
+            if isfield(testSystems(SYSINDEX),'fluid_loop') 
+                fluid_loop = testSystems(SYSINDEX).fluid_loop;
             end
             subnet = testSystems(SYSINDEX).Network;
             dispatch = [];op_mat_a = [];op_mat_b = [];one_step = []; predicted = [];
@@ -100,9 +100,9 @@ else
                 op_mat_b = testSystems(SYSINDEX).OpMatB;
                 one_step = testSystems(SYSINDEX).OneStep;
             end
-            [solution,history,gen,buildings,cool_tower] = planning_slider_callback(...
-                TestData,date_start,testSystems(SYSINDEX).Generator,buildings,cool_tower,...
+            [solution,history,gen,buildings,fluid_loop] = planning_slider_callback(...
+                TestData,date_start,testSystems(SYSINDEX).Generator,buildings,fluid_loop,...
                 subnet,op_mat_a,op_mat_b,one_step,dispatch,predicted,testSystems(SYSINDEX).optimoptions);
-            plot_project(gen,buildings,cool_tower,[],history,solution,[],handles,'Dispatch')
+            plot_project(gen,buildings,fluid_loop,[],history,solution,[],handles,'Dispatch')
     end
 end

@@ -31,7 +31,7 @@ for i = 1:1:n_g
     if isfield(gen(i).VariableStruct, 'StartCost')
         start_cost(i) = gen(i).VariableStruct.StartCost;
     end
-    ic(i) = gen(i).CurrentState;
+    ic(i) = gen(i).CurrentState(1);
 end
 [n_s,~] = size(scale_cost);
 gen_output = zeros(n_s+1,n_g+n_l+n_b+n_fl);
@@ -52,7 +52,12 @@ for t = 1:1:n_s %for every timestep
         dem_h = net_demand.H;
     end
     v_h = value_heat(gen,[ic;first_profile(t+1,:)],dem_h,dt(t));
-    stor_power(t,:) = find_stor_power(gen,[ic;first_profile(t+1,:)],dt(t));
+    stor_power(t,:) = find_stor_power(gen,ic,first_profile(t+1,:),dt(t));
+    for i = 1:1:n_g
+        if strcmp(gen(i).Type,'Hydro Storage')
+            stor_power(t,i) = first_profile(t+1,i) + (first_profile(t,i) - ic(i));
+        end
+    end
     marginal = update_mc(gen,first_profile(t+1,:),scale_cost(t,:),dt(t),v_h);%update marginal cost
     qp{t} = update_matrices_step(gen,building,fluid_loop,subnet,options,one_step,forecast,scale_cost(t,:),marginal,stor_power(t,:),dt,ic,first_profile,limit,t,temperatures);
     
@@ -79,7 +84,6 @@ if isfield(forecast,'Renewable')
 end
 end% Ends function dispatch_step
 
-
 function [gen_output,ic] = update_ic(gen,ic,best_dispatch,first_profile,dt,limit)
 n_g = length(gen);
 gen_output = best_dispatch;
@@ -102,19 +106,21 @@ else
         end
     end
     gen_output(1,1:n_g) = ec;
-    gen_output(1,n_g+1:end) = best_dispatch(n_g+1:end);
     if strcmp(limit,'constrained')%if its constrained but not initially constrained then make the last output the initial condition
         ic = ec;
     else %if strcmp(limit,'initially constrained')
         for i = 1:1:n_g
-            if isfield(gen(i).QPform,'Stor')
-                ic(i) = ec(i); %update the state of storage
+            switch gen(i).Type
+                case {'Electric Storage';'Thermal Storage';'Hydrogen Storage';}
+                    ic(i) = ec(i); %update the state of storage
+                case 'Hydro Storage'
+                    %% update something. Need better calculation of min/max power at next step according to remaining state of reservoir
+                    ic(i) = gen_output(1,i);
             end
         end
     end
 end
 end%ends function update_ic
-
 
 function net_demand = agregate_demand(forecast,t)
 net_demand = [];
@@ -165,19 +171,17 @@ end
 v_h = excess_heat<=1e-1;
 end%Ends function value_heat
 
-function stor_power = find_stor_power(gen,dispatch,dt)
+function stor_power = find_stor_power(gen,ic,dispatch,dt)
 n_g = length(gen);
-stor_power = zeros(length(dt),n_g);  
+stor_power = zeros(1,n_g);  
 for i = 1:1:n_g
-    if isfield(gen(i).QPform,'Stor')
-        for t = 1:1:length(dt)
-            loss = (gen(i).QPform.Stor.SelfDischarge*gen(i).QPform.Stor.UsableSize);
-            d_SOC = dispatch(t+1,i) - dispatch(t,i);%expected output of storage in kWh to reach the SOC from the 1st dispatch (penalties are always pushing it back on track if it needed more storage than expected somewhere)
-            if (d_SOC/dt(t) + loss)<0 %discharging
-                stor_power(t,i) = -(d_SOC/dt(t) + loss)*gen(i).QPform.Stor.DischEff;
-            else %charging
-                stor_power(t,i) = -(d_SOC/dt(t) +loss)/gen(i).QPform.Stor.ChargeEff; 
-            end
+    if any(strcmp(gen(i).Type,{'Electric Storage';'Thermal Storage';'Hydrogen Storage';}))
+        loss = (gen(i).QPform.Stor.SelfDischarge*gen(i).QPform.Stor.UsableSize);
+        d_SOC = dispatch(1,i) - ic(i);%expected output of storage in kWh to reach the SOC from the 1st dispatch (penalties are always pushing it back on track if it needed more storage than expected somewhere)
+        if (d_SOC/dt + loss)<0 %discharging
+            stor_power(1,i) = -(d_SOC/dt + loss)*gen(i).QPform.Stor.DischEff;
+        else %charging
+            stor_power(1,i) = -(d_SOC/dt +loss)/gen(i).QPform.Stor.ChargeEff; 
         end
     end
 end

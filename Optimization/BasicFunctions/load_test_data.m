@@ -4,9 +4,13 @@
 %Option c) load test data from a file
 global Plant TestData Model_dir
 if isempty(TestData)
-    %check for Plant.Building
-    if isfield(Plant,'Data') && ~isempty(Plant.Data)
-        k = center_menu('Select Test Data', 'Simulated Building', 'Historical Data in project', 'Load from File');
+    if isfield(Plant,'Building') && ~isempty(Plant.Building)
+        %use building/s in project
+        k = 1;
+    elseif isfield(Plant,'Data') && ~isempty(Plant.Data)
+        %use data in project
+%         k = center_menu('Select Test Data', 'Simulated Building', 'Historical Data in project', 'Load from File');
+        k = 3;
     else
         k = center_menu('Select Test Data', 'Simulated Building', 'Load from File');
         if k ==2
@@ -34,14 +38,14 @@ if isempty(TestData)
             if ~isfield(Plant,'Weather') || isempty(Plant.Weather)
                 cd(fullfile(Model_dir,'System Library','Weather'))
                 [fn,pn,~] = uigetfile('*.mat','Load Weather File');
-                load(fullfile(pn,fn));
+                weather = import_weather(fullfile(pn,fn));
                 cd(Model_dir)
                 TestData.Weather = interpolate_weather(weather,TestData.Timestamp);
             else
                 TestData.Weather = interpolate_weather(Plant.Weather,TestData.Timestamp);
             end
         end
-        TestData.Building = load_test_building(Plant.Building,Plant.Network,TestData.Timestamp,TestData.Weather);
+        
     elseif k == 2
         TestData = Plant.Data;%% Revise this so you can pull from more than what is loaded in Plant
         if isfield(Plant.Data,'Hydro')
@@ -55,4 +59,7 @@ if isempty(TestData)
         load(fullfile(pn,fn));
         cd(Model_dir)
     end
+end
+if isfield(Plant,'Building') && ~isempty(Plant.Building) && ~strcmp(Plant.optimoptions.forecast,'Building')
+    TestData.Building = load_test_building(Plant.Building,Plant.Network,TestData.Timestamp,TestData.Weather);
 end

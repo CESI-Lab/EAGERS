@@ -1,4 +1,4 @@
-function [gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,online] = initialize_optimization(gen,buildings,fluid_loop,network,options,test_data)
+function [gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,online,num_steps,dispatch,predicted,design,flag] = initialize_optimization(gen,buildings,fluid_loop,network,options,test_data,date)
 %% Load generators, & build QP matrices
 Time = build_time_vector(options);%% set up dt vector of time interval length
 dt = Time - [0; Time(1:end-1)];
@@ -22,4 +22,20 @@ if strcmp(options.method,'Control')
         online(t) = load_matrices(gen,buildings,fluid_loop,subnet,options,'B',dt2(t:end)); %build the matrix for the onlineOptimLoop using FitB
     end
 end
+
+[num_steps,dispatch,predicted,design,~] = pre_allocate_space(gen,buildings,fluid_loop,subnet,options,test_data);
+% k = center_menu('Select Option','Manually specify initial conditions','Automatically determine initial conditions');
+k = 2;
+if k ==1
+    [gen,buildings] = manual_ic(gen,buildings,fluid_loop,subnet);
+    flag = 0;
+else
+    [data_t0,gen,~] = update_forecast(gen,buildings,fluid_loop,subnet,options,date,test_data,[]);
+    [gen,fluid_loop,flag] = automatic_ic(gen,buildings,fluid_loop,subnet,date,one_step,options,data_t0);% set the initial conditions
+end
+
+for i = 1:1:length(buildings)
+    dispatch.Buildings(1,i) = buildings(i).Tzone;
+end
+dispatch.Timestamp(1) = date;
 end%ends function initialize_optimization

@@ -1,34 +1,25 @@
 % --- Executes on slider movement.
-function [solution,history,gen,buildings,cool_tower] = planning_slider_callback(test_data,date,gen,buildings,cool_tower,subnet,op_mat_a,op_mat_b,one_step,dispatch,predicted,options)
+function [solution,history,gen,buildings,fluid_loop] = planning_slider_callback(test_data,date,gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,dispatch,predicted,options)
 handles = guihandles;
 if strcmp(options.solver,'NREL')
-    buildings = [];
-    cool_tower = [];
-    buildings.Name = 'Building';
-    buildings.Tzone = 22;
-%     buildings.QPform.Location.Longitude = 105; buildings.QPform.Location.Latitude = 40; buildings.QPform.Location.TimeZone = -6;
-    solution = SingleOptimizationNREL(test_data.Timestamp(1) + get(handles.sliderStartDate,'Value'));
+    solution = single_optimization_NREL(gen,buildings,options,test_data,date);
+    buildings.Tzone = solution.Buildings.Temperature(1);
     plot_project(gen,buildings,[],3,[],solution,[],handles,'Result')
 else
     if isempty(dispatch) || ~isfield(dispatch,'Timestamp') || isempty(dispatch.Timestamp) || min(abs(dispatch.Timestamp-(test_data.Timestamp(1) + get(handles.sliderStartDate,'Value'))))>=options.Resolution/24
         date = date +[0;build_time_vector(options)/24];
-        test_data = update_test_data(test_data,[],gen,options);
+        test_data = update_test_data(test_data,[],[],options);
         if isempty(dispatch)
-            [gen,buildings,cool_tower,subnet,op_mat_a,op_mat_b,one_step,~] = initialize_optimization(gen,buildings,cool_tower,subnet,options,test_data);
+            [gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,~,~,dispatch,~,~,~] = initialize_optimization(gen,buildings,fluid_loop,subnet,options,test_data,date(1));
         end
-        [wy_forecast,gen] = water_year_forecast(gen,buildings,cool_tower,subnet,options,date,[],test_data);%if october 1st,Run a yearly forecast for hydrology
-        freq = 1; %period of repetition (1 = 1 day)
-        res = options.Resolution/24;
-        n_o = round(freq/res)+1;
-        prev_data = get_data(test_data,linspace((date(1) - res - freq),date(1)-res,n_o)',[],[]);
-        now_data = get_data(test_data,date(1),[],[]);
-        future_data = get_data(test_data,date(2:end),[],[]);
+        [wy_forecast,gen] = water_year_forecast(gen,buildings,fluid_loop,subnet,options,date,[],test_data);%if october 1st,Run a yearly forecast for hydrology
+
         if strcmp(options.solver,'ANN')
             options.solver = 'quadprog';
-            [solution,forecast,gen,buildings,cool_tower] = single_optimization(date,[],gen,buildings,cool_tower,options,dispatch,subnet,op_mat_a,op_mat_b,one_step,test_data.HistProf,wy_forecast,prev_data,now_data,future_data);
+            [solution,forecast,gen,buildings,fluid_loop] = single_optimization(date,[],gen,buildings,fluid_loop,options,dispatch,subnet,op_mat_a,op_mat_b,one_step,test_data,wy_forecast);
             options.solver = 'ANN';
         else
-            [solution,forecast,gen,buildings,cool_tower] = single_optimization(date,[],gen,buildings,cool_tower,options,dispatch,subnet,op_mat_a,op_mat_b,one_step,test_data.HistProf,wy_forecast,prev_data,now_data,future_data);
+            [solution,forecast,gen,buildings,fluid_loop] = single_optimization(date,[],gen,buildings,fluid_loop,options,dispatch,subnet,op_mat_a,op_mat_b,one_step,test_data,wy_forecast);
         end
         history = [];
     else

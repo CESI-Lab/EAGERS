@@ -13,6 +13,7 @@ for i = 1:1:n_g
     end
 end
 network_names = fieldnames(qp.Organize.Balance);
+network_names = network_names(~strcmp('Hydro',network_names));
 %% make sure it can shut down in time from initial condition
 for i = 1:1:n_g
     if qp.Organize.Dispatchable(i) ==1

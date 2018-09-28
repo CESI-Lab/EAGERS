@@ -1,4 +1,4 @@
-function [sunrise,sunset,azimuth,zenith] = solar_calc(long,lat,time_zone,date)
+function [sunrise,sunset,azimuth,zenith,hour_angle,declination] = solar_calc(long,lat,time_zone,date)
 %SOLAR_CALC Calculate position of sun and sunrise and sunset times.
 %   [sunrise,sunset,azimuth,zenith] = solar_calc(long,lat,time_zone,date)
 %   Calculated using NOAA solar calculations available at:
@@ -37,9 +37,9 @@ sunrise = solar_noon - ha_sunrise * 4 / 1440; % Local Sidereal Time (LST)
 sunset = solar_noon + ha_sunrise * 4 / 1440; % Local Sidereal Time (LST)
 
 tst = mod(tpm*1440 + eq_of_time + 4*long - 60*time_zone, 1440); % True Solar Time in min
-hour_angle = tst/4+180; % degrees
-hour_angle(tst>0) = hour_angle-360;
-zenith = 360 / (2*pi) * acos(sin(lat/57.2958) .* sin(declination) +  cos(lat/57.2958) .* cos(declination) .* cos(hour_angle/57.2958)); % degrees
+hour_angle = (tst/4+180)/57.2958; % radians
+hour_angle(tst>0) = hour_angle-2*pi;% radians
+zenith = 360 / (2*pi) * acos(sin(lat/57.2958) .* sin(declination) +  cos(lat/57.2958) .* cos(declination) .* cos(hour_angle)); % degrees
 % ElevationAngle = 90 - Zenith;
 % Refraction = zeros(length(ElevationAngle),1);
 % Refracion(ElevationAngle<85 & ElevationAngle>5) = (58.1./tan(ElevationAngle(ElevationAngle<85 & ElevationAngle>5)/57.2958)-0.07./tan(ElevationAngle(ElevationAngle<85 & ElevationAngle>5)/57.2958).^3 +.000086./tan(ElevationAngle(ElevationAngle<85 & ElevationAngle>5)/57.2958).^5)/3600;

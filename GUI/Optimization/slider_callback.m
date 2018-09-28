@@ -3,11 +3,12 @@ function slider_callback(index)
 global Plant TestData
 handles = guihandles;
 if strcmp(Plant.optimoptions.solver,'NREL')
-    Plant.Building = [];
-    Plant.Building.Name = 'Building';
-    Plant.Building.Tzone = 22;
-%     Plant.Building.QPform.Location.Longitude = 105; Plant.Building.QPform.Location.Latitude = 40; Plant.Building.QPform.Location.TimeZone = -6;
-    solution = SingleOptimizationNREL(TestData.Timestamp(1) + get(handles.sliderStartDate,'Value'));
+%     building.Name = 'Building';
+%     building.Tzone = 22;
+    building = Plant.Building;
+    date = TestData.Timestamp(1) + get(handles.sliderStartDate,'Value');
+    solution = single_optimization_NREL(Plant.Generator,building,Plant.optimoptions,TestData,date);
+    Plant.Building.Tzone = solution.Buildings.Temperature(1);
     plot_project(Plant.Generator,Plant.Building,[],3,[],solution,[],handles,'Result')
 else
     if ~isfield(Plant,'Dispatch') || isempty(Plant.Dispatch) || ~isfield(Plant.Dispatch,'Timestamp') || isempty(Plant.Dispatch.Timestamp) || min(abs(Plant.Dispatch.Timestamp-(TestData.Timestamp(1) + get(handles.sliderStartDate,'Value'))))>=Plant.optimoptions.Resolution/24
@@ -23,27 +24,24 @@ else
         else
             data = [];
         end
-        TestData = update_test_data(TestData,data,Plant.Generator,Plant.optimoptions);
+        if isfield(Plant,'Weather') 
+            weather = Plant.Weather;
+        else
+            weather = [];
+        end
+        TestData = update_test_data(TestData,data,weather,Plant.optimoptions);
         if ~isfield(Plant,'Dispatch') || ~isempty(Plant.Dispatch)
-            [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,~] = initialize_optimization(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Network,Plant.optimoptions,TestData);
-            Plant.Dispatch = [];
+            [Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,~,~,Plant.Dispatch,Plant.Predicted,Plant.Design,~] = initialize_optimization(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.Network,Plant.optimoptions,TestData,date(1));
         end
         [wy_forecast,Plant.Generator] = water_year_forecast(Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.subNet,Plant.optimoptions,date,[],TestData);%if october 1st,Run a yearly forecast for hydrology
-        dispatch = Plant.Dispatch;
-        freq = 1; %period of repetition (1 = 1 day)
-        res = Plant.optimoptions.Resolution/24;
-        n_o = round(freq/res)+1;
-        prev_data = get_data(TestData,linspace((date(1) - res - freq),date(1)-res,n_o)',[],[]);
-        now_data = get_data(TestData,date(1),[],[]);
-        future_data = get_data(TestData,date(2:end),[],[]);
-        [prev_data,now_data] = water_dispatch_history(prev_data,now_data,dispatch,Plant.subNet);
         if strcmp(Plant.optimoptions.solver,'ANN')
             Plant.optimoptions.solver = 'quadprog';
-            [solution,forecast,Plant.Generator,Plant.Building,Plant.fluid_loop] = single_optimization(date,[],Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,dispatch,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,TestData.HistProf,wy_forecast,prev_data,now_data,future_data);
+            [solution,forecast,Plant.Generator,Plant.Building,Plant.fluid_loop] = single_optimization(date,[],Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,Plant.Dispatch,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,TestData,wy_forecast);
             Plant.optimoptions.solver = 'ANN';
         else
-            [solution,forecast,Plant.Generator,Plant.Building,Plant.fluid_loop] = single_optimization(date,[],Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,dispatch,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,TestData.HistProf,wy_forecast,prev_data,now_data,future_data);
+            [solution,forecast,Plant.Generator,Plant.Building,Plant.fluid_loop] = single_optimization(date,[],Plant.Generator,Plant.Building,Plant.fluid_loop,Plant.optimoptions,Plant.Dispatch,Plant.subNet,Plant.OpMatA,Plant.OpMatB,Plant.OneStep,TestData,wy_forecast);
         end
+        Plant.current_solution = solution;
         history = [];
     else
         d = TestData.Timestamp(1) + get(handles.sliderStartDate,'Value');
@@ -53,19 +51,25 @@ else
         elseif Plant.Predicted.Timestamp(1,s_i)==0
             s_i = s_i - 1;
         end
-        date = [d;Plant.Predicted.Timestamp(:,s_i)];
-        solution.Dispatch = [zeros(1,length(Plant.Predicted.GenDisp(1,:,s_i)));Plant.Predicted.GenDisp(:,:,s_i);];
-        solution.LineFlows = Plant.Predicted.LineFlows(:,:,s_i);
-        solution.Buildings.Temperature = Plant.Predicted.Buildings(:,:,s_i);
-        solution.fluid_loop = Plant.Predicted.fluid_loop(:,:,s_i);
-        solution.hydroSOC = Plant.Predicted.hydroSOC(:,:,s_i);
-        backSteps = min(s_i-1,Plant.optimoptions.Horizon/Plant.optimoptions.Resolution);
-        history.Dispatch = Plant.Dispatch.GeneratorState(s_i-backSteps:s_i,:);
-        history.LineFlows = Plant.Dispatch.LineFlows(s_i-backSteps:s_i,:);
-        history.Buildings = Plant.Dispatch.Buildings(s_i-backSteps:s_i,:);
-        history.fluid_loop = Plant.Dispatch.fluid_loop(s_i-backSteps:s_i,:);
-        history.hydroSOC = Plant.Dispatch.hydroSOC(s_i-backSteps:s_i,:);
-        history.Timestamp = Plant.Dispatch.Timestamp(s_i-backSteps:s_i,:);
+        if s_i ==0
+            solution = Plant.current_solution;
+            history = [];
+            date = TestData.Timestamp(1) + get(handles.sliderStartDate,'Value')+[0;build_time_vector(Plant.optimoptions)/24];
+        else
+            date = [d;Plant.Predicted.Timestamp(:,s_i)];
+            solution.Dispatch = [zeros(1,length(Plant.Predicted.GenDisp(1,:,s_i)));Plant.Predicted.GenDisp(:,:,s_i);];
+            solution.LineFlows = Plant.Predicted.LineFlows(:,:,s_i);
+            solution.Buildings.Temperature = Plant.Predicted.Buildings(:,:,s_i);
+            solution.fluid_loop = Plant.Predicted.fluid_loop(:,:,s_i);
+            solution.hydroSOC = Plant.Predicted.hydroSOC(:,:,s_i);
+            backSteps = min(s_i-1,Plant.optimoptions.Horizon/Plant.optimoptions.Resolution);
+            history.Dispatch = Plant.Dispatch.GeneratorState(s_i-backSteps:s_i,:);
+            history.LineFlows = Plant.Dispatch.LineFlows(s_i-backSteps:s_i,:);
+            history.Buildings = Plant.Dispatch.Buildings(s_i-backSteps:s_i,:);
+            history.fluid_loop = Plant.Dispatch.fluid_loop(s_i-backSteps:s_i,:);
+            history.hydroSOC = Plant.Dispatch.Hydro.SOC(s_i-backSteps:s_i,:);
+            history.Timestamp = Plant.Dispatch.Timestamp(s_i-backSteps:s_i,:);
+        end
     end    
     solution.Timestamp = date;
     gen = Plant.Generator;

@@ -1,20 +1,13 @@
-function test_data = update_test_data(test_data,data,gen,options)
-%load solar
-if ~isfield(test_data,'Weather') || ~isfield(test_data.Weather,'irradDireNorm') %no solar data
-    n_g = length(gen);
-    for i = 1:1:n_g
-        if strcmp(gen(i).Type,'Solar')
-            test_data.Weather.irradDireNorm = load_solar(test_data.Timestamp);
-            break
-        end
-    end
-end
-%copy from data if necessary
+function test_data = update_test_data(test_data,data,weather,options)
 if ~isfield(test_data,'Demand') && isfield(data,'Demand')
     test_data.Demand = data.Demand;
 end
-if ~isfield(test_data,'Weather') && isfield(data,'Weather')
+if ~isfield(test_data,'Weather') && ~isempty(weather)
+    test_data.Weather = weather;
+elseif ~isfield(test_data,'Weather') && isfield(data,'Weather')
     test_data.Weather = data.Weather;
+else
+    %load weather
 end
 if isfield(data,'Hydro') && ~isfield(test_data,'Hydro')
     test_data.Hydro = data.Hydro;

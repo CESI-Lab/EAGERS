@@ -166,7 +166,7 @@ end
 function load_settings(hObject, eventdata, handles)
 global SYSINDEX testSystems
 handles = guihandles;
-set(handles.uipanelOptimizationOptions,'Visible','on')
+set(handles.uipanelOptimizationOptions,'Visible','on','Parent',get(handles.plotting_panel,'Parent'))
 set(handles.ProjectsPanel,'Visible','off')
 second_plot_vis(handles,'off')
 set(handles.open_settings,'Visible','off')
@@ -904,7 +904,7 @@ update_plots
 
 % --- Executes on button press in energy_demands.
 function energy_demands_Callback(hObject, eventdata, handles)
-global TestData
+global TestData testSystems SYSINDEX
 handles = guihandles;
 set(handles.open_settings,'Visible','on')
 second_plot_vis(handles,'on')
@@ -923,8 +923,9 @@ if isfield(TestData,'Demand')
         list(end+1) = {'Water Demand'};
     end
 end
-if isfield(TestData,'Building')
+if isfield(testSystems(SYSINDEX),'Building')
     list(end+1:end+2) = {'InternalGains';'NonHVACelectric';};
+    TestData.Building = load_test_building(testSystems(SYSINDEX).Building,testSystems(SYSINDEX).Network,TestData.Timestamp,TestData.Weather);
 end
 set(handles.popupmenuAxes,'String',list,'Value',1);
 set(handles.NPC_discount,'Visible','off');set(handles.text_discount_rate,'Visible','off');set(handles.text_perc,'Visible','off');

@@ -15,34 +15,34 @@ years = str2double(get(handles.NPC_Years,'String'));%choose years in GUI
 % find net present cost for each size
 npc = zeros(1,n);
 for i = 1:1:n
-    [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),gen_i,TestData,design_day,years);
+    [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),1,gen_i,TestData,design_day,years);
 end
 [~,i_min] = min(npc);
 if i_min == 1
     gen_i_size = linspace(gen_i_size(1),gen_i_size(2),n);
     npc(1,:) = npc(:,i_min);
     for i = 2:1:n
-        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),gen_i,TestData,design_day,years);
+        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),1,gen_i,TestData,design_day,years);
     end
     [~,i_min] = min(npc);
 elseif i_min == n
     gen_i_size = linspace(gen_i_size(n-1),gen_i_size(n),n);
     npc(1,:) = npc(:,i_min);
     for i = 1:1:n-1
-        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),gen_i,TestData,design_day,years);
+        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),1,gen_i,TestData,design_day,years);
     end
     [~,i_min] = min(npc);
 else
     gen_i_size = linspace(gen_i_size(i_min-1),gen_i_size(i_min+1),n);
     npc(1,:) = npc(:,i_min);
     for i = 2:1:n
-        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),gen_i,TestData,design_day,years);
+        [npc(:,i),costs(:,:,i),mc(:,i)] = design_test(testSystems(SYSINDEX),gen_i_size(i),1,gen_i,TestData,design_day,years);
     end
     [~,i_min] = min(npc);
 end
 
 % get optimal size
-[testSystems(SYSINDEX).Generator,testSystems(SYSINDEX).Costs.Equipment,testSystems(SYSINDEX).Network] = design_resize(testSystems(SYSINDEX).Generator,testSystems(SYSINDEX).Costs.Equipment,testSystems(SYSINDEX).Network,gen_i_size(i_min),gen_i);
+[testSystems(SYSINDEX).Generator,testSystems(SYSINDEX).Costs.Equipment,testSystems(SYSINDEX).Network] = design_resize(testSystems(SYSINDEX).Generator,testSystems(SYSINDEX).Costs.Equipment,testSystems(SYSINDEX).Network,gen_i_size(i_min),1,gen_i);
 testSystems(SYSINDEX).Costs.ProjectedMonthlyCosts = mc(:,i_min);
 testSystems(SYSINDEX).Costs.NPC = npc(:,i_min);
 testSystems(SYSINDEX).Costs.Design = costs(:,:,i_min);

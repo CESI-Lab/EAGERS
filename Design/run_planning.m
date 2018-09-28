@@ -12,60 +12,50 @@ for i_ts = 1:1:length(test_sys)%Run through list of projects
         else
             buildings = [];
         end
-        if isfield(test_sys(i_ts),'cool_tower')
-            cool_tower = test_sys(i_ts).cool_tower;
+        if isfield(test_sys(i_ts),'fluid_loop')
+            fluid_loop = test_sys(i_ts).fluid_loop;
         else
-            cool_tower = [];
+            fluid_loop = [];
         end
+        data = [];
         if isfield(test_sys(i_ts),'Data') 
             data = test_sys(i_ts).Data;
-        else
-            data = [];
+        end
+        weather = [];
+        if isfield(test_sys(i_ts),'Data') 
+            weather = test_sys(i_ts).Data;
         end
         options.Interval = floor(test_data.Timestamp(end)-test_data.Timestamp(1));
-        freq = 1; %period of repetition (1 = 1 day)
-        res = options.Resolution/24;
-        n_o = round(freq/res)+1;
-        test_data = update_test_data(test_data,data,gen,options);
+        test_data = update_test_data(test_data,data,weather,options);
+        date_1 = test_data.Timestamp(1);%set the starting date
         if design_day ==1%If design days option is selected, optimize the 1st day of the month, and assume the rest of the month to be identical
             options.endSOC = 'Initial';%Constrain the final SOC of any storage device to be equal to the initial charge so that days 2-30 of each month do not over depleate storage
             options.Horizon = max(24,options.Horizon);%Make the horizon at least 1 day
-            date_1 = test_data.Timestamp(1);%set the starting date
         else
             options.endSOC = 'Flexible';%remove constraint on final SOC of storage
         end
-
-        [gen,buildings,cool_tower,subnet,op_mat_a,op_mat_b,one_step,online] = initialize_optimization(gen,buildings,cool_tower,network,options,test_data);
+        s_i = 1;
+        [gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,online,num_steps,dispatch,predicted,design,flag] = initialize_optimization(gen,buildings,fluid_loop,network,options,test_data,date_1);
 
         if design_day ==1
             date = date_1+[0;build_time_vector(options)/24];%linspace(Date,DateEnd)';would need to re-do optimization matrices for this time vector
-            [wy_forecast, gen] = water_year_forecast(gen,buildings,cool_tower,subnet,options,date,[],test_data);%if october 1st,Run a yearly forecast for hydrology
-            [num_steps,dispatch,predicted,design,run_data] = pre_allocate_space(gen,buildings,cool_tower,subnet,options,test_data);%create Plant.Design structure with correct space
+            [wy_forecast, gen] = water_year_forecast(gen,buildings,fluid_loop,subnet,options,date,[],test_data);%if october 1st,Run a yearly forecast for hydrology
             STR = 'Optimizing Design Day Dispatch';
             planning_waitbar=waitbar(0,STR,'Visible','on');
-            
-            prev_data = get_data(test_data,linspace((date(1) - res - freq),date(1)-res,n_o)',[],[]);
-            now_data = get_data(test_data,date(1),[],[]);
-            future_data = get_data(test_data,date(2:end),[],[]);
-            [data_t0,gen,~] = update_forecast(gen,buildings,cool_tower,subnet,options,date_1,test_data.HistProf,prev_data,now_data,future_data);
-            [gen,cool_tower] = automatic_ic(gen,buildings,cool_tower,subnet,date_1,one_step,options,data_t0);% set the initial conditions
             design.Timestamp(1) = date_1;
             
-            s_i = 1;
+            
             while date(1)+options.Horizon/24<=test_data.Timestamp(end)%loop to simulate days 1 to n in TestData
                 D = datevec(date(1));
                 if s_i == 1 || D(3) == 1  %If it is the first step, or the first of the month run the actual optimization                     
-                    prev_data = get_data(test_data,linspace((date(1) - res - freq),date(1)-res,n_o)',[],[]);
-                    now_data = get_data(test_data,date(1),[],[]);
-                    future_data = get_data(test_data,date(2:end),[],[]);
-                    [forecast,gen,buildings] = update_forecast(gen,buildings,cool_tower,subnet,options,date(2:end),test_data.HistProf,prev_data,now_data,future_data);%% function that creates demand vector with time intervals coresponding to those selected
-                    [wy_forecast, gen] = water_year_forecast(gen,buildings,cool_tower,subnet,options,date,wy_forecast,test_data);%if october 1st,Run a yearly forecast for hydrology
+                    [forecast,gen,buildings] = update_forecast(gen,buildings,fluid_loop,subnet,options,date(2:end),test_data,dispatch);%% function that creates demand vector with time intervals coresponding to those selected
+                    [wy_forecast, gen] = water_year_forecast(gen,buildings,fluid_loop,subnet,options,date,wy_forecast,test_data);%if october 1st,Run a yearly forecast for hydrology
                     forecast.wy_forecast = wy_forecast;
-                    [Solution,flag] = dispatch_loop(gen,buildings,cool_tower,subnet,op_mat_a,op_mat_b,one_step,options,date,forecast,[]);
+                    [Solution,flag] = dispatch_loop(gen,buildings,fluid_loop,subnet,op_mat_a,op_mat_b,one_step,options,date,forecast,[]);
                 else%otherwise just change the dates and use the previous solution,
                     forecast.Timestamp = date(2:end);
                 end   
-                [s_i,date,gen,buildings,cool_tower,design,dispatch,predicted] = dispatch_record(gen,buildings,cool_tower,subnet,options,test_data,s_i,date,forecast,Solution,design,dispatch,predicted);%put solution into Plant.Design
+                [s_i,date,gen,buildings,fluid_loop,design,dispatch,predicted] = dispatch_record(gen,buildings,fluid_loop,subnet,options,test_data,s_i,date,forecast,Solution,design,dispatch,predicted);%put solution into Plant.Design
                 if isfield(subnet,'Hydro')
                     n_s = length(date)-1;
                     for n = 1:1:length(subnet.Hydro.nodes)
@@ -83,7 +73,7 @@ for i_ts = 1:1:length(test_sys)%Run through list of projects
             if ~isfield(test_sys(i_ts),'Design') || isempty(test_sys(i_ts).Design) || any(test_sys(i_ts).Design.Timestamp==0) %at least some points have not been run
                 STR = 'Optimizing Dispatch Throughout Entire Year';
                 planning_waitbar=waitbar(0,STR,'Visible','on');
-                [gen,buildings,cool_tower,test_data,design,~,~,~] = run_simulation(test_data.Timestamp(1),0,1,[],test_data,test_data.HistProf,gen,buildings,cool_tower,network,options,subnet,data);
+                [gen,buildings,fluid_loop,design,~,~] = run_simulation(test_data.Timestamp(1),num_steps,s_i,[],test_data,gen,buildings,fluid_loop,options,subnet,op_mat_a,op_mat_b,one_step,design,dispatch,predicted,[]);
                 close(planning_waitbar)
             end
         end
@@ -93,7 +83,7 @@ for i_ts = 1:1:length(test_sys)%Run through list of projects
         test_sys(i_ts).Generator = gen;
         test_sys(i_ts).optimoptions = options;
         test_sys(i_ts).Building = buildings;
-        test_sys(i_ts).cool_tower = cool_tower;
+        test_sys(i_ts).fluid_loop = fluid_loop;
         timestamp(:,i_ts) = design.Timestamp;
     else
         design = test_sys(i_ts).Design;

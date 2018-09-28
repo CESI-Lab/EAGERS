@@ -30,6 +30,7 @@ end
 
 [x,feasible] = call_solver(qp);
 if feasible ~=1
+    solution = x;
     disp('some additional contraints making problem infeasible, tried adding infinite sources');
 else
     solution = sort_solution(x,qp);

@@ -41,8 +41,8 @@ end
 
 scale_cost = update_cost(date,gen);%% All costs were assumed to be 1 when building matrices, update Generator costs for the given time
 
-if isfield(data_t0,'Weather') && isfield(data_t0.Weather,'irradDireNorm')
-    data_t0.Renewable = renewable_output(gen,subnet,date,data_t0.Weather.irradDireNorm);
+if isfield(data_t0,'Weather') && isfield(data_t0.Weather,'DNIWm2')
+    data_t0.Renewable = renewable_output(gen,subnet,date,data_t0.Weather.DNIWm2);
 end
 
 marginal = update_mc(gen,[],scale_cost,[],0);%update marginal cost
@@ -55,11 +55,11 @@ else
     flag = 0;
     [~,i_best] = min(cost);
     ic = disp_comb(i_best,:);
-    gen = set_ic(gen,ic,50,data_t0);
+    gen = set_ic(gen,ic,50);
 end
 end%Ends function automatic_ic
 
-function gen = set_ic(gen,ic,stor_perc,data_t0)
+function gen = set_ic(gen,ic,stor_perc)
 n_g = length(gen);
 lb = zeros(1,n_g);
 for i=1:1:n_g
@@ -74,9 +74,5 @@ for i=1:1:n_g
     end
     gen(i).CurrentState(1) = ic(i);
     gen(i).Status = ic(i)>lb(i);
-    if isfield(data_t0,'WYForecast') && strcmp(gen(i).Type,'Hydro Storage')
-        n = gen(i).QPform.Hydro.subnetNode;%dam #
-        gen(i).CurrentState(2) = interp1(data_t0.WYForecast.Timestamp,data_t0.WYForecast.hydroSOC(:,n),date);
-    end
 end
 end%ends function set_ic

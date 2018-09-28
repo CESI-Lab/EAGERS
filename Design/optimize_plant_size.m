@@ -17,6 +17,12 @@ for i = 1:1:length(range(:,1))
         upper_bound(end+1) = range{i,10};
     end
 end
+
+%%add some condition hear to go into discrete sizing mode.
+%% edit the variable multiple in the call of design test to change # of generators
+%% design_test(testSystems(SYSINDEX), gen_size, multiple, i_searchable, TestData, use_design_day, n_years);
+
+
 if length(i_searchable) == 1
     optimize_component_size(i_searchable,lower_bound,upper_bound);
 elseif length(i_searchable)>1
@@ -33,8 +39,9 @@ elseif length(i_searchable)>1
     % Optimization parameters.
     plot_fcn_list = {@psw_plot_best_obj_vals,@psw_plot_iter_time,@psw_plot_best_combos, @psw_plot_combos};
     options = optimoptions('particleswarm', 'Display','iter','SwarmSize', 20,'OutputFcn', @psw_output,'PlotFcn', plot_fcn_list);
-
-    obj_func = @(gen_size)design_test(testSystems(SYSINDEX), gen_size, i_searchable, TestData, use_design_day, n_years);
+    
+    multiple = ones(length(i_searchable),1);
+    obj_func = @(gen_size)design_test(testSystems(SYSINDEX), gen_size, multiple, i_searchable, TestData, use_design_day, n_years);
     [optim_size, ~, ~, ~] = particleswarm(obj_func, length(i_searchable), lower_bound, upper_bound, options);
 
     % update the plant with optimal generator sizes
