@@ -12,34 +12,53 @@ switch mode
                     T_sup = varargin{6};
                     w_sup = varargin{7};
                     all_outdoor = varargin{8};
-                    coil.rated_air_flow(k,1) = flow;
                     T_amb = 35;
                     if all_outdoor
                         T_mix = 26.7;
+                        w_mix = 0.01115; %T_wb = 19.5, RH = 50.7%
                     else
                         T_mix = 35;
+                        w_mix = 0.014; %T_wb = 23.9, RH = 40%
                     end
-                    w_mix = 0.01115; %T_wb = 19.5, RH = 50.7%
-                    h_mix = (1.006*T_mix + w_mix.*(2501 + 1.86*T_mix));%kJ/kg %ASHRAE 2013 fundamentals eq. 32 (http://www.ce.utexas.edu/prof/Novoselac/classes/ARE383/Handouts/F01_06SI.pdf)
-
-                    h_sup = (1.006*T_sup + w_sup.*(2501 + 1.86*T_sup));%kJ/kg %ASHRAE 2013 fundamentals eq. 32 (http://www.ce.utexas.edu/prof/Novoselac/classes/ARE383/Handouts/F01_06SI.pdf)
+                    h_mix = psychometric_h(T_mix,w_mix);
+                    h_sup = psychometric_h(T_sup,w_sup);
+                    
                     peak_capacity = flow*(h_mix-h_sup)*1000;% kg/s * kJ/kg * 1000 J/kJ = W
                     CapMod = eval_curve(curve,coil.capacity_v_temperature_curve{k},[T_mix,T_amb]); 
                     CC_rated = peak_capacity/CapMod;
-
                     if all_outdoor
                         CC_rated = max(min(CC_rated,flow/0.00001677),flow/0.00003355);
                     else
                         CC_rated = max(min(CC_rated,flow/0.00004027),flow/0.00006041);
                     end
-                    coil.rated_capacity(k,1) = CC_rated;
+                    
+                    rated_slope = (w_mix - w_sup)/(T_mix - T_sup);
+                    %%find apparatus dewpoint
+                    T_search_K = linspace(5,T_sup)+273;
+                    P = 101.325; % atmospheric pressure (kPa)
+                    satP = exp((-5.8002206e3)./T_search_K + 1.3914993 - 4.8640239e-2*T_search_K + 4.1764768e-5*T_search_K.^2 - 1.4452093e-8*T_search_K.^3 + 6.5459673*log(T_search_K))/1000; %saturated water vapor pressure ASHRAE 2013 fundamentals eq. 6 in kPa valid for 0 to 200C
+                    W_s = 0.62198*satP./(P-satP);
+                    W_coil_linear_extrap = rated_slope*(T_search_K-273-T_sup) + w_sup;
+                    apparatus_dewpoint = T_search_K(nnz(W_s<W_coil_linear_extrap))-273;
+                    h_ADP = psychometric_h(apparatus_dewpoint,W_s(nnz(W_s<W_coil_linear_extrap)));
+                    rated_bypass_factor = (h_sup - h_ADP)/(h_mix-h_ADP);
+                    coil.rated_A0(k,1) = -log(rated_bypass_factor)*flow;
+                    
+                    if isnan(coil.rated_sensible_heat_ratio(k,1))
+                        h_ADP_search = psychometric_h(T_search_K-273,W_s);
+                        w_ADP = interp1(h_ADP_search,W_s,h_ADP);
+                        coil.rated_sensible_heat_ratio(k,1) = min(1,(psychometric_h(T_mix,w_ADP)-h_ADP)/(h_mix - h_ADP));
+                    end
                     switch coil.type{k}
                         case 'DX:TwoSpeed'
+                            coil.rated_air_flow(k,1) = flow;
+                            coil.rated_capacity(k,1) = CC_rated;
                             coil.rated_capacity2(k,1) = CC_rated/2;
                             coil.rated_air_flow2(k,1) = flow/2;
                             varargout = {coil};
                         case 'DX:SingleSpeed'
-                            %%%
+                            coil.rated_air_flow(k,1) = flow;
+                            coil.rated_capacity(k,1) = CC_rated;
                     end
                 end
                 varargout = {coil};
@@ -103,17 +122,12 @@ switch mode
                 air_in = varargin{5};
                 T_db = varargin{6}; %outside dry air temperature
                 sensible_load = varargin{7};
-
-                air_out = air_in;
-                if air_out.m_dot>1e-8 && sensible_load>0
-                    air_out.h = (air_in.h.*air_in.m_dot - sensible_load/1000)/air_out.m_dot;
-                    air_out.w = ones(length(air_in.T),1)*varargin{8}; %humidity
-                    air_out.T = (air_out.h - air_out.w*2501)./(1.006 + air_out.w*1.86);%Temperature in C using enthalpy in kJ/kg and humidity in massH2O/massAir
-
-                    %add details if exceeding max load, or if water condenses
+                
+                bypass_factor = exp(-coil.rated_A0(k)./air_in.m_dot);
+                if air_in.m_dot>1e-8 && sensible_load>0
                     switch coil.type{k}
                         case 'DX:TwoSpeed'
-                            input(:,1) = air_in.T; %needs to be wet-bulb, once I figure out humidity
+                            input(:,1) = psychometric_Twb(air_in); 
                             input(:,2) = T_db; %needs to be outdoor wetbulb temperature if it is an evaporative cooled condenser
                             TotCapTempMod_1 = eval_curve(curve,coil.capacity_v_temperature_curve{k},input);
                             EIRTempMod_1 = eval_curve(curve,coil.energy_input_v_temperature_curve{k},input);
@@ -124,24 +138,46 @@ switch mode
                             TotCapFlowMod = eval_curve(curve,coil.capacity_v_flow_curve{k},input2); 
                             EIRFlowMod = eval_curve(curve,coil.energy_input_v_flow_curve{k},input2);  
 
-                            max_load_1 = coil.rated_capacity(k)*TotCapTempMod_1*TotCapFlowMod;
-                            max_load_2 = coil.rated_capacity2(k)*TotCapTempMod_2*TotCapFlowMod;
+                            Q_1 = coil.rated_capacity(k)*TotCapTempMod_1*TotCapFlowMod;
+                            Q_2 = coil.rated_capacity2(k)*TotCapTempMod_2*TotCapFlowMod;
                             EIR_1 = (1/coil.rated_COP(k))*EIRTempMod_1*EIRFlowMod;%energy input ratio
                             EIR_2 = (1/coil.rated_COP2(k))*EIRTempMod_2*EIRFlowMod;%energy input ratio
-
-                            Speed_ratio = max(0,(sensible_load - max_load_2)/(max_load_1 - max_load_2));
+                            
+                            
+                            Speed_ratio = max(0,(sensible_load - Q_2)/(Q_1 - Q_2));
                             if Speed_ratio>0
-                                Power = Speed_ratio*max_load_1*EIR_1 + (1-Speed_ratio)*max_load_2*EIR_2;
-                                heat_rejected = Speed_ratio*max_load_1*(1+EIR_1) + (1-Speed_ratio)*max_load_2*(1+EIR_2);
-                            else
+                                error = 1;
                                 PLR = sensible_load/(coil.rated_capacity(k)*coil.rated_sensible_heat_ratio(k)); %
+                                while abs(error)>1e-3
+                                    air_out = coil_air_out(air_in,Q_1,bypass_factor,PLR);
+                                    spec_heat_supply = 1006 + 1860*air_out.w; %J/kg*K
+                                    error = min(2,max(-.5,(sensible_load - air_out.m_dot*(air_in.T - air_out.T)*spec_heat_supply)/sensible_load));
+                                    PLR = PLR*(1+error);%(psychometric_h(air_in) - psychometric_h(air_in.T - sensible_load/air_in.m_dot/spec_heat_supply,air_out.w))/(psychometric_h(air_in)-psychometric_h(air_out))^1.3;%re-scale to meet correct sensible load
+                                end
+                                revised_sensible_load = PLR*(coil.rated_capacity(k)*coil.rated_sensible_heat_ratio(k)); %
+                                Speed_ratio = max(0,(revised_sensible_load - Q_2)/(Q_1 - Q_2));
+                                Power = Speed_ratio*Q_1*EIR_1 + (1-Speed_ratio)*Q_2*EIR_2;
+                                heat_rejected = Speed_ratio*Q_1*(1+EIR_1) + (1-Speed_ratio)*Q_2*(1+EIR_2);
+                            else
+                                error = 1;
+                                PLR = sensible_load/(coil.rated_capacity2(k)*coil.rated_sensible_heat_ratio(k)); %
+                                while abs(error)>1e-3
+                                    air_out = coil_air_out(air_in,Q_2,bypass_factor,PLR);
+                                    spec_heat_supply = 1006 + 1860*air_out.w; %J/kg*K
+                                    error = min(2,max(-.5,(sensible_load - air_out.m_dot*(air_in.T - air_out.T)*spec_heat_supply)/sensible_load));
+                                    PLR = PLR*(1+error);%(psychometric_h(air_in) - psychometric_h(air_in.T - sensible_load/air_in.m_dot/spec_heat_supply,air_out.w))/(psychometric_h(air_in)-psychometric_h(air_out))^1.3;%re-scale to meet correct sensible load
+                                end
                                 PartLoadFrac = max(.7,eval_curve(curve,coil.part_load_curve{k},PLR));
                                 RTF = PLR./PartLoadFrac;%runtime fraction
-                                Power = max_load_2*EIR_2*RTF;
-                                heat_rejected = max_load_2*(1+EIR_2);
+                                Power = Q_2*EIR_2*RTF;
+                                heat_rejected = Q_2*(1+EIR_2);
                             end  
+                            air_out.m_dot = air_in.m_dot;
+                            air_out.h = (air_in.h.*air_in.m_dot - sensible_load/1000)/air_out.m_dot;
+                            air_out.w = ones(length(air_in.T),1)*varargin{8}; %humidity
+                            air_out.T = (air_out.h - air_out.w*2501)./(1.006 + air_out.w*1.86);%Temperature in C using enthalpy in kJ/kg and humidity in massH2O/massAir
                         case 'DX:SingleSpeed'
-                            input(:,1) = air_in.T; %needs to be wet-bulb, once I figure out humidity
+                            input(:,1) = psychometric_Twb(air_in); 
                             input(:,2) = T_db; %needs to be outdoor wetbulb temperature if it is an evaporative cooled condenser
                             TotCapTempMod= eval_curve(curve,coil.capacity_v_temperature_curve{k},input);
                             EIRTempMod = eval_curve(curve,coil.energy_input_v_temperature_curve{k},input);
@@ -151,16 +187,25 @@ switch mode
                             EIRFlowMod= eval_curve(curve,coil.energy_input_v_flow_curve{k},input2);  
                             PLR = sensible_load/(coil.rated_capacity(k)*coil.rated_sensible_heat_ratio(k)); %
                             PartLoadFrac = max(.7,eval_curve(curve,coil.part_load_curve{k},PLR));
-
-                            max_load = coil.rated_capacity(k)*TotCapTempMod*TotCapFlowMod;
+                            Q_total = coil.rated_capacity(k)*TotCapTempMod*TotCapFlowMod;
+                            
+                            error = 1;
+                            while abs(error)>1e-3
+                                air_out = coil_air_out(air_in,Q_total,bypass_factor,PLR);
+                                spec_heat_supply = 1006 + 1860*air_out.w; %J/kg*K
+                                error = min(2,max(-.5,(sensible_load - air_out.m_dot*(air_in.T - air_out.T)*spec_heat_supply)/sensible_load));
+                                PLR = PLR*(1+error);%(psychometric_h(air_in) - psychometric_h(air_in.T - sensible_load/air_in.m_dot/spec_heat_supply,air_out.w))/(psychometric_h(air_in)-psychometric_h(air_out))^1.3;%re-scale to meet correct sensible load
+                            end
+                            
                             EIR = (1/coil.rated_COP(k))*EIRTempMod*EIRFlowMod;%energy input ratio
                             RTF = PLR./PartLoadFrac;%runtime fraction
-                            Power = max_load*EIR*RTF;
-                            heat_rejected = max_load*(1+EIR);
+                            Power = Q_total*EIR*RTF;
+                            heat_rejected = Q_total*(1+EIR);
                     end
                     %%need to add sensible/latent heat calculations for moisture.
                 else
                     Power = 0;
+                    air_out = air_in;
                 end
                 varargout = {air_out,Power};
             case 'Water:Detailed'
@@ -274,19 +319,24 @@ switch mode
 end
 end%Ends function cooling_coil
 
-function out = eval_curve(curve,name,input)
-k = nonzeros((1:length(curve.name))'.*strcmpi(name,curve.name));
-x = min(curve.max_x(k),max(curve.min_x(k),input(:,1)));
-switch curve.type{k}
-    case 'Quadratic'
-        out = curve.a0(k) + curve.a1(k)*x + curve.a2(k)*x.^2;
-    case 'Cubic'
-        out = curve.a0(k) + curve.a1(k)*x + curve.a2(k)*x.^2 + curve.a3(k)*x.^3;
-    case 'Biquadratic'
-        y = min(curve.max_y(k),max(curve.min_y(k),input(:,2)));
-        out = curve.a0(k) + curve.a1(k)*x + curve.a2(k)*x.^2 + curve.b1(k)*y + curve.b2(k)*y.^2 + curve.ab(k)*x.*y;
-    case 'Bicubic'
-        y = min(curve.max_y(k),max(curve.min_y(k),input(:,2)));
-        out = curve.a0(k) + curve.a1(k)*x + curve.a2(k)*x.^2 + curve.a3(k)*x.^3 + curve.b1(k)*y + curve.b2(k)*y.^2 + curve.b3(k)*y.^3 + curve.ab(k)*x.*y + curve.aab(k)*x.^2.*y + curve.abb(k)*x.*y.^2;
+function air_out = coil_air_out(air_in,Q_total,bypass_factor,PLR)
+%%find apparatus dewpoint
+h_ADP = air_in.h - (Q_total/air_in.m_dot)/(1-bypass_factor)/1000;%convert W/(kg/s) to kJ
+T_search_K = linspace(5,40,20)+273;
+P = 101.325; % atmospheric pressure (kPa)
+satP = exp((-5.8002206e3)./T_search_K + 1.3914993 - 4.8640239e-2*T_search_K + 4.1764768e-5*T_search_K.^2 - 1.4452093e-8*T_search_K.^3 + 6.5459673*log(T_search_K))/1000; %saturated water vapor pressure ASHRAE 2013 fundamentals eq. 6 in kPa valid for 0 to 200C
+W_s = 0.62198*satP./(P-satP);
+h_ADP_search = psychometric_h(T_search_K-273,W_s);
+w_ADP = interp1(h_ADP_search,W_s,h_ADP);
+
+air_out.m_dot = air_in.m_dot;
+air_out.h = air_in.h - Q_total*PLR/air_out.m_dot/1000;%convert W/(kg/s) to kJ
+if air_in.w<w_ADP %dry coil
+    air_out.w = air_in.w;
+else
+    sensible_heat_ratio = min(1,(psychometric_h(air_in.T,w_ADP)-h_ADP)/(air_in.h - h_ADP));
+    h_Tin_w_out = air_in.h - (1-sensible_heat_ratio)*(air_in.h - air_out.h);
+    air_out.w = psychometric_w(air_in.T,h_Tin_w_out); 
 end
-end%Ends function eval_curve
+air_out.T = psychometric_T(air_out.h,air_out.w);
+end%Ends function coil_air_out

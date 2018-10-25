@@ -59,6 +59,7 @@ infiltration = zeros(n_s,n);
 Q_zone_gain = zeros(n_s,n);
 W_zone_gain = zeros(n_s,n);
 Q_surf_absorb = zeros(n_s,length(building.ctf.capacitance));%interior, intermediate and exterior surfaces
+frost = zeros(n_s+1,length(building.cases.name)); %need to make as initial condition that is passed from previous time step
 
 air_density = 1.225; %kg/m^3
 sig = 5.67e-8;% W/m^2*K^4 Stephan-Boltzman const
@@ -67,7 +68,6 @@ ir_intensity = Sky_emissivity*sig.*(weather.DrybulbC+273).^4;%W/m^2
 T_sky = (ir_intensity/sig).^.25 - 273;
 [~,mon,~] = datevec(date);
 T_ground = building.ground_temperatures(mon);
-cos_phi_vert = building.surfaces.normal(:,3)./(building.surfaces.normal(:,1).^2 + building.surfaces.normal(:,2).^2 + building.surfaces.normal(:,3).^2).^.5; %portion of surface pointed upwards
 
 tolerance = 1e-2;
 for t = 1:1:n_s
@@ -75,8 +75,8 @@ for t = 1:1:n_s
     Tair_z = weather.DrybulbC(t) - 0.0065*building.ctf.z_height;%outdoor air temp next to each zone
     Tair_s = weather.DrybulbC(t) - 0.0065*building.ctf.s_height;%outdoor air temp next to each exterior surface
     [~,~,occupancy(t,:),mixing(:,:,t),infiltration(t,:),Q_zone_gain(t,:),Q_surf_absorb(t,:),...
-        W_zone_gain(t,:),internal_irrad_window,T_set_now,cos_phi_windows] = ...
-        zone_loads(building,date(t+1),prof_now,weather.DNIWm2(t),weather.DHIWm2(t),T_zone(t,:),m_v_zone(t,:),dt(t),Tair_z');
+        W_zone_gain(t,:),internal_irrad_window,T_set_now,cos_phi_windows,frost(t+1,:)] = ...
+        zone_loads(building,date(t+1),prof_now,weather.DNIWm2(t),weather.DHIWm2(t),T_zone(t,:),m_v_zone(t,:),dt(t),Tair_z',m_v_air,frost(t,:));
 
 %%%Part A, iterate to find T_supply and M_supply that achieves temperature constraints
     T_zone_est = T_zone(t,:)';
@@ -89,9 +89,9 @@ for t = 1:1:n_s
         [T_windows_int(t,:),T_windows_ext(t,:),Q_windows(t,:),h_windows] = ...
             window_temperature(building,cos_phi_windows',T_zone_est+273,T_surf_est(building.ctf.sur_state1)+273,Tair_z+273,T_sky(t)+273,spec_heat_air(t),weather.DNIWm2(t),weather.DHIWm2(t),weather.Wdirdegrees(t),weather.Wspdms(t),internal_irrad_window,T_windows_int(t,:)'+273,T_windows_ext(t,:)'+273);
         h_rad = internal_radiation(building.zones.view_factors,[building.surfaces.area_rad;building.windows.area],[T_surf_est(building.ctf.sur_state1);T_windows_int(t,:)']+273);
-        h = natural_convection(building.surfaces.normal,T_surf_est(building.ctf.sur_state1) - building.ctf.map_sur2zone'*T_zone_est,cos_phi_vert);%interior surface convection = h*A*(Tsur - Tzone) 
+        h = natural_convection(building.surfaces,T_surf_est(building.ctf.sur_state1) - building.ctf.map_sur2zone'*T_zone_est,T_set_now.no_hvac);%interior surface convection = h*A*(Tsur - Tzone) 
         h(strcmp(building.surfaces.type,'InternalMass')) = 0;
-        [h_s,h_sky,T_exterior] = exterior_convection(building.surfaces,building.ctf.sur_state2,T_surf_est,Tair_s,weather.Wdirdegrees(t),weather.Wspdms(t),T_sky(t),T_ground(t),cos_phi_vert);%exterior surface convection terms
+        [h_s,h_sky,T_exterior] = exterior_convection(building.surfaces,building.ctf.sur_state2,T_surf_est,Tair_s,weather.Wdirdegrees(t),weather.Wspdms(t),T_sky(t),T_ground(t));%exterior surface convection terms
         
         Q_mixing = air_density*(1006 + 1860*m_v_zone_est).*(net_mixing*T_zone_est - sum(net_mixing,2).*T_zone_est);%heat into zone from another zone
         Q_infiltration = air_density*infiltration(t,:)'.*spec_heat_air(t).*(Tair_z - T_zone_est);%heat into zone from air infiltration 
@@ -185,7 +185,7 @@ transmit = windows.solar_transmittance.*cos_phi_sun.*(1+(0.768+0.817*windows.sol
 f1 = (((2.403*cos_phi_sun - 6.192).*cos_phi_sun + 5.625).*cos_phi_sun - 2.095).*cos_phi_sun + 1;
 f2 = (((-1.188*cos_phi_sun + 2.022).*cos_phi_sun + 0.137).*cos_phi_sun - 1.720).*cos_phi_sun;
 reflect = windows.solar_reflectance.*(f1 + f2.*windows.solar_heat_gain.^.5)./(0.7413 - (0.7396*windows.solar_heat_gain.^.5));
-%% need transmit/reflec as fcn agle for regular glazing
+%% need transmit/reflect as fcn agle for regular glazing
 
 
 windows.visible_absorptance = max(0,1 - transmit - reflect);%%solve equation on page 290 for absorptance, for single layer it is what is not transmitted or reflected
@@ -200,16 +200,15 @@ T_i = T_zone(windows.zone_index);
 S1 = .5*(solar_normal*cos_phi_sun.*windows.visible_absorptance + solar_diffuse*diffuse_absorptance + internal_irrad.visible'.*windows.visible_absorptance);
 S2 = S1 + windows.thermal_absorptance.*internal_irrad.long_wave';
 
-cos_phi_vert = building.windows.normal(:,3)./(building.windows.normal(:,1).^2 + building.windows.normal(:,2).^2 + building.windows.normal(:,3).^2).^.5; %portion of window pointed upwards
-F_sky = 0.5*(1+cos_phi_vert);
+F_sky = 0.5*(1+building.windows.cos_phi);
 leward = (cos(w_dir)*windows.normal(:,1) +  sin(w_dir)*windows.normal(:,1))<0;%oreintation relative to wind (surface normal is outward facing)
 error = 1;
 count = 0;
 while error>1e-1 && count<10
-    Eo = windows.thermal_absorptance.*windows.emittance_front.*sig.*((0.5*(1-cos_phi_vert)).*T_o.^4 ...
+    Eo = windows.thermal_absorptance.*windows.emittance_front.*sig.*((0.5*(1-building.windows.cos_phi)).*T_o.^4 ...
         + F_sky.^1.5.*T_sky.^4 + F_sky.*(1-F_sky.^.5).*T_o.^4);
     Ei = windows.thermal_absorptance.*windows.emittance_back.*sig.*(building.zones.view_factors(length(T_surf)+1:end,:)*[T_surf.^4;T_int.^4]);
-    h_n_ext = natural_convection(windows.normal, T_ext - T_o,cos_phi_vert);
+    h_n_ext = natural_convection(windows, T_ext - T_o,[]);
     h_o = (h_n_ext.^2 + (3.26*w_speed^.89)^2).^.5;
     h_o(leward) = (h_n_ext(leward).^2 + (3.55*w_speed^.617)^2).^.5;
 
@@ -250,47 +249,57 @@ for i = 1:1:length(hvac.plenum.name)
 end
 end%Ends function plenum_mixing
 
-function h = natural_convection(normal,dT,cos_phi)
-%%TARP method
-vertical = abs(normal(:,3))<1e-3; %vertical surface
-upwards = (dT<0 & normal(:,3)>0) | (dT>0 & normal(:,3)<0);
-downwards = ~vertical & ~upwards;
-h = 1.31*(max(0.01,abs(dT)).^(1/3));%avoid dT = 0
-h_up = 9.482/1.31*h./(7.283-abs(cos_phi));
-h_down = 1.81/1.31*h./(1.382+abs(cos_phi));
-h(upwards) = h_up(upwards);
-h(downwards) = h_down(downwards);
+function h = natural_convection(surface,dT,nat_buoyancy)
+%%need to expand active algorithm selector
+%A) simple buoyancy
+h_buoy = 1.31*abs(dT).^(1/3);%ASHRAE vertical surface
+h_tilt_unstable = 9.482*abs(dT).^(1/3)./(7.283-abs(surface.cos_phi));%Walton for tilted surfaces
+h_tilt_stable = 1.81*abs(dT).^(1/3)./(1.382-abs(surface.cos_phi));%Walton for tilted surfaces
+stable  = (surface.normal(:,3)<-1e-3 & dT>0) | (surface.normal(:,3)>1e-3 & dT<0);
+unstable  = (surface.normal(:,3)<-1e-3 & dT<0) | (surface.normal(:,3)>1e-3 & dT>0);
+h_buoy(stable) = h_tilt_stable(stable);
+h_buoy(unstable) = h_tilt_unstable(unstable);
+%% TARP method
+h = max(.1,h_buoy);
+%% other methods see pg 105 of reference
+% if isempty(nat_buoyancy)
+%     h = max(.1,h_buoy);
+% else
+%     %B) Mechanical Central Air Diffuser
+%     h_cent = h_buoy;
+%     
+%     h = max(.1,h_cent);
+%     h(nat_buoyancy) = max(.1,h_buoy(nat_buoyancy));
+% end
 end%ends function natural_convection
 
-function [h_s,h_sky,T_exterior] = exterior_convection(surface,sur_state2,Tsurf,Tair,w_dir,w_speed,T_sky,T_ground,cos_phi)
+function [h_s,h_sky,T_exterior] = exterior_convection(surface,sur_state2,Tsurf,Tair,w_dir,w_speed,T_sky,T_ground)
 sig = 5.67e-8;% W/m^2*K^4 Stephan-Boltzman const
-n_sur = length(surface.name);
-ext = nonzeros((1:n_sur)'.*(strcmp(surface.boundary,'Outdoors') | strcmp(surface.boundary,'Ground')));
-n_ext = length(ext);
+n_ext = length(surface.exterior.cos_phi);
 h_s = zeros(n_ext,1);
 T_exterior = zeros(n_ext,1);
 T_exterior_sur = Tsurf(sur_state2);
 
-F_grnd = 0.5*(1-cos_phi(ext));
-F_sky = 0.5*(1+cos_phi(ext));
+F_grnd = 0.5*(1-surface.exterior.cos_phi);
+F_sky = 0.5*(1+surface.exterior.cos_phi);
 beta = F_sky.^.5;
-h_n = natural_convection(surface.normal((ext),:),T_exterior_sur - Tair,cos_phi(ext));
+h_n = natural_convection(surface.exterior,T_exterior_sur - Tair,[]);
 h_glass = (h_n.^2 + (3.26*w_speed^.89)^2).^.5;
-leward = (cos(w_dir)*surface.normal(ext,1) +  sin(w_dir)*surface.normal(ext,1))<0;%oreintation relative to wind (surface normal is outward facing)
+leward = (cos(w_dir)*surface.exterior.normal(:,1) +  sin(w_dir)*surface.exterior.normal(:,1))<0;%oreintation relative to wind (surface normal is outward facing)
 h_glass(leward) = (h_n(leward).^2 + (3.55*w_speed^.617)^2).^.5;
-h_wind = h_n + surface.roughness_factor(ext).*(h_glass-h_n);
+h_wind = h_n + surface.exterior.roughness_factor.*(h_glass-h_n);
 
-h_ground = surface.absorptance.thermal(ext,2)*sig.*F_grnd.*((T_exterior_sur+273).^4 - (Tair+273).^4)./(T_exterior_sur - Tair);
+h_ground = surface.exterior.thermal_absorptance(:,2)*sig.*F_grnd.*((T_exterior_sur+273).^4 - (Tair+273).^4)./(T_exterior_sur - Tair);
 h_ground(T_exterior_sur == Tair) = 4*Tair(T_exterior_sur == Tair).^3;%avoid nan by using derivative
-h_sky = surface.absorptance.thermal(ext,2)*sig.*F_sky.*beta.*((T_exterior_sur+273).^4 - (T_sky+273).^4)./(T_exterior_sur - T_sky);
+h_sky = surface.exterior.thermal_absorptance(:,2)*sig.*F_sky.*beta.*((T_exterior_sur+273).^4 - (T_sky+273).^4)./(T_exterior_sur - T_sky);
 h_sky(T_exterior_sur == T_sky) = 4*Tair(T_exterior_sur == T_sky).^3;%avoid nan by using derivative
-h_air = surface.absorptance.thermal(ext,2)*sig.*F_sky.*(1-beta).*((T_exterior_sur+273).^4 - (Tair+273).^4)./(T_exterior_sur - Tair);
+h_air = surface.exterior.thermal_absorptance(:,2)*sig.*F_sky.*(1-beta).*((T_exterior_sur+273).^4 - (Tair+273).^4)./(T_exterior_sur - Tair);
 h_air(T_exterior_sur == Tair) = 4*Tair(T_exterior_sur == Tair).^3;%avoid nan by using derivative
 
-a = strcmp(surface.boundary(ext),'Outdoors');
+a = strcmp(surface.exterior.boundary,'Outdoors');
 h_s(a) = h_wind(a) + h_air(a) + h_ground(a);
 T_exterior(a) = Tair(a);
-b = strcmp(surface.boundary(ext),'Ground');
+b = strcmp(surface.exterior.boundary,'Ground');
 T_exterior(b) = T_ground;
 end%Ends function exterior convection
 
@@ -340,7 +349,11 @@ for i = 1:1:sub_steps %loop through the wall at a faster time freq, so that inte
     T_zone = new(1:z);
     T_surf = new(z+1:z+s);
     m_v_zone = new(z+s+1:end);
+%     if any(T_zone>100) || any(T_zone<-30) || any(T_surf>100) || any(T_surf<-30) || any(m_v_zone>.05) || any(m_v_zone<0.0008)
+%         disp('wtf')
+%     end
 end
+
 
 % Q_surfaces = (h_A_T - h_A.*T_new');
 % Q_mixing = air_density*spec_heat_zone.*(mixing*T_setpoint - sum(mixing,2).*T_new');%heat into zone from another zone

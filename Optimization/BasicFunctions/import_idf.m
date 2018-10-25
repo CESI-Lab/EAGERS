@@ -71,25 +71,8 @@ building.ctf = build_ctf(building);
 for i = 1:1:length(building.HVAC.fans.name)
     building.HVAC.fans.schedule(i) = {fix_schedule_name(building.HVAC.fans.schedule{i},building.schedule)};
 end
+[building.cases,building.walk_ins,building.racks] = refrigeration(objects,building.zones.name);
 %% other component and equipment categories
-A = nonzeros((1:j)'.*strcmp(objects.type,'Refrigeration:Case'));
-prop = {'schedule';'zone';'rated_ambient_T';'rated_ambient_RH';'capacity_per_length';'latent_heat_ratio';'runtime_fraction';'length';'temperature';'latent_credit_curve_type';'latent_credit_curve_name';'fan_power_per_length';'operating_fan_power_per_length';'standard_lighting_per_unit_length';'installed_standard_lighting_per_unit_length';'light_schedule';'light_to_case';'anti_sweat_heater_per_length';'minimum_anti_sweat_per_length';'anti_sweat_control';'humidity_at_zero_percent';'height';'anti_sweat_heat_to_case';'defrost_power_per_length';'defrost_type';'defrost_schedule';'defrost_drip_down_schedule';'defrost_curve_type';'defrost_curve_name';'return_air_frac';'restock_schedule';'case_credit_fraction_schedule'};
-building.cases = load_object([],objects.name(A),objects.value(A),prop,0);
-if ~isempty(building.cases)
-    zones = building.cases.zone;
-    building.cases.zone = zeros(length(A),1);
-    for k = 1:1:length(A)%some cases don't have last condition
-        z = nonzeros((1:length(building.zones.name))'.*strcmpi(zones{k},building.zones.name));
-        building.cases.zone(k) = z;
-    end
-end
-
-building.walk_ins = [];%need to add this object type
-
-A = nonzeros((1:j)'.*strcmp(objects.type,'Refrigeration:CompressorRack'));
-prop = {'heat_reject_location';'design_COP';'COP_curve';'fan_power';'fan_power_temperature_curve';'condensor_type';'water_inlet';'water_outlet';'water_loop_type';'water_condensor_temperature_schedule';'water_flow_rate';'water_max_flow';'water_max_outlet_T';'water_min_inlet_T';'evap_condenser_schedule';'evap_condenser_effectiveness';'evap_condenser_air_flow';'basin_heater_capacity';'basin_heater_setpoint';'water_pump_power';'water_supply_tank';'condenser_air_inlet';'end_use';'case_name';};
-building.racks = load_object([],objects.name(A),objects.value(A),prop,0);
-
 A = nonzeros((1:j)'.*strcmp(objects.type,'WaterUse:Equipment'));
 building.water_use = import_idf_water_use(objects.name(A),objects.value(A),building.zones.name);
 end%Ends function import_idf
@@ -448,7 +431,7 @@ for j = 1:1:n_sur
     if ~strcmp(surf.type{j},'InternalMass')
         mat = construct.(fix_name(surf.construct{j}));
         surf.resistance(j,1) = {resistance(mat,material,surf.area(j),surf.i_nodes)};
-        surf.capacitance(j,1) = {capacitance(mat,material,surf.area(j),surf.resistance(j),surf.i_nodes)};
+        surf.capacitance(j,1) = {capacitance(mat,material,surf.area(j),surf.resistance{j},surf.i_nodes)};
     else
         surf.capacitance(j,1) = {capacitance(construct.(fix_name(surf.construct{j})),material,surf.area(j),[],surf.i_nodes)};
     end
@@ -512,7 +495,8 @@ for j = 1:1:length(A)
         surf.(prop1{p})(j,1) = {fix_name(value{p})};
     end
     surf.vertices(j,1) = {surface_vertices(value(10:9+str2double(value{9})))};
-    [surf.area(j,1),surf.normal(j,:)] = find_area(surf.vertices{j});
+    surf.height(j,1)  = max(surf.vertices{j}(:,3)) - min(surf.vertices{j}(:,3));
+    [surf.area(j,1),surf.perimeter(j,1),surf.normal(j,:)] = find_area(surf.vertices{j});
     mat = construct.(fix_name(surf.construct{j}));
     surf.roughness(j,1) = {material.(mat{1}).roughness{1}};%outside surface material roughness
     [surf.absorptance.solar(j,:),surf.absorptance.thermal(j,:),surf.absorptance.visible(j,:)] = absorptance(mat,material);
@@ -522,7 +506,6 @@ surf.roughness_factor(strcmpi(surf.roughness,'Rough'),1) = 1.67;
 surf.roughness_factor(strcmpi(surf.roughness,'MediumRough'),1) = 1.52;
 surf.roughness_factor(strcmpi(surf.roughness,'MediumSmooth'),1) = 1.13;
 surf.roughness_factor(strcmpi(surf.roughness,'Smooth'),1) = 1.11;
-
 for k = 1:1:length(A2)
     value = objects.value{A2(k)};
     surf.name(j+k,1) = {fix_name(objects.name{A2(k)})};
@@ -535,6 +518,21 @@ for k = 1:1:length(A2)
     surf.boundary(j+k,1) = {''};
     surf.object(j+k,1) = {''};    
 end
+surf.cos_phi = surf.normal(:,3)./(surf.normal(:,1).^2 + surf.normal(:,2).^2 + surf.normal(:,3).^2).^.5; %portion of surface pointed upwards
+
+surf.orientation.vertical = abs(surf.normal(:,3))<1e-3; 
+surf.orientation.horizontal =  abs(surf.normal(:,1))<1e-3 &  abs(surf.normal(:,2))<1e-3;
+surf.orientation.tilted = ~surf.orientation.vertical & ~surf.orientation.horizontal;
+surf.orientation.ceiling = surf.orientation.horizontal & surf.normal(:,3)<0;
+surf.orientation.floor = surf.orientation.horizontal & surf.normal(:,3)>0;
+
+n_sur = length(surf.name);
+ext = nonzeros((1:n_sur)'.*(strcmp(surf.boundary,'Outdoors') | strcmp(surf.boundary,'Ground')));
+surf.exterior.normal = surf.normal(ext,:);
+surf.exterior.cos_phi = surf.cos_phi(ext);
+surf.exterior.thermal_absorptance = surf.absorptance.thermal(ext,:);
+surf.exterior.boundary = surf.boundary(ext);
+surf.exterior.roughness_factor = surf.roughness_factor(ext);
 end%ends function import_idf_surfaces
 
 function [window,door] = import_window_door(objects,construct,material)
@@ -569,7 +567,7 @@ for j = 1:1:length(B)
             window.surf_name(w,1) = {fix_name(value{3})};
             window.frame_name(w,1) = value(7);
             window.vertices(w,1) = {surface_vertices(value(10:9+str2double(value{9})))};
-            [window.area(w,1),window.normal(w,:)] = find_area(window.vertices{w,1});
+            [window.area(w,1),window.perimeter(w,1),window.normal(w,:)] = find_area(window.vertices{w,1});
             k = nonzeros((1:length(frames))'.*strcmp(window.frame_name{w},frame_names));
             if ~isempty(k)
                 window.frame = frames{k};
@@ -588,6 +586,12 @@ for j = 1:1:length(B)
         %need double pane window capability
     end
 end
+window.cos_phi = window.normal(:,3)./(window.normal(:,1).^2 + window.normal(:,2).^2 + window.normal(:,3).^2).^.5; %portion of surface pointed upwards
+window.orientation.vertical = abs(window.normal(:,3))<1e-3; 
+window.orientation.horizontal =  abs(window.normal(:,1))<1e-3 &  abs(window.normal(:,2))<1e-3;
+window.orientation.tilted = ~window.orientation.vertical & ~window.orientation.horizontal;
+window.orientation.ceiling = window.orientation.horizontal & window.normal(:,3)<0;
+window.orientation.floor = window.orientation.horizontal & window.normal(:,3)>0;
 end%Ends function import_window_door
 
 function vertices = surface_vertices(vert)
@@ -663,6 +667,50 @@ for k = 1:1:length(value)
     construct.(name) = layers;
 end
 end%ends function import_idf_construction
+
+function [cases,walk_ins,racks] = refrigeration(objects,z_names)
+j = length(objects.name);
+A = nonzeros((1:j)'.*strcmp(objects.type,'Refrigeration:Case'));
+prop = {'schedule';'zone';'rated_ambient_T';'rated_ambient_RH';'capacity_per_length';'latent_heat_ratio';'runtime_fraction';'length';'temperature';'latent_credit_curve_type';'latent_credit_curve_name';'fan_power_per_length';'operating_fan_power_per_length';'standard_lighting_per_unit_length';'installed_standard_lighting_per_unit_length';'light_schedule';'light_to_case';'anti_sweat_heater_per_length';'minimum_anti_sweat_per_length';'anti_sweat_control';'humidity_at_zero_percent';'height';'anti_sweat_heat_to_case';'defrost_power_per_length';'defrost_type';'defrost_schedule';'defrost_drip_down_schedule';'defrost_curve_type';'defrost_curve_name';'return_air_frac';'restock_schedule';'case_credit_fraction_schedule'};
+cases = load_object([],objects.name(A),objects.value(A),prop,0);
+if ~isempty(cases)
+    zones = cases.zone;
+    cases.zone = zeros(length(A),1);
+    for k = 1:1:length(A)%some cases don't have last condition
+        z = nonzeros((1:length(z_names))'.*strcmpi(zones{k},z_names));
+        cases.zone(k) = z;
+    end
+else
+    cases.name = [];
+end
+
+walk_ins = [];%need to add this object type
+
+C = nonzeros((1:j)'.*strcmp(objects.type,'Refrigeration:CompressorRack'));
+if isempty(C)
+    racks.name = [];
+else
+    prop = {'heat_reject_location';'design_COP';'COP_curve';'fan_power';'fan_power_temperature_curve';'condensor_type';'water_inlet';'water_outlet';'water_loop_type';'water_condensor_temperature_schedule';'water_flow_rate';'water_max_flow';'water_max_outlet_T';'water_min_inlet_T';'evap_condenser_schedule';'evap_condenser_effectiveness';'evap_condenser_air_flow';'basin_heater_capacity';'basin_heater_setpoint';'water_pump_power';'water_supply_tank';'condenser_air_inlet';'end_use';'case_name';};
+    racks = load_object([],objects.name(C),objects.value(C),prop,0);    
+end
+racks.cases = cell(length(C),1);
+
+D = nonzeros((1:j)'.*strcmp(objects.type,'Refrigeration:CaseAndWalkInList'));
+for i = 1:1:length(D)
+    r = nonzeros((1:length(C))'.*strcmpi(objects.name{D(i)},racks.case_name));
+    value = objects.value{D(i)};
+    c_num = zeros(length(value),1);
+    for j = 1:1:length(value)
+        c_num(j) = nonzeros((1:length(A)).*strcmpi(value{j},cases.name));
+    end
+    racks.cases(r) = {c_num};
+end
+for i = 1:1:length(racks.cases)
+    if isempty(racks.cases{i})
+        racks.cases(i) = {nonzeros((1:length(A)).*strcmpi(racks.case_name{i},cases.name))};
+    end
+end
+end%Ends function refrigeration
 
 function water_use = import_idf_water_use(names,values,zone_names)
 prop = {'end_use_category';'peak_flow';'flow_schedule';'target_temperature_schedule';'hot_supply_temperature_schedule';'cold_supply_temperature_schedule';'zone';'sensible_frac_schedule';'latent_frac_schedule'};
@@ -806,6 +854,8 @@ for i = 1:1:n
         R(j+1:j+i_nodes-1) = mat.thickness/mat.conductivity/A/(i_nodes-1);% K/W 
     elseif isfield(mat,'thermal_resistance')
         R(j+1:j+i_nodes-1) = mat.thermal_resistance/A/(i_nodes-1);% K/W 
+    else
+        disp('what happens here')
     end
     j = j + i_nodes - 1;
 end
@@ -866,7 +916,7 @@ if length(layers)>1%record properties of outside layer if different
 end
 end%Ends function absorptance
 
-function [area,normal] = find_area(vertices)
+function [area,perimeter,normal] = find_area(vertices)
 P1 = vertices(1,:);
 P2 = vertices(2,:);
 P3 = vertices(3,:);
@@ -886,11 +936,12 @@ b = normal_v(2);%y-value of normal vector
 c = normal_v(3);%z-value of normal vector 
 mag = (a^2 + b^2 + c^2)^.5;%magnitude of normal vector
 normal = normal_v/mag;
+n_v = length(vertices(:,1));
 if a~=0 || b~=0 %not in X-Y plane, need to rotate
     if dot([a,b,0],[1,0,0]) == 0 %single rotation about x-axis
         theta_z = sign(normal(2))*acos(dot(normal,[0,0,1]));%angle between normal and z-axis (rotate around y-axis)
         R_x = [1 0 0; 0 cos(theta_z) -sin(theta_z); 0 sin(theta_z) cos(theta_z);];
-        for k = 1:1:length(vertices(:,1))
+        for k = 1:1:n_v
             vertices(k,:) = (R_x*vertices(k,:)')';
         end
     else
@@ -899,12 +950,13 @@ if a~=0 || b~=0 %not in X-Y plane, need to rotate
         normal2 = (R_z*normal')';
         theta_z = -sign(normal(1))*acos(dot(normal2,[0,0,1]));%angle between normal and z-axis (rotate around y-axis)
         R_y = [cos(theta_z) 0 sin(theta_z); 0 1 0; -sin(theta_z) 0 cos(theta_z);];
-        for k = 1:1:length(vertices(:,1))
+        for k = 1:1:n_v
             vertices(k,:) = (R_y*R_z*vertices(k,:)')';
         end
     end
 end
-area = polyarea(vertices(:,1),vertices(:,2));
+area = abs(sum((vertices([2:n_v 1],1) - vertices(:,1)).* (vertices([2:n_v 1],2) + vertices(:,2)))/2);%area under each segment in x-dir, length of segment * average height in y
+perimeter = abs(sum(((vertices([2:n_v 1],1) - vertices(:,1)).^2 + (vertices([2:n_v 1],2) - vertices(:,2)).^2).^.5));
 end%Ends function find_area
 
 function name = fix_schedule_name(name,schedule)

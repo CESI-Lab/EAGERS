@@ -27,7 +27,11 @@ for i = 1:1:length(z_objects(:,1))
     size_info.zone.user_load(z,a) = str2double(z_objects{i,4});
     size_info.zone.calc_flow(z,a) = str2double(z_objects{i,5});
     size_info.zone.user_flow(z,a) = str2double(z_objects{i,6});
-    size_info.zone.hour_of_day(z,a) = time_convert(z_objects{i,8});
+    if isempty(z_objects{i,8})
+        size_info.zone.hour_of_day(z,a) = 12;
+    else
+        size_info.zone.hour_of_day(z,a) = time_convert(z_objects{i,8});
+    end
 end
 
 size_info.loop_flow = zeros(length(l_names),1);

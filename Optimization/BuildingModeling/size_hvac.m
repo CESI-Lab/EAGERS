@@ -245,7 +245,7 @@ if ~isempty(building.HVAC.unitary_sys)
             output.cool = size_param.zone.user_load(i,2);    
             output.cool_T = interp1(linspace(0,24,24/ts+1),[T_mix_s(1,j);T_mix_s(:,j)],size_param.zone.hour_of_day(i,2));
             output.cool_w = interp1(linspace(0,24,24/ts+1),[w_mix_s(1,j);w_mix_s(:,j)],size_param.zone.hour_of_day(i,2));
-            output.cool_m_dot = size_param.zone_flow(z,2)*air_density;
+            output.cool_m_dot = size_param.zone.user_flow(z,2)*air_density;
             output.cool_des_T = building.zones.t_supply_c(z);
             output.cool_des_w = building.zones.humid_supply_c(z);
             output.all_cool = false;
@@ -253,7 +253,7 @@ if ~isempty(building.HVAC.unitary_sys)
             output.heat = size_param.zone.user_load(i,1);    
             output.heat_T = interp1(linspace(0,24,24/ts+1),[T_mix_s(1,j);T_mix_s(:,j)],size_param.zone.hour_of_day(i,1));
             output.heat_w = interp1(linspace(0,24,24/ts+1),[w_mix_s(1,j);w_mix_s(:,j)],size_param.zone.hour_of_day(i,1));
-            output.heat_m_dot = size_param.zone_flow(z,1)*air_density;
+            output.heat_m_dot = size_param.zone.user_flow(z,1)*air_density;
             output.nominal_flow = size_param.zone_flow(z);
             building = unitary_sys_size(building,output,i);
         end

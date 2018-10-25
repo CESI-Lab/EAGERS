@@ -348,12 +348,7 @@ if ~isempty(A) || ~isempty(B)
     for i = 1:1:n_hc
         coils.cooling.rated_capacity(i) = str2double(hc_rc{i});
         coils.cooling.rated_air_flow(i) = str2double(cc_rf{i});
-        a = str2double(cc_shr{i});
-        if isnan(a)
-            coils.cooling.rated_sensible_heat_ratio(i) = 1;
-        else
-            coils.cooling.rated_sensible_heat_ratio(i) = a;
-        end
+        coils.cooling.rated_sensible_heat_ratio(i) = str2double(cc_shr{i});
     end
 end
 
