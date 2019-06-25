@@ -1,11 +1,11 @@
 %% SOFC stack with basic control of fuel and air flow
 function Plant = SOFCstack
 global SimSettings
-SimSettings.NominalPower= 300;
+SimSettings.NominalPower= 100;
 Reformer = 'direct'; % options are 'internal' for indirect internal reforming, 'direct' for direct internal reforming, 'adiabatic' for external reforming using the heat from the anode (over-rides S2C ratio),'external' for an external reformer with heat captured from oxidixed anode exhaust, 'pox' partial oxidation reformer
 
 Utilization = 0.8; %global fuel utilization
-Steam2Carbon = 3.0;
+Steam2Carbon = 2.0;
 Air.N2 = .79;
 Air.O2 = .21;
 
@@ -60,7 +60,8 @@ Plant.Components.FuelSource.name = 'FuelSource';
 Plant.Components.FuelSource.InitialComposition = Fuel;
 if S2C<Steam2Carbon %there will be anode recirculation to heat incoming fuel
     Plant.Components.FuelSource.connections = {300;'';'Controller.FuelFlow';};
-else Plant.Components.FuelSource.connections = {900;'';'Controller.FuelFlow';};
+else
+    Plant.Components.FuelSource.connections = {900;'';'Controller.FuelFlow';};
 end
 
 if S2C<Steam2Carbon || strcmp(Reformer,'adiabatic')%add anode recirculation
@@ -137,7 +138,7 @@ Plant.Components.FC1.Mode = 'fuelcell'; % options are 'fuelcell' or 'electrolyze
 Plant.Components.FC1.PressureRatio = 1.2;
 Plant.Components.FC1.columns = 10;
 Plant.Components.FC1.rows = 1;
-Plant.Components.FC1.RatedStack_kW = 300; %Nominal Stack Power in kW
+Plant.Components.FC1.RatedStack_kW = SimSettings.NominalPower; %Nominal Stack Power in kW
 Plant.Components.FC1.Flow1Spec = Plant.Components.AirSource.InitialComposition; %initial oxidant composition
 Plant.Components.FC1.Flow2Spec = Fuel; %initial fuel composition at inlet
 Plant.Components.FC1.Steam2Carbon = Steam2Carbon;

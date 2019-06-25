@@ -1,0 +1,823 @@
+Program Version,EnergyPlus, Version 8.8.0-7c3bbe4830, YMD=2019.02.08 13:06
+! <Version>, Version ID
+ Version, 8.8
+! <Timesteps per Hour>, #TimeSteps, Minutes per TimeStep {minutes}
+ Timesteps per Hour,  6, 10
+! <System Convergence Limits>, Minimum System TimeStep {minutes}, Max HVAC Iterations, Minimum Plant Iterations, Maximum Plant Iterations
+ System Convergence Limits, 2, 25, 2, 8
+! <Simulation Control>, Do Zone Sizing, Do System Sizing, Do Plant Sizing, Do Design Days, Do Weather Simulation, Do HVAC Sizing Simulation
+ Simulation Control, Yes, Yes, Yes, No, Yes, No
+! <Output Reporting Tolerances>, Tolerance for Time Heating Setpoint Not Met, Tolerance for Zone Cooling Setpoint Not Met Time
+ Output Reporting Tolerances, 0.556, 0.556, 
+! <Site:GroundTemperature:BuildingSurface>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:BuildingSurface,  19.91,  19.92,  19.91,  19.93,  19.95,  20.04,  20.33,  20.06,  20.44,  20.09,  19.99,  19.95
+! <Site:GroundTemperature:FCfactorMethod>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:FCfactorMethod,   9.79,   9.47,  10.04,  10.94,  13.29,  15.11,  16.33,  16.71,  16.07,  14.66,  12.78,  11.03
+! <Site:GroundTemperature:Shallow>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:Shallow,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00
+! <Site:GroundTemperature:Deep>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:Deep,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00
+! <Site:GroundReflectance>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Site:GroundReflectance:SnowModifier>, Normal, Daylighting {dimensionless}
+ Site:GroundReflectance:SnowModifier,   1.000,   1.000
+! <Site:GroundReflectance:Snow>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance:Snow,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Site:GroundReflectance:Snow:Daylighting>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance:Snow:Daylighting,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Environment:Weather Station>,Wind Sensor Height Above Ground {m},Wind Speed Profile Exponent {},Wind Speed Profile Boundary Layer Thickness {m},Air Temperature Sensor Height Above Ground {m},Wind Speed Modifier Coefficient-Internal,Temperature Modifier Coefficient-Internal
+Environment:Weather Station,10.000,0.140,270.000,1.500,1.586,9.750E-003
+! <Site:Location>, Location Name, Latitude {N+/S- Deg}, Longitude {E+/W- Deg},  Time Zone Number {GMT+/-}, Elevation {m},  Standard Pressure at Elevation {Pa}, Standard RhoAir at Elevation
+Site:Location,SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,37.62,-122.38,-8.00,5.00,101265,1.2036
+! <Building Information>, Building Name,North Axis {deg},Terrain,  Loads Convergence Tolerance Value,Temperature Convergence Tolerance Value,  Solar Distribution,Maximum Number of Warmup Days,Minimum Number of Warmup Days
+ Building Information,Ref Bldg Large Hotel New2004_v1.3_5.0,0.000,City,4.00000E-002,0.20000,FullInteriorAndExterior,25,6
+! <Inside Convection Algorithm>, Algorithm {Simple | TARP | CeilingDiffuser | AdaptiveConvectionAlgorithm}
+Inside Convection Algorithm,TARP
+! <Outside Convection Algorithm>, Algorithm {SimpleCombined | TARP | MoWitt | DOE-2 | AdaptiveConvectionAlgorithm}
+Outside Convection Algorithm,DOE-2
+! <Sky Radiance Distribution>, Value {Anisotropic}
+Sky Radiance Distribution,Anisotropic
+! <Zone Air Solution Algorithm>, Value {ThirdOrderBackwardDifference | AnalyticalSolution | EulerMethod}
+ Zone Air Solution Algorithm, AnalyticalSolution
+! <Zone Air Carbon Dioxide Balance Simulation>, Simulation {Yes/No}, Carbon Dioxide Concentration
+ Zone Air Carbon Dioxide Balance Simulation, No,N/A
+! <Zone Air Generic Contaminant Balance Simulation>, Simulation {Yes/No}, Generic Contaminant Concentration
+ Zone Air Generic Contaminant Balance Simulation, No,N/A
+! <Zone Air Mass Flow Balance Simulation>, Enforce Mass Balance, Adjust Zone Mixing, Adjust Zone Infiltration {AddInfiltration | AdjustInfiltration | None}, Infiltration Zones {MixingSourceZonesOnly | AllZones}
+ Zone Air Mass Flow Balance Simulation, No,N/A,N/A,N/A
+! <HVACSystemRootFindingAlgorithm>, Value {RegulaFalsi | Bisection | BisectionThenRegulaFalsi | RegulaFalsiThenBisection}
+ HVACSystemRootFindingAlgorithm, RegulaFalsi
+! <Environment:Site Atmospheric Variation>,Wind Speed Profile Exponent {},Wind Speed Profile Boundary Layer Thickness {m},Air Temperature Gradient Coefficient {K/m}
+Environment:Site Atmospheric Variation,0.330,460.000,6.500000E-003
+! <Surface Geometry>,Starting Corner,Vertex Input Direction,Coordinate System,Daylight Reference Point Coordinate System,Rectangular (Simple) Surface Coordinate System
+ Surface Geometry,UpperLeftCorner,Counterclockwise,RelativeCoordinateSystem,RelativeCoordinateSystem,RelativeToZoneOrigin
+! <Surface Heat Transfer Algorithm>, Value {CTF - ConductionTransferFunction | EMPD - MoisturePenetrationDepthConductionTransferFunction | CondFD - ConductionFiniteDifference | HAMT - CombinedHeatAndMoistureFiniteElement} - Description,Inside Surface Max Temperature Limit{C}, Surface Convection Coefficient Lower Limit {W/m2-K}, Surface Convection Coefficient Upper Limit {W/m2-K}
+Surface Heat Transfer Algorithm, CTF - ConductionTransferFunction,200,0.10,1000.0
+! <Shading Summary>, Number of Fixed Detached Shades, Number of Building Detached Shades, Number of Attached Shades
+ Shading Summary,0,2,0
+! <Zone Summary>, Number of Zones, Number of Zone Surfaces, Number of SubSurfaces
+ Zone Summary,22,229,30
+! <Zone Information>,Zone Name,North Axis {deg},Origin X-Coordinate {m},Origin Y-Coordinate {m},Origin Z-Coordinate {m},Centroid X-Coordinate {m},Centroid Y-Coordinate {m},Centroid Z-Coordinate {m},Type,Zone Multiplier,Zone List Multiplier,Minimum X {m},Maximum X {m},Minimum Y {m},Maximum Y {m},Minimum Z {m},Maximum Z {m},Ceiling Height {m},Volume {m3},Zone Inside Convection Algorithm {Simple-Detailed-CeilingDiffuser-TrombeWall},Zone Outside Convection Algorithm {Simple-Detailed-Tarp-MoWitt-DOE-2-BLAST}, Floor Area {m2},Exterior Gross Wall Area {m2},Exterior Net Wall Area {m2},Exterior Window Area {m2}, Number of Surfaces, Number of SubSurfaces, Number of Shading SubSurfaces,  Part of Total Building Area
+ Zone Information, BANQUET_FLR_6,0.0,0.00,0.00,0.00,26.37,17.68,17.68,1,1,1,10.36,42.37,12.50,22.86,16.15,19.20,3.05,1010.89,TARP,DOE-2,331.66,97.55,65.34,32.21,6,1,0,Yes
+ Zone Information, BASEMENT,0.0,0.00,0.00,0.00,41.45,11.51,-1.22,1,1,1,0.00,86.56,0.00,22.86,-2.44,0.00,2.44,4826.37,TARP,DOE-2,1978.83,0.00,0.00,0.00,13,0,0,Yes
+ Zone Information, CAFE_FLR_1,0.0,0.00,0.00,0.00,70.26,2.90,1.98,1,1,1,53.95,86.56,0.00,5.79,0.00,3.96,3.96,748.35,TARP,DOE-2,188.86,152.17,86.55,65.62,7,1,0,Yes
+ Zone Information, CORRIDOR_FLR_3,0.0,0.00,0.00,0.00,43.28,14.33,8.53,1,4,1,4.57,81.99,5.79,22.86,7.01,10.06,3.05,1186.91,TARP,DOE-2,389.40,48.31,32.37,15.94,20,4,0,Yes
+ Zone Information, CORRIDOR_FLR_6,0.0,0.00,0.00,0.00,41.51,13.35,17.68,1,1,1,4.57,81.99,5.79,22.86,16.15,19.20,3.05,1256.16,TARP,DOE-2,412.12,85.47,57.25,28.22,15,3,0,Yes
+ Zone Information, DINING_FLR_6,0.0,0.00,0.00,0.00,63.55,17.68,17.68,1,1,1,47.55,79.55,12.50,22.86,16.15,19.20,3.05,1010.89,TARP,DOE-2,331.66,97.55,65.34,32.21,6,1,0,Yes
+ Zone Information, KITCHEN_FLR_6,0.0,0.00,0.00,0.00,82.99,14.11,17.68,1,1,1,79.55,86.56,5.79,22.86,16.15,19.20,3.05,314.87,TARP,DOE-2,103.30,87.33,60.95,26.38,8,3,0,Yes
+ Zone Information, LAUNDRY_FLR_1,0.0,0.00,0.00,0.00,84.28,14.33,1.98,1,1,1,81.99,86.56,5.79,22.86,0.00,3.96,3.96,309.22,TARP,DOE-2,78.04,85.75,85.75,0.00,6,0,0,Yes
+ Zone Information, LOBBY_FLR_1,0.0,0.00,0.00,0.00,38.29,12.45,1.98,1,1,1,0.00,81.99,0.00,22.86,0.00,3.96,3.96,5183.56,TARP,DOE-2,1308.19,434.79,349.55,85.24,18,1,0,Yes
+ Zone Information, MECH_FLR_1,0.0,0.00,0.00,0.00,61.87,17.68,1.98,1,1,1,53.95,69.80,12.50,22.86,0.00,3.96,3.96,650.80,TARP,DOE-2,164.24,62.80,62.80,0.00,6,0,0,Yes
+ Zone Information, RETAIL_1_FLR_1,0.0,0.00,0.00,0.00,5.79,2.90,1.98,1,1,1,0.00,11.58,0.00,5.79,0.00,3.96,3.96,265.76,TARP,DOE-2,67.07,68.84,45.54,23.30,6,1,0,Yes
+ Zone Information, RETAIL_2_FLR_1,0.0,0.00,0.00,0.00,5.79,9.14,1.98,1,1,1,0.00,11.58,5.79,12.50,0.00,3.96,3.96,307.76,TARP,DOE-2,77.67,26.57,26.57,0.00,6,0,0,Yes
+ Zone Information, ROOM_1_FLR_3,0.0,0.00,0.00,0.00,2.29,10.06,8.53,1,4,1,0.00,4.57,5.79,14.33,7.01,10.06,3.05,118.94,TARP,DOE-2,39.02,39.95,26.77,13.18,6,2,0,Yes
+ Zone Information, ROOM_1_FLR_6,0.0,0.00,0.00,0.00,2.29,10.06,17.68,1,1,1,0.00,4.57,5.79,14.33,16.15,19.20,3.05,118.94,TARP,DOE-2,39.02,39.95,26.76,13.19,6,2,0,Yes
+ Zone Information, ROOM_2_FLR_3,0.0,0.00,0.00,0.00,2.29,18.59,8.53,1,4,1,0.00,4.57,14.33,22.86,7.01,10.06,3.05,118.93,TARP,DOE-2,39.02,39.95,26.77,13.18,6,2,0,Yes
+ Zone Information, ROOM_2_FLR_6,0.0,0.00,0.00,0.00,2.29,18.59,17.68,1,1,1,0.00,4.57,14.33,22.86,16.15,19.20,3.05,118.93,TARP,DOE-2,39.02,39.95,26.76,13.19,6,2,0,Yes
+ Zone Information, ROOM_3_MULT19_FLR_3,0.0,0.00,0.00,0.00,8.53,9.14,8.53,1,76,1,6.71,10.36,5.79,12.50,7.01,10.06,3.05,74.75,TARP,DOE-2,24.52,11.15,7.47,3.68,6,1,0,Yes
+ Zone Information, ROOM_3_MULT9_FLR_6,0.0,0.00,0.00,0.00,7.93,7.62,17.68,1,9,1,4.57,11.28,5.79,9.45,16.15,19.20,3.05,74.77,TARP,DOE-2,24.53,20.44,13.69,6.75,6,1,0,Yes
+ Zone Information, ROOM_4_MULT19_FLR_3,0.0,0.00,0.00,0.00,12.19,19.51,8.53,1,76,1,10.36,14.02,16.15,22.86,7.01,10.06,3.05,74.77,TARP,DOE-2,24.53,11.15,7.47,3.68,6,1,0,Yes
+ Zone Information, ROOM_5_FLR_3,0.0,0.00,0.00,0.00,84.28,10.06,8.53,1,4,1,81.99,86.56,5.79,14.33,7.01,10.06,3.05,118.94,TARP,DOE-2,39.02,39.95,26.77,13.18,6,2,0,Yes
+ Zone Information, ROOM_6_FLR_3,0.0,0.00,0.00,0.00,84.28,18.59,8.53,1,4,1,81.99,86.56,14.33,22.86,7.01,10.06,3.05,118.93,TARP,DOE-2,39.02,39.95,26.77,13.18,6,2,0,Yes
+ Zone Information, STORAGE_FLR_1,0.0,0.00,0.00,0.00,74.37,17.68,1.98,1,1,1,69.80,78.94,12.50,22.86,0.00,3.96,3.96,375.47,TARP,DOE-2,94.76,36.23,36.23,0.00,6,0,0,Yes
+! <Zone Internal Gains Nominal>,Zone Name, Floor Area {m2},# Occupants,Area per Occupant {m2/person},Occupant per Area {person/m2},Interior Lighting {W/m2},Electric Load {W/m2},Gas Load {W/m2},Other Load {W/m2},Hot Water Eq {W/m2},Steam Equipment {W/m2},Sum Loads per Area {W/m2},Outdoor Controlled Baseboard Heat
+ Zone Internal Gains Nominal, BANQUET_FLR_6,331.66,238.6,1.390,0.719,13.990,67.817,0.000,0.000,0.000,0.000,81.807,No
+ Zone Internal Gains Nominal, BASEMENT,1978.83,53.3,37.160,2.691E-002,10.760,5.380,0.000,0.000,0.000,0.000,16.140,No
+ Zone Internal Gains Nominal, CAFE_FLR_1,188.86,135.9,1.390,0.719,13.990,5.380,0.000,0.000,0.000,0.000,19.370,No
+ Zone Internal Gains Nominal, CORRIDOR_FLR_3,389.40,4.2,92.900,1.076E-002,5.380,0.000,0.000,0.000,0.000,0.000,5.380,No
+ Zone Internal Gains Nominal, CORRIDOR_FLR_6,412.12,4.4,92.900,1.076E-002,5.380,0.000,0.000,0.000,0.000,0.000,5.380,No
+ Zone Internal Gains Nominal, DINING_FLR_6,331.66,238.6,1.390,0.719,13.990,67.817,0.000,0.000,0.000,0.000,81.807,No
+ Zone Internal Gains Nominal, KITCHEN_FLR_6,103.30,5.6,18.580,5.382E-002,12.910,514.779,1612.767,0.000,0.000,0.000,2140.456,No
+ Zone Internal Gains Nominal, LAUNDRY_FLR_1,78.04,3.4,23.230,4.305E-002,6.460,62.789,535.857,0.000,0.000,0.000,605.106,No
+ Zone Internal Gains Nominal, LOBBY_FLR_1,1308.19,422.0,3.100,0.323,11.840,8.070,0.000,0.000,0.000,0.000,19.910,No
+ Zone Internal Gains Nominal, MECH_FLR_1,164.24,0.0,N/A,0.000,16.140,5.380,0.000,0.000,0.000,0.000,21.520,No
+ Zone Internal Gains Nominal, RETAIL_1_FLR_1,67.07,10.8,6.190,0.162,16.140,10.760,0.000,0.000,0.000,0.000,26.900,No
+ Zone Internal Gains Nominal, RETAIL_2_FLR_1,77.67,12.5,6.190,0.162,16.140,10.760,0.000,0.000,0.000,0.000,26.900,No
+ Zone Internal Gains Nominal, ROOM_1_FLR_3,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_1_FLR_6,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_2_FLR_3,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_2_FLR_6,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_3_MULT19_FLR_3,24.52,1.5,16.350,6.116E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_3_MULT9_FLR_6,24.53,1.5,16.350,6.116E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_4_MULT19_FLR_3,24.53,1.5,16.350,6.116E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_5_FLR_3,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, ROOM_6_FLR_3,39.02,1.5,26.010,3.845E-002,11.840,14.300,0.000,0.000,0.000,0.000,26.140,No
+ Zone Internal Gains Nominal, STORAGE_FLR_1,94.76,2.0,46.450,2.153E-002,9.680,2.690,0.000,0.000,0.000,0.000,12.370,No
+! <People Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Number of People {},People/Floor Area {person/m2},Floor Area per person {m2/person},Fraction Radiant,Fraction Convected,Sensible Fraction Calculation,Activity level,ASHRAE 55 Warnings,Carbon Dioxide Generation Rate,Nominal Minimum Number of People,Nominal Maximum Number of People,MRT Calculation Type,Work Efficiency, Clothing Insulation Calculation Method,Clothing Insulation Calculation Method Schedule,Clothing,Air Velocity,Fanger Calculation,Pierce Calculation,KSU Calculation
+ People Internal Gains Nominal, BANQUET_FLR_6 PEOPLE,COMMON_OCC_SCH,BANQUET_FLR_6,331.66,238.6,238.6,0.719,1.390,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,239,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, BASEMENT PEOPLE,COMMON_OCC_SCH,BASEMENT,1978.83,53.3,53.3,2.691E-002,37.160,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,53,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, CAFE_FLR_1 PEOPLE,COMMON_OCC_SCH,CAFE_FLR_1,188.86,135.9,135.9,0.719,1.390,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,136,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, CORRIDOR_FLR_3 PEOPLE,COMMON_OCC_SCH,CORRIDOR_FLR_3,389.40,4.2,4.2,1.076E-002,92.900,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,4,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, CORRIDOR_FLR_6 PEOPLE,COMMON_OCC_SCH,CORRIDOR_FLR_6,412.12,4.4,4.4,1.076E-002,92.900,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,4,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, DINING_FLR_6 PEOPLE,COMMON_OCC_SCH,DINING_FLR_6,331.66,238.6,238.6,0.719,1.390,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,239,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, KITCHEN_FLR_6 PEOPLE,COMMON_OCC_SCH,KITCHEN_FLR_6,103.30,5.6,5.6,5.382E-002,18.580,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,6,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, LAUNDRY_FLR_1 PEOPLE,COMMON_OCC_SCH,LAUNDRY_FLR_1,78.04,3.4,3.4,4.305E-002,23.230,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,3,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, LOBBY_FLR_1 PEOPLE,COMMON_OCC_SCH,LOBBY_FLR_1,1308.19,422.0,422.0,0.323,3.100,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,422,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, RETAIL_1_FLR_1 PEOPLE,COMMON_OCC_SCH,RETAIL_1_FLR_1,67.07,10.8,10.8,0.162,6.190,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,11,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, RETAIL_2_FLR_1 PEOPLE,COMMON_OCC_SCH,RETAIL_2_FLR_1,77.67,12.5,12.5,0.162,6.190,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,13,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_1_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_1_FLR_3,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_1_FLR_6 PEOPLE,GUESTROOM_OCC_SCH,ROOM_1_FLR_6,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_2_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_2_FLR_3,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_2_FLR_6 PEOPLE,GUESTROOM_OCC_SCH,ROOM_2_FLR_6,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_3_MULT19_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_3_MULT19_FLR_3,24.52,1.5,1.5,6.116E-002,16.350,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,1,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_3_MULT9_FLR_6 PEOPLE,GUESTROOM_OCC_SCH,ROOM_3_MULT9_FLR_6,24.53,1.5,1.5,6.116E-002,16.350,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_4_MULT19_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_4_MULT19_FLR_3,24.53,1.5,1.5,6.116E-002,16.350,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_5_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_5_FLR_3,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, ROOM_6_FLR_3 PEOPLE,GUESTROOM_OCC_SCH,ROOM_6_FLR_3,39.02,1.5,1.5,3.845E-002,26.010,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+ People Internal Gains Nominal, STORAGE_FLR_1 PEOPLE,COMMON_OCC_SCH,STORAGE_FLR_1,94.76,2.0,2.0,2.153E-002,46.450,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,2,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+! <Lights Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Lighting Level {W},Lights/Floor Area {W/m2},Lights per person {W/person},Fraction Return Air,Fraction Radiant,Fraction Short Wave,Fraction Convected,Fraction Replaceable,End-Use Category,Nominal Minimum Lighting Level {W},Nominal Maximum Lighting Level {W}
+ Lights Internal Gains Nominal, BANQUET_FLR_6_LIGHTS,BLDG_LIGHT_SCH,BANQUET_FLR_6,331.66,238.6,4639.888,13.990,19.446,0.000,0.700,0.200,0.100,1.000,General,0.000,4639.888
+ Lights Internal Gains Nominal, BASEMENT_LIGHTS,BLDG_LIGHT_SCH,BASEMENT,1978.83,53.3,21292.213,10.760,399.842,0.000,0.700,0.200,0.100,1.000,General,0.000,21292.213
+ Lights Internal Gains Nominal, CAFE_FLR_1_LIGHTS,BLDG_LIGHT_SCH,CAFE_FLR_1,188.86,135.9,2642.178,13.990,19.446,0.000,0.700,0.200,0.100,1.000,General,0.000,2642.178
+ Lights Internal Gains Nominal, CORRIDOR_FLR_3_LIGHTS,BLDG_LIGHT_SCH,CORRIDOR_FLR_3,389.40,4.2,2094.997,5.380,499.802,0.000,0.700,0.200,0.100,1.000,General,0.000,2094.997
+ Lights Internal Gains Nominal, CORRIDOR_FLR_6_LIGHTS,BLDG_LIGHT_SCH,CORRIDOR_FLR_6,412.12,4.4,2217.231,5.380,499.802,0.000,0.700,0.200,0.100,1.000,General,0.000,2217.231
+ Lights Internal Gains Nominal, DINING_FLR_6_LIGHTS,BLDG_LIGHT_SCH,DINING_FLR_6,331.66,238.6,4639.888,13.990,19.446,0.000,0.700,0.200,0.100,1.000,General,0.000,4639.888
+ Lights Internal Gains Nominal, KITCHEN_FLR_6_LIGHTS,BLDG_LIGHT_SCH,KITCHEN_FLR_6,103.30,5.6,1333.661,12.910,239.867,0.000,0.700,0.200,0.100,1.000,General,0.000,1333.661
+ Lights Internal Gains Nominal, LAUNDRY_FLR_1_LIGHTS,BLDG_LIGHT_SCH,LAUNDRY_FLR_1,78.04,3.4,504.135,6.460,150.066,0.000,0.700,0.200,0.100,1.000,General,0.000,504.135
+ Lights Internal Gains Nominal, LOBBY_FLR_1_LIGHTS,BLDG_LIGHT_SCH,LOBBY_FLR_1,1308.19,422.0,15488.924,11.840,36.704,0.000,0.700,0.200,0.100,1.000,General,0.000,15488.924
+ Lights Internal Gains Nominal, MECH_FLR_1_LIGHTS,BLDG_LIGHT_SCH,MECH_FLR_1,164.24,0.0,2650.885,16.140,N/A,0.000,0.700,0.200,0.100,1.000,General,0.000,2650.885
+ Lights Internal Gains Nominal, RETAIL_1_FLR_1_LIGHTS,BLDG_LIGHT_SCH,RETAIL_1_FLR_1,67.07,10.8,1082.532,16.140,99.907,0.000,0.700,0.200,0.100,1.000,General,0.000,1082.532
+ Lights Internal Gains Nominal, RETAIL_2_FLR_1_LIGHTS,BLDG_LIGHT_SCH,RETAIL_2_FLR_1,77.67,12.5,1253.576,16.140,99.907,0.000,0.700,0.200,0.100,1.000,General,0.000,1253.576
+ Lights Internal Gains Nominal, ROOM_1_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_1_FLR_3,39.02,1.5,462.021,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,462.021
+ Lights Internal Gains Nominal, ROOM_1_FLR_6_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_1_FLR_6,39.02,1.5,462.021,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,462.021
+ Lights Internal Gains Nominal, ROOM_2_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_2_FLR_3,39.02,1.5,461.967,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,461.967
+ Lights Internal Gains Nominal, ROOM_2_FLR_6_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_2_FLR_6,39.02,1.5,461.967,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,461.967
+ Lights Internal Gains Nominal, ROOM_3_MULT19_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_3_MULT19_FLR_3,24.52,1.5,290.362,11.840,193.584,0.000,0.700,0.200,0.100,1.000,General,0.000,290.362
+ Lights Internal Gains Nominal, ROOM_3_MULT9_FLR_6_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_3_MULT9_FLR_6,24.53,1.5,290.442,11.840,193.584,0.000,0.700,0.200,0.100,1.000,General,0.000,290.442
+ Lights Internal Gains Nominal, ROOM_4_MULT19_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_4_MULT19_FLR_3,24.53,1.5,290.442,11.840,193.584,0.000,0.700,0.200,0.100,1.000,General,0.000,290.442
+ Lights Internal Gains Nominal, ROOM_5_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_5_FLR_3,39.02,1.5,462.021,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,462.021
+ Lights Internal Gains Nominal, ROOM_6_FLR_3_LIGHTS,GUESTROOM_LTG_SCH_BASE,ROOM_6_FLR_3,39.02,1.5,461.967,11.840,307.958,0.000,0.700,0.200,0.100,1.000,General,0.000,461.967
+ Lights Internal Gains Nominal, STORAGE_FLR_1_LIGHTS,BLDG_LIGHT_SCH,STORAGE_FLR_1,94.76,2.0,917.270,9.680,449.636,0.000,0.700,0.200,0.100,1.000,General,0.000,917.270
+! <ElectricEquipment Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Equipment Level {W},Equipment/Floor Area {W/m2},Equipment per person {W/person},Fraction Latent,Fraction Radiant,Fraction Lost,Fraction Convected,End-Use SubCategory,Nominal Minimum Equipment Level {W},Nominal Maximum Equipment Level {W}
+ ElectricEquipment Internal Gains Nominal, BANQUET_FLR_6_MISCPLUG_EQUIP,KITCHEN_ELEC_EQUIP_SCH,BANQUET_FLR_6,331.66,238.6,22492.000,67.817,94.266,0.000,0.500,0.000,0.500,MiscPlug,0.000,7872.200
+ ElectricEquipment Internal Gains Nominal, BASEMENT_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,BASEMENT,1978.83,53.3,10646.106,5.380,199.921,0.000,0.500,0.000,0.500,MiscPlug,0.000,10646.106
+ ElectricEquipment Internal Gains Nominal, CAFE_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,CAFE_FLR_1,188.86,135.9,1016.077,5.380,7.478,0.000,0.500,0.000,0.500,MiscPlug,0.000,1016.077
+ ElectricEquipment Internal Gains Nominal, DINING_FLR_6_MISCPLUG_EQUIP,KITCHEN_ELEC_EQUIP_SCH,DINING_FLR_6,331.66,238.6,22492.000,67.817,94.266,0.000,0.500,0.000,0.500,MiscPlug,0.000,7872.200
+ ElectricEquipment Internal Gains Nominal, KITCHEN_FLR_6_EXHFAN_EQUIP,KITCHEN_EXHAUST_SCH,KITCHEN_FLR_6,103.30,5.6,698.000,6.757,125.540,0.000,0.000,1.000,0.000,KitchenExhFan,0.000,698.000
+ ElectricEquipment Internal Gains Nominal, KITCHEN_FLR_6_MISCELEC_EQUIP,KITCHEN_ELEC_EQUIP_SCH,KITCHEN_FLR_6,103.30,5.6,52481.000,508.023,9439.029,0.200,0.500,0.100,0.200,MiscElec,0.000,18368.350
+ ElectricEquipment Internal Gains Nominal, LAUNDRY_FLR_1_MISCPLUG_EQUIP,LAUNDRYROOM_EQP_ELEC_SCH,LAUNDRY_FLR_1,78.04,3.4,4813.000,61.674,1432.685,0.000,0.500,0.000,0.500,MiscPlug,0.000,4813.000
+ ElectricEquipment Internal Gains Nominal, LAUNDRY_FLR_1_EXHFAN_EQUIP,ALWAYS_ON,LAUNDRY_FLR_1,78.04,3.4,87.000,1.115,25.897,0.000,0.000,1.000,0.000,LaundryExhFan,87.000,87.000
+ ElectricEquipment Internal Gains Nominal, LOBBY_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,LOBBY_FLR_1,1308.19,422.0,10557.062,8.070,25.017,0.000,0.500,0.000,0.500,MiscPlug,0.000,10557.062
+ ElectricEquipment Internal Gains Nominal, MECH_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,MECH_FLR_1,164.24,0.0,883.628,5.380,N/A,0.000,0.500,0.000,0.500,MiscPlug,0.000,883.628
+ ElectricEquipment Internal Gains Nominal, RETAIL_1_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,RETAIL_1_FLR_1,67.07,10.8,721.688,10.760,66.604,0.000,0.500,0.000,0.500,MiscPlug,0.000,721.688
+ ElectricEquipment Internal Gains Nominal, RETAIL_2_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,RETAIL_2_FLR_1,77.67,12.5,835.717,10.760,66.604,0.000,0.500,0.000,0.500,MiscPlug,0.000,835.717
+ ElectricEquipment Internal Gains Nominal, ROOM_1_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_1_FLR_3,39.02,1.5,558.015,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,558.015
+ ElectricEquipment Internal Gains Nominal, ROOM_1_FLR_6_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_1_FLR_6,39.02,1.5,558.015,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,558.015
+ ElectricEquipment Internal Gains Nominal, ROOM_2_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_2_FLR_3,39.02,1.5,557.950,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,557.950
+ ElectricEquipment Internal Gains Nominal, ROOM_2_FLR_6_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_2_FLR_6,39.02,1.5,557.950,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,557.950
+ ElectricEquipment Internal Gains Nominal, ROOM_3_MULT19_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_3_MULT19_FLR_3,24.52,1.5,350.691,14.300,233.805,0.000,0.500,0.000,0.500,General,0.000,350.691
+ ElectricEquipment Internal Gains Nominal, ROOM_3_MULT9_FLR_6_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_3_MULT9_FLR_6,24.53,1.5,350.787,14.300,233.805,0.000,0.500,0.000,0.500,General,0.000,350.787
+ ElectricEquipment Internal Gains Nominal, ROOM_4_MULT19_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_4_MULT19_FLR_3,24.53,1.5,350.787,14.300,233.805,0.000,0.500,0.000,0.500,General,0.000,350.787
+ ElectricEquipment Internal Gains Nominal, ROOM_5_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_5_FLR_3,39.02,1.5,558.015,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,558.015
+ ElectricEquipment Internal Gains Nominal, ROOM_6_FLR_3_PLUGMISC_EQUIP,GUESTROOM_EQP_SCH,ROOM_6_FLR_3,39.02,1.5,557.950,14.300,371.943,0.000,0.500,0.000,0.500,General,0.000,557.950
+ ElectricEquipment Internal Gains Nominal, STORAGE_FLR_1_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,STORAGE_FLR_1,94.76,2.0,254.902,2.690,124.951,0.000,0.500,0.000,0.500,MiscPlug,0.000,254.902
+! <GasEquipment Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Equipment Level {W},Equipment/Floor Area {W/m2},Equipment per person {W/person},Fraction Latent,Fraction Radiant,Fraction Lost,Fraction Convected,End-Use SubCategory,Nominal Minimum Equipment Level {W},Nominal Maximum Equipment Level {W}
+ GasEquipment Internal Gains Nominal, KITCHEN_FLR_6_MISCGAS_EQUIP,KITCHEN_GAS_EQUIP_SCH,KITCHEN_FLR_6,103.30,5.6,166606.000,1612.767,29965.108,0.100,0.200,0.700,0.000,MiscGas,0.000,49981.800
+ GasEquipment Internal Gains Nominal, LAUNDRY_FLR_1_MISCGAS_EQUIP,LAUNDRYROOM_EQP_GAS_SCH,LAUNDRY_FLR_1,78.04,3.4,41818.000,535.857,12447.960,0.000,0.500,0.000,0.500,MiscGas,0.000,41818.000
+! <Shadowing/Sun Position Calculations Annual Simulations>, Calculation Method, Value {days}, Allowable Number Figures in Shadow Overlap {}, Polygon Clipping Algorithm, Sky Diffuse Modeling Algorithm
+Shadowing/Sun Position Calculations Annual Simulations,AverageOverDaysInFrequency,7,15000,SutherlandHodgman,SimpleSkyDiffuseModeling,InternalCalculation,No
+! <#Refrigeration Compressor Racks>,Number of Refrigeration Compressor Racks
+! <Refrigeration Compressor Rack>,Compressor Rack Name, # Refrigerated Cases Connected,# WalkIn Coolers Connected, Heat Rejection Location, Condenser Type, COP
+!  <Refrigeration Case>,Refrigeration Case Number, Refrigeration Case Name,Zone Name,Zone Node #,Zone Node Name,Capacity (W/m),LHR,Temperature (C),Length (m),Fan (W/m),Installed Lighting (W/m),Anti-Sweat (W/m),Defrost (W/m)
+#Refrigeration Compressor Racks, 2
+ Refrigeration Compressor Rack,RACK1,1,0,Outdoors,Air-Cooled,1.500
+   Refrigeration Case,1,KITCHEN_FLR_6_CASE:1_WALKINFREEZER,KITCHEN_FLR_6,216,KITCHEN_FLR_6 AIR NODE,367.0,0.10,-23.0,7.3,34.0,16.4,0.0,273.0
+ Refrigeration Compressor Rack,RACK2,1,0,Outdoors,Air-Cooled,3.000
+   Refrigeration Case,2,KITCHEN_FLR_6_CASE:2_SELFCONTAINEDDISPLAYCASE,KITCHEN_FLR_6,216,KITCHEN_FLR_6 AIR NODE,734.0,8.00E-002,2.0,3.7,55.0,33.0,0.0,0.0
+! <Water Heater Information>,Type,Name,Volume {m3},Maximum Capacity {W},Standard Rated Recovery Efficiency, Standard Rated Energy Factor
+! <ZoneInfiltration Airflow Stats Nominal>,Name,Schedule Name,Zone Name, Zone Floor Area {m2}, # Zone Occupants,Design Volume Flow Rate {m3/s},Volume Flow Rate/Floor Area {m3/s/m2},Volume Flow Rate/Exterior Surface Area {m3/s/m2},ACH - Air Changes per Hour,Equation A - Constant Term Coefficient {},Equation B - Temperature Term Coefficient {1/C},Equation C - Velocity Term Coefficient {s/m}, Equation D - Velocity Squared Term Coefficient {s2/m2}
+ ZoneInfiltration Airflow Stats Nominal, BANQUET_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,BANQUET_FLR_6,331.66,238.6,2.946E-002,8.883E-005,6.864E-005,0.105,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, CAFE_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,CAFE_FLR_1,188.86,135.9,4.596E-002,2.433E-004,1.348E-004,0.221,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, CORRIDOR_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,CORRIDOR_FLR_3,389.40,4.2,1.459E-002,3.746E-005,3.020E-004,4.425E-002,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, CORRIDOR_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,CORRIDOR_FLR_6,412.12,4.4,2.581E-002,6.263E-005,5.187E-005,7.398E-002,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, DINING_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,DINING_FLR_6,331.66,238.6,2.946E-002,8.883E-005,6.864E-005,0.105,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, KITCHEN_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,KITCHEN_FLR_6,103.30,5.6,2.637E-002,2.553E-004,1.383E-004,0.302,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, LAUNDRY_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,LAUNDRY_FLR_1,78.04,3.4,2.590E-002,3.318E-004,3.020E-004,0.301,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, LOBBY_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,LOBBY_FLR_1,1308.19,422.0,0.131,1.004E-004,1.931E-004,9.119E-002,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, MECH_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,MECH_FLR_1,164.24,0.0,1.897E-002,1.155E-004,3.020E-004,0.105,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, RETAIL_1_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,RETAIL_1_FLR_1,67.07,10.8,2.079E-002,3.100E-004,1.530E-004,0.282,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, RETAIL_2_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,RETAIL_2_FLR_1,77.67,12.5,8.025E-003,1.033E-004,3.020E-004,9.387E-002,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_1_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_1_FLR_3,39.02,1.5,1.206E-002,3.092E-004,3.020E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_1_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_1_FLR_6,39.02,1.5,1.206E-002,3.092E-004,1.528E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_2_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_2_FLR_3,39.02,1.5,1.206E-002,3.092E-004,3.020E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_2_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_2_FLR_6,39.02,1.5,1.206E-002,3.092E-004,1.528E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_3_MULT19_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_3_MULT19_FLR_3,24.52,1.5,3.366E-003,1.373E-004,3.020E-004,0.162,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_3_MULT9_FLR_6_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_3_MULT9_FLR_6,24.53,1.5,6.173E-003,2.516E-004,1.373E-004,0.297,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_4_MULT19_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_4_MULT19_FLR_3,24.53,1.5,3.367E-003,1.373E-004,3.020E-004,0.162,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_5_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_5_FLR_3,39.02,1.5,1.206E-002,3.092E-004,3.020E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, ROOM_6_FLR_3_INFILTRATION,INFIL_QUARTER_ON_SCH,ROOM_6_FLR_3,39.02,1.5,1.206E-002,3.092E-004,3.020E-004,0.365,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, STORAGE_FLR_1_INFILTRATION,INFIL_QUARTER_ON_SCH,STORAGE_FLR_1,94.76,2.0,1.094E-002,1.155E-004,3.020E-004,0.105,1.000,0.000,0.000,0.000
+! <Mixing Airflow Stats Nominal>,Name,Schedule Name,Zone Name, Zone Floor Area {m2}, # Zone Occupants,Design Volume Flow Rate {m3/s},Volume Flow Rate/Floor Area {m3/s/m2},Volume Flow Rate/person Area {m3/s/person},ACH - Air Changes per Hour,From/Source Zone,Delta Temperature {C}
+ Mixing Airflow Stats Nominal, KITCHEN_FLR_6 EXHAUST FANMIXING_0,ALWAYS_ON,KITCHEN_FLR_6,103.30,5.6,1.844,1.785E-002,0.332,21.077,DINING_FLR_6,0.00
+! <AirFlow Model>, Simple
+ AirFlow Model, Simple
+! <RoomAir Model>, Zone Name, Mixing/Mundt/UCSDDV/UCSDCV/UCSDUFI/UCSDUFE/User Defined
+RoomAir Model,BANQUET_FLR_6,Mixing/Well-Stirred
+RoomAir Model,BASEMENT,Mixing/Well-Stirred
+RoomAir Model,CAFE_FLR_1,Mixing/Well-Stirred
+RoomAir Model,CORRIDOR_FLR_3,Mixing/Well-Stirred
+RoomAir Model,CORRIDOR_FLR_6,Mixing/Well-Stirred
+RoomAir Model,DINING_FLR_6,Mixing/Well-Stirred
+RoomAir Model,KITCHEN_FLR_6,Mixing/Well-Stirred
+RoomAir Model,LAUNDRY_FLR_1,Mixing/Well-Stirred
+RoomAir Model,LOBBY_FLR_1,Mixing/Well-Stirred
+RoomAir Model,MECH_FLR_1,Mixing/Well-Stirred
+RoomAir Model,RETAIL_1_FLR_1,Mixing/Well-Stirred
+RoomAir Model,RETAIL_2_FLR_1,Mixing/Well-Stirred
+RoomAir Model,ROOM_1_FLR_3,Mixing/Well-Stirred
+RoomAir Model,ROOM_1_FLR_6,Mixing/Well-Stirred
+RoomAir Model,ROOM_2_FLR_3,Mixing/Well-Stirred
+RoomAir Model,ROOM_2_FLR_6,Mixing/Well-Stirred
+RoomAir Model,ROOM_3_MULT19_FLR_3,Mixing/Well-Stirred
+RoomAir Model,ROOM_3_MULT9_FLR_6,Mixing/Well-Stirred
+RoomAir Model,ROOM_4_MULT19_FLR_3,Mixing/Well-Stirred
+RoomAir Model,ROOM_5_FLR_3,Mixing/Well-Stirred
+RoomAir Model,ROOM_6_FLR_3,Mixing/Well-Stirred
+RoomAir Model,STORAGE_FLR_1,Mixing/Well-Stirred
+! <AirflowNetwork Model:Control>, No Multizone or Distribution/Multizone with Distribution/Multizone without Distribution/Multizone with Distribution only during Fan Operation
+AirflowNetwork Model:Control,NoMultizoneOrDistribution
+! <Zone Volume Capacitance Multiplier>, Sensible Heat Capacity Multiplier, Moisture Capacity Multiplier, Carbon Dioxide Capacity Multiplier, Generic Contaminant Capacity Multiplier
+Zone Volume Capacitance Multiplier,   1.000 ,   1.000,   1.000,   1.000
+! <Load Timesteps in Zone Design Calculation Averaging Window>, Value
+ Load Timesteps in Zone Design Calculation Averaging Window,    6
+! <Heating Sizing Factor Information>, Sizing Factor ID, Value
+ Heating Sizing Factor Information, Global,   1.3300    
+ Heating Sizing Factor Information, Zone BANQUET_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone BASEMENT,   1.3300    
+ Heating Sizing Factor Information, Zone CAFE_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone CORRIDOR_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone CORRIDOR_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone DINING_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone KITCHEN_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone LAUNDRY_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone LOBBY_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone MECH_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone RETAIL_1_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone RETAIL_2_FLR_1,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_1_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_1_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_2_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_2_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_3_MULT19_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_3_MULT9_FLR_6,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_4_MULT19_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_5_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone ROOM_6_FLR_3,   1.3300    
+ Heating Sizing Factor Information, Zone STORAGE_FLR_1,   1.3300    
+! <Cooling Sizing Factor Information>, Sizing Factor ID, Value
+ Cooling Sizing Factor Information, Global,   1.3300    
+ Cooling Sizing Factor Information, Zone BANQUET_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone BASEMENT,   1.3300    
+ Cooling Sizing Factor Information, Zone CAFE_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone CORRIDOR_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone CORRIDOR_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone DINING_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone KITCHEN_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone LAUNDRY_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone LOBBY_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone MECH_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone RETAIL_1_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone RETAIL_2_FLR_1,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_1_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_1_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_2_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_2_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_3_MULT19_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_3_MULT9_FLR_6,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_4_MULT19_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_5_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone ROOM_6_FLR_3,   1.3300    
+ Cooling Sizing Factor Information, Zone STORAGE_FLR_1,   1.3300    
+! <Zone Sizing Information>, Zone Name, Load Type, Calc Des Load {W}, User Des Load {W}, Calc Des Air Flow Rate {m3/s}, User Des Air Flow Rate {m3/s}, Design Day Name, Date/Time of Peak, Temperature at Peak {C}, Humidity Ratio at Peak {kgWater/kgDryAir}, Floor Area {m2}, # Occupants, Calc Outdoor Air Flow Rate {m3/s}, Calc DOAS Heat Addition Rate {W}
+ Zone Sizing Information, BANQUET_FLR_6, Cooling, 36214.56004, 48165.36486, 2.86418, 3.80936, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 331.65745, 238.60248, 2.38602, 0.00000
+ Zone Sizing Information, BANQUET_FLR_6, Heating, 14656.75314, 19493.48168, 0.61109, 2.38602, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 331.65745, 238.60248, 2.38602, 0.00000
+ Zone Sizing Information, BASEMENT, Cooling, 27853.40325, 37045.02632, 2.19635, 2.92115, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 1978.83018, 53.25162, 0.49471, 0.00000
+ Zone Sizing Information, BASEMENT, Heating, 11857.40139, 15770.34385, 0.50364, 0.66984, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 1978.83018, 53.25162, 0.49471, 0.00000
+ Zone Sizing Information, CAFE_FLR_1, Cooling, 25924.38612, 34479.43354, 2.11382, 2.81138, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 13:20:00, 25.40000, 1.02534E-002, 188.86188, 135.87186, 1.35872, 0.00000
+ Zone Sizing Information, CAFE_FLR_1, Heating, 11207.70356, 14906.24574, 0.46706, 1.35872, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 188.86188, 135.87186, 1.35872, 0.00000
+ Zone Sizing Information, CORRIDOR_FLR_3, Cooling, 9450.55410, 12569.23695, 0.48087, 0.63955, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 14:20:00, 25.70000, 1.02534E-002, 389.40468, 4.19165, 0.38940, 0.00000
+ Zone Sizing Information, CORRIDOR_FLR_3, Heating, 2310.33416, 3072.74444, 7.84337E-002, 0.38940, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 24:00:00, 3.20000, 4.75845E-003, 389.40468, 4.19165, 0.38940, 0.00000
+ Zone Sizing Information, CORRIDOR_FLR_6, Cooling, 3872.20951, 5150.03864, 0.19703, 0.26206, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 15:00:00, 25.70000, 1.02534E-002, 412.12471, 4.43622, 0.10303, 0.00000
+ Zone Sizing Information, CORRIDOR_FLR_6, Heating, 4030.23119, 5360.20748, 0.13682, 0.18197, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 07:20:00, 3.20000, 4.75845E-003, 412.12471, 4.43622, 0.10303, 0.00000
+ Zone Sizing Information, DINING_FLR_6, Cooling, 37451.14436, 49810.02200, 2.96241, 3.94001, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 331.65745, 238.60248, 2.38602, 0.00000
+ Zone Sizing Information, DINING_FLR_6, Heating, 14227.41301, 18922.45930, 0.59259, 2.38602, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 331.65745, 238.60248, 2.38602, 0.00000
+ Zone Sizing Information, KITCHEN_FLR_6, Cooling, 18757.25336, 24947.14697, 1.24970, 1.66211, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 103.30446, 5.56000, 4.44800E-002, 0.00000
+ Zone Sizing Information, KITCHEN_FLR_6, Heating, 3460.84035, 4602.91766, 0.11858, 0.15771, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 07:10:00, 3.20000, 4.75845E-003, 103.30446, 5.56000, 4.44800E-002, 0.00000
+ Zone Sizing Information, LAUNDRY_FLR_1, Cooling, 47054.60122, 62582.61962, 3.70078, 4.92204, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 78.03947, 3.35943, 0.23600, 0.00000
+ Zone Sizing Information, LAUNDRY_FLR_1, Heating, 2769.04061, 3682.82401, 0.11577, 0.23600, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 78.03947, 3.35943, 0.23600, 0.00000
+ Zone Sizing Information, LOBBY_FLR_1, Cooling, 84089.44315, 111838.95939, 6.49658, 8.64046, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 1308.18612, 421.99552, 4.21996, 0.00000
+ Zone Sizing Information, LOBBY_FLR_1, Heating, 27470.34996, 36535.56544, 1.14648, 4.21996, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 1308.18612, 421.99552, 4.21996, 0.00000
+ Zone Sizing Information, MECH_FLR_1, Cooling, 1036.79778, 1378.94104, 5.27502E-002, 7.01578E-002, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 07:20:00, 18.02000, 1.02534E-002, 164.24319, 0.00000, 4.10608E-002, 0.00000
+ Zone Sizing Information, MECH_FLR_1, Heating, 0.00000, 0.00000, 0.00000, 4.10608E-002, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, , 3.20000, 4.75845E-003, 164.24319, 0.00000, 4.10608E-002, 0.00000
+ Zone Sizing Information, RETAIL_1_FLR_1, Cooling, 7044.07623, 9368.62139, 0.57363, 0.76293, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 13:20:00, 25.40000, 1.02534E-002, 67.07136, 10.83544, 0.10195, 0.00000
+ Zone Sizing Information, RETAIL_1_FLR_1, Heating, 4252.35940, 5655.63801, 0.17748, 0.23604, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 67.07136, 10.83544, 0.10195, 0.00000
+ Zone Sizing Information, RETAIL_2_FLR_1, Cooling, 5246.26416, 6977.53133, 0.40615, 0.54017, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 08:00:00, 19.04000, 1.02534E-002, 77.66889, 12.54748, 0.11806, 0.00000
+ Zone Sizing Information, RETAIL_2_FLR_1, Heating, 1542.64082, 2051.71229, 6.48136E-002, 0.11806, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 08:00:00, 3.20000, 4.75845E-003, 77.66889, 12.54748, 0.11806, 0.00000
+ Zone Sizing Information, ROOM_1_FLR_3, Cooling, 18028.65147, 23978.10646, 1.22314, 1.62677, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 16:10:00, 25.04000, 1.02534E-002, 39.02202, 1.50027, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_1_FLR_3, Heating, 5888.50408, 7831.71042, 0.25251, 0.33584, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:20:00, 3.20000, 4.75845E-003, 39.02202, 1.50027, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_1_FLR_6, Cooling, 4854.79956, 6456.88342, 0.32937, 0.43806, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 16:10:00, 25.04000, 1.02534E-002, 39.02202, 1.50027, 1.41600E-002, 0.00000
+ Zone Sizing Information, ROOM_1_FLR_6, Heating, 1598.65907, 2126.21657, 6.85538E-002, 9.11766E-002, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00, 3.20000, 4.75845E-003, 39.02202, 1.50027, 1.41600E-002, 0.00000
+ Zone Sizing Information, ROOM_2_FLR_3, Cooling, 15264.17990, 20301.35926, 1.03559, 1.37733, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 16:30:00, 24.80000, 1.02534E-002, 39.01745, 1.50009, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_2_FLR_3, Heating, 5897.14811, 7843.20699, 0.25288, 0.33633, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:20:00, 3.20000, 4.75845E-003, 39.01745, 1.50009, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_2_FLR_6, Cooling, 4095.84568, 5447.47476, 0.27788, 0.36958, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 16:40:00, 24.68000, 1.02534E-002, 39.01745, 1.50009, 1.41600E-002, 0.00000
+ Zone Sizing Information, ROOM_2_FLR_6, Heating, 1600.98229, 2129.30645, 6.86534E-002, 9.13091E-002, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00, 3.20000, 4.75845E-003, 39.01745, 1.50009, 1.41600E-002, 0.00000
+ Zone Sizing Information, ROOM_3_MULT19_FLR_3, Cooling, 136303.68729, 181283.90410, 9.64498, 20.44704, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 13:40:00, 25.55000, 1.02534E-002, 24.52384, 1.49993, 20.44704, 0.00000
+ Zone Sizing Information, ROOM_3_MULT19_FLR_3, Heating, 29050.77044, 38637.52468, 1.24578, 20.44704, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00, 3.20000, 4.75845E-003, 24.52384, 1.49993, 20.44704, 0.00000
+ Zone Sizing Information, ROOM_3_MULT9_FLR_6, Cooling, 25897.56588, 34443.76262, 1.83252, 2.43725, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 13:40:00, 25.55000, 1.02534E-002, 24.53055, 1.50034, 1.14696, 0.00000
+ Zone Sizing Information, ROOM_3_MULT9_FLR_6, Heating, 7824.51241, 10406.60150, 0.33553, 1.14696, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00, 3.20000, 4.75845E-003, 24.53055, 1.50034, 1.14696, 0.00000
+ Zone Sizing Information, ROOM_4_MULT19_FLR_3, Cooling, 63870.00554, 84947.10737, 4.51962, 20.44704, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 14:50:00, 25.70000, 1.02534E-002, 24.53055, 1.50034, 20.44704, 0.00000
+ Zone Sizing Information, ROOM_4_MULT19_FLR_3, Heating, 29232.16386, 38878.77793, 1.25355, 20.44704, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00, 3.20000, 4.75845E-003, 24.53055, 1.50034, 20.44704, 0.00000
+ Zone Sizing Information, ROOM_5_FLR_3, Cooling, 15694.82060, 20874.11140, 1.11113, 1.47780, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 10:10:00, 22.50500, 1.02534E-002, 39.02202, 1.50027, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_5_FLR_3, Heating, 5871.94328, 7809.68457, 0.25180, 0.33489, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:20:00, 3.20000, 4.75845E-003, 39.02202, 1.50027, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_6_FLR_3, Cooling, 13322.13481, 17718.43929, 0.97102, 1.29146, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 09:30:00, 21.51500, 1.02534E-002, 39.01745, 1.50009, 5.66400E-002, 0.00000
+ Zone Sizing Information, ROOM_6_FLR_3, Heating, 5880.58033, 7821.17184, 0.25217, 0.33539, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:20:00, 3.20000, 4.75845E-003, 39.01745, 1.50009, 5.66400E-002, 0.00000
+ Zone Sizing Information, STORAGE_FLR_1, Cooling, 126.05256, 167.64991, 6.41425E-003, 7.20170E-002, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 07:20:00, 18.02000, 1.02534E-002, 94.75927, 2.04003, 7.20170E-002, 0.00000
+ Zone Sizing Information, STORAGE_FLR_1, Heating, 0.00000, 0.00000, 0.00000, 7.20170E-002, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, , 3.20000, 4.75845E-003, 94.75927, 2.04003, 7.20170E-002, 0.00000
+! <System Sizing Information>, System Name, Load Type, Peak Load Kind, User Design Capacity, Calc Des Air Flow Rate [m3/s], User Des Air Flow Rate [m3/s], Design Day Name, Date/Time of Peak
+ System Sizing Information, FLR_3_DOAS, Cooling, Sensible, 36101.29, 46.66744, 2.37888, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 05:00:00
+ System Sizing Information, FLR_3_DOAS, Heating, Sensible, 42581.36, 42.23653, 2.37888, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00
+ System Sizing Information, FLR_6_DOAS, Cooling, Sensible, 2366.48, 3.24490, 0.15576, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 05:00:00
+ System Sizing Information, FLR_6_DOAS, Heating, Sensible, 2788.07, 1.32945, 0.15576, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:40:00
+ System Sizing Information, VAV WITH REHEAT, Cooling, Sensible, 373788.41, 31.05338, 31.05338, SAN_FRANCISCO ANN CLG .4% CONDNS WB=>MDB, 9/21 00:00:00
+ System Sizing Information, VAV WITH REHEAT, Heating, Sensible, 192813.67, 12.45283, 12.45283, SAN_FRANCISCO ANN HTG 99.6% CONDNS DB, 1/21 00:20:00
+! <Component Sizing Information>, Component Type, Component Name, Input Field Description, Value
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 3.80936
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 1.14281
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 3.44574E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 5.58807E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 1.14281
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BANQUET_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, BANQUET_FLR_6 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 25955.90232
+ Component Sizing Information, Coil:Heating:Water, BANQUET_FLR_6 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 5.58807E-004
+ Component Sizing Information, Coil:Heating:Water, BANQUET_FLR_6 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 523.90766
+! <Water Heating Coil Capacity Information>,Component Type,Name,Nominal Total Capacity {W}
+Water Heating Coil Capacity Information,Coil:Heating:Water,BANQUET_FLR_6 VAV BOX REHEAT COIL,25599.10
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 2.92115
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.51619
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.87634
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 4.42859E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 4.46548E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.87634
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, BASEMENT VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, BASEMENT VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 20741.60403
+ Component Sizing Information, Coil:Heating:Water, BASEMENT VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 4.46548E-004
+ Component Sizing Information, Coil:Heating:Water, BASEMENT VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 421.67377
+Water Heating Coil Capacity Information,Coil:Heating:Water,BASEMENT VAV BOX REHEAT COIL,20454.22
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 2.81138
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.84341
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 4.46578E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 4.23772E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.84341
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CAFE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, CAFE_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 19683.69280
+ Component Sizing Information, Coil:Heating:Water, CAFE_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 4.23772E-004
+ Component Sizing Information, Coil:Heating:Water, CAFE_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 399.19636
+Water Heating Coil Capacity Information,Coil:Heating:Water,CAFE_FLR_1 VAV BOX REHEAT COIL,19412.74
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 0.63955
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 1.85584
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.19187
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 1.23179E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 6.36705E-005
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.19187
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_3 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_3 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 2957.41717
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_3 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 6.36705E-005
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_3 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 56.82386
+Water Heating Coil Capacity Information,Coil:Heating:Water,CORRIDOR_FLR_3 VAV BOX REHEAT COIL,2917.96
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 0.26206
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 1.19836
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 7.86169E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 1.90760E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 1.13938E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.18197
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, CORRIDOR_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_6 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 5292.27668
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_6 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.13938E-004
+ Component Sizing Information, Coil:Heating:Water, CORRIDOR_FLR_6 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 112.46726
+Water Heating Coil Capacity Information,Coil:Heating:Water,CORRIDOR_FLR_6 VAV BOX REHEAT COIL,4091.67
+ Component Sizing Information, ZoneHVAC:UnitHeater, CORRIDOR_FLR_6 UNIT HEATER, Design Size Maximum Supply Air Flow Rate [m3/s], 0.18197
+ Component Sizing Information, Fan:ConstantVolume, CORRIDOR_FLR_6 UNIT HEATERFAN, Design Size Maximum Flow Rate [m3/s], 0.18197
+ Component Sizing Information, Coil:Heating:Electric, CORRIDOR_FLR_6 UNIT HEATER COIL, Design Size Nominal Capacity [W], 6978.75431
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 3.94001
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.46898
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 1.18200
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 3.56392E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 5.50827E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 1.18200
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, DINING_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, DINING_FLR_6 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 25585.21082
+ Component Sizing Information, Coil:Heating:Water, DINING_FLR_6 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 5.50827E-004
+ Component Sizing Information, Coil:Heating:Water, DINING_FLR_6 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 512.35517
+Water Heating Coil Capacity Information,Coil:Heating:Water,DINING_FLR_6 VAV BOX REHEAT COIL,25234.47
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 1.66211
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.49863
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 4.82682E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 1.22764E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.49863
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, KITCHEN_FLR_6 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, KITCHEN_FLR_6 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 5702.25627
+ Component Sizing Information, Coil:Heating:Water, KITCHEN_FLR_6 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.22764E-004
+ Component Sizing Information, Coil:Heating:Water, KITCHEN_FLR_6 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 105.65665
+Water Heating Coil Capacity Information,Coil:Heating:Water,KITCHEN_FLR_6 VAV BOX REHEAT COIL,5619.54
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 4.92204
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 1.47661
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 1.89213E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 2.50976E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 1.47661
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LAUNDRY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, LAUNDRY_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 11657.50795
+ Component Sizing Information, Coil:Heating:Water, LAUNDRY_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 2.50976E-004
+ Component Sizing Information, Coil:Heating:Water, LAUNDRY_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 207.76763
+Water Heating Coil Capacity Information,Coil:Heating:Water,LAUNDRY_FLR_1 VAV BOX REHEAT COIL,11491.72
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 8.64046
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 2.59214
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 1.98147E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 1.09919E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 2.59214
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, LOBBY_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, LOBBY_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 51056.02702
+ Component Sizing Information, Coil:Heating:Water, LOBBY_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.09919E-003
+ Component Sizing Information, Coil:Heating:Water, LOBBY_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 1008.34208
+Water Heating Coil Capacity Information,Coil:Heating:Water,LOBBY_FLR_1 VAV BOX REHEAT COIL,50360.38
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 7.01578E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 1.78388
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 2.10473E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 1.28147E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 0.00000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 2.10473E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, MECH_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, MECH_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 0.00000
+ Component Sizing Information, Coil:Heating:Water, MECH_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 0.00000
+ Component Sizing Information, Coil:Heating:Water, MECH_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 1.00000
+Water Heating Coil Capacity Information,Coil:Heating:Water,MECH_FLR_1 VAV BOX REHEAT COIL,0.00
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 0.76293
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.22888
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 3.41247E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 1.51087E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.23604
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_1_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, RETAIL_1_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 7017.81024
+ Component Sizing Information, Coil:Heating:Water, RETAIL_1_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.51087E-004
+ Component Sizing Information, Coil:Heating:Water, RETAIL_1_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 149.98745
+Water Heating Coil Capacity Information,Coil:Heating:Water,RETAIL_1_FLR_1 VAV BOX REHEAT COIL,6877.86
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 0.54017
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 0.20000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 0.16205
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 2.08645E-003
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 6.36291E-005
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 0.16205
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, RETAIL_2_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, RETAIL_2_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 2955.49080
+ Component Sizing Information, Coil:Heating:Water, RETAIL_2_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 6.36291E-005
+ Component Sizing Information, Coil:Heating:Water, RETAIL_2_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 57.79762
+Water Heating Coil Capacity Information,Coil:Heating:Water,RETAIL_2_FLR_1 VAV BOX REHEAT COIL,2915.44
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_1_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 5.66400E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_1_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 1.62677
+ Component Sizing Information, Fan:ConstantVolume, ROOM_1_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 1.62677
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.71470E-004
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 8.73575E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 8.73575E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 1.62677
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 1.62677
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99872
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.59632E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.00000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.50000E-003
+! <Water Cooling Coil Capacity Information>,Component Type,Name,Nominal Total Capacity {W},Nominal Sensible Capacity {W},Nominal Latent Capacity {W},Nominal Sensible Heat Ratio, Nominal Coil UA Value {W/C}, Nominal Coil Surface Area {m2}
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_1_FLR_3 FAN COILCOOL COIL,32719.07,24727.47,7991.60,0.76,3711.28,37.64
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 7964.57932
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.71470E-004
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 177.50957
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_1_FLR_3 FAN COILHEAT COIL,8407.02
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_1_FLR_6 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_1_FLR_6 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_6 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 0.43806
+ Component Sizing Information, Fan:ConstantVolume, ROOM_1_FLR_6 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 0.43806
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_6 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 4.65530E-005
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_1_FLR_6 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 2.34900E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 2.34900E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 0.43806
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 0.43806
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99874
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.58926E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.00000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_1_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.50000E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_1_FLR_6 FAN COILCOOL COIL,8803.34,6655.14,2148.20,0.76,998.54,10.13
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_6 FAN COILHEAT COIL, Design Size Rated Capacity [W], 2162.32758
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_6 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 4.65530E-005
+ Component Sizing Information, Coil:Heating:Water, ROOM_1_FLR_6 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 48.19227
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_1_FLR_6 FAN COILHEAT COIL,2282.43
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_2_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 5.66400E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_2_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 1.37733
+ Component Sizing Information, Fan:ConstantVolume, ROOM_2_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 1.37733
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.71722E-004
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 7.42292E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 7.42292E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 1.37733
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 1.37733
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99868
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.61402E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.00000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.50000E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_2_FLR_3 FAN COILCOOL COIL,27759.74,20963.63,6796.10,0.76,3148.80,31.94
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 7976.27089
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.71722E-004
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 177.77013
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_2_FLR_3 FAN COILHEAT COIL,8419.36
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_2_FLR_6 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_2_FLR_6 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_6 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 0.36958
+ Component Sizing Information, Fan:ConstantVolume, ROOM_2_FLR_6 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 0.36958
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_6 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 4.66206E-005
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_2_FLR_6 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 1.98867E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 1.98867E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 0.36958
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 0.36958
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99870
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.60631E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.00000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_2_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.50000E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_2_FLR_6 FAN COILCOOL COIL,7442.04,5621.93,1820.11,0.76,844.15,8.56
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_6 FAN COILHEAT COIL, Design Size Rated Capacity [W], 2165.46994
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_6 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 4.66206E-005
+ Component Sizing Information, Coil:Heating:Water, ROOM_2_FLR_6 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 48.26230
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_2_FLR_6 FAN COILHEAT COIL,2285.75
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_3_MULT19_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_3_MULT19_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 0.26904
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT19_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Fan:ConstantVolume, ROOM_3_MULT19_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 20.44704
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT19_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.04397E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT19_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 1.07809E-002
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 1.07809E-002
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99818
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.51156E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.49000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.30590E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_3_MULT19_FLR_3 FAN COILCOOL COIL,406758.75,308614.45,98144.30,0.76,46105.59,467.63
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT19_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 484910.76926
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT19_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.04397E-002
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT19_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 10807.44048
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_3_MULT19_FLR_3 FAN COILHEAT COIL,511849.97
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_3_MULT9_FLR_6 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 1.14696
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_3_MULT9_FLR_6 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 0.12744
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT9_FLR_6 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 2.43725
+ Component Sizing Information, Fan:ConstantVolume, ROOM_3_MULT9_FLR_6 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 2.43725
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT9_FLR_6 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 5.85612E-004
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_3_MULT9_FLR_6 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 1.26609E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 1.26609E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 2.43725
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 2.43725
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99828
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.44034E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.49000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.30590E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_3_MULT9_FLR_6 FAN COILCOOL COIL,48064.57,36583.49,11481.08,0.76,5448.35,55.26
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT9_FLR_6 FAN COILHEAT COIL, Design Size Rated Capacity [W], 27200.94521
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT9_FLR_6 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 5.85612E-004
+ Component Sizing Information, Coil:Heating:Water, ROOM_3_MULT9_FLR_6 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 606.23235
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_3_MULT9_FLR_6 FAN COILHEAT COIL,28711.76
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_4_MULT19_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_4_MULT19_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 0.26904
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_4_MULT19_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Fan:ConstantVolume, ROOM_4_MULT19_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 20.44704
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_4_MULT19_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.04397E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_4_MULT19_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 1.12966E-002
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 1.12966E-002
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 20.44704
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99789
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.74215E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.49000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.30590E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_4_MULT19_FLR_3 FAN COILCOOL COIL,417866.33,313960.59,103905.74,0.75,47378.61,480.54
+ Component Sizing Information, Coil:Heating:Water, ROOM_4_MULT19_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 484910.76862
+ Component Sizing Information, Coil:Heating:Water, ROOM_4_MULT19_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.04397E-002
+ Component Sizing Information, Coil:Heating:Water, ROOM_4_MULT19_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 10807.43673
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_4_MULT19_FLR_3 FAN COILHEAT COIL,511849.84
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_5_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 5.66400E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_5_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_5_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 1.47780
+ Component Sizing Information, Fan:ConstantVolume, ROOM_5_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 1.47780
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_5_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.70988E-004
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_5_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 7.62771E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 7.62771E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 1.47780
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 1.47780
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99874
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.59291E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.50000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_5_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.48650E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_5_FLR_3 FAN COILCOOL COIL,28567.87,21819.40,6748.47,0.76,3142.49,31.87
+ Component Sizing Information, Coil:Heating:Water, ROOM_5_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 7942.17974
+ Component Sizing Information, Coil:Heating:Water, ROOM_5_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.70988E-004
+ Component Sizing Information, Coil:Heating:Water, ROOM_5_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 177.01037
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_5_FLR_3 FAN COILHEAT COIL,8383.37
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_6_FLR_3 DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 5.66400E-002
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, ROOM_6_FLR_3 DIRECT AIR, User-Specified Maximum Air Flow Rate [m3/s], 1.41600E-002
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_6_FLR_3 FAN COIL, Design Size Maximum Supply Air Flow Rate [m3/s], 1.29146
+ Component Sizing Information, Fan:ConstantVolume, ROOM_6_FLR_3 FAN COILFAN, Design Size Maximum Flow Rate [m3/s], 1.29146
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_6_FLR_3 FAN COIL, Design Size Maximum Hot Water Flow [m3/s], 1.71239E-004
+ Component Sizing Information, ZoneHVAC:FourPipeFanCoil, ROOM_6_FLR_3 FAN COIL, Design Size Maximum Cold Water Flow [m3/s], 6.50031E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Water Flow Rate [m3/s], 6.50031E-004
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Air Flow Rate [m3/s], 1.29146
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, User-Specified Design Air Flow Rate [m3/s], 1.29146
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Temperature [C], 23.99873
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Inlet Air Humidity Ratio, 8.60806E-003
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Temperature [C], 12.83000
+ Component Sizing Information, Coil:Cooling:Water, ROOM_6_FLR_3 FAN COILCOOL COIL, Design Size Design Outlet Air Humidity Ratio, 8.48650E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,ROOM_6_FLR_3 FAN COILCOOL COIL,24301.79,18684.97,5616.82,0.77,2616.60,26.54
+ Component Sizing Information, Coil:Heating:Water, ROOM_6_FLR_3 FAN COILHEAT COIL, Design Size Rated Capacity [W], 7953.86185
+ Component Sizing Information, Coil:Heating:Water, ROOM_6_FLR_3 FAN COILHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 1.71239E-004
+ Component Sizing Information, Coil:Heating:Water, ROOM_6_FLR_3 FAN COILHEAT COIL, Design Size U-Factor Times Area Value [W/K], 177.27072
+Water Heating Coil Capacity Information,Coil:Heating:Water,ROOM_6_FLR_3 FAN COILHEAT COIL,8395.70
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Air Flow Rate [m3/s], 7.20170E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Constant Minimum Air Flow Fraction, 1.00263
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, User-Specified Constant Minimum Air Flow Fraction, 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Minimum Air Flow Rate [m3/s], 2.16051E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow per Zone Floor Area during Reheat [m3/s-m2], 2.28000E-004
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Flow Fraction during Reheat [], 0.30000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Maximum Reheat Water Flow Rate [m3/s], 0.00000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Air Volume Flow Rate [m3/s], 2.16051E-002
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Temperature [C], 16.70000
+ Component Sizing Information, AirTerminal:SingleDuct:VAV:Reheat, STORAGE_FLR_1 VAV BOX COMPONENT, Design Size Reheat Coil Sizing Inlet Air Humidity Ratio [kgWater/kgDryAir], 8.00000E-003
+ Component Sizing Information, Coil:Heating:Water, STORAGE_FLR_1 VAV BOX REHEAT COIL, Design Size Rated Capacity [W], 0.00000
+ Component Sizing Information, Coil:Heating:Water, STORAGE_FLR_1 VAV BOX REHEAT COIL, Design Size Maximum Water Flow Rate [m3/s], 0.00000
+ Component Sizing Information, Coil:Heating:Water, STORAGE_FLR_1 VAV BOX REHEAT COIL, Design Size U-Factor Times Area Value [W/K], 1.00000
+Water Heating Coil Capacity Information,Coil:Heating:Water,STORAGE_FLR_1 VAV BOX REHEAT COIL,0.00
+ Component Sizing Information, AirLoopHVAC, VAV WITH REHEAT, Design Supply Air Flow Rate [m3/s], 31.05338
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Coil Load [W], 52133.22458
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Water Flow Rate [m3/s], 1.86205E-003
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Air Flow Rate [m3/s], 2.37888
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Inlet Air Temperature [C], 25.36772
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Outlet Air Temperature [C], 12.82000
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Inlet Air Humidity Ratio, 1.02534E-002
+ Component Sizing Information, Coil:Cooling:Water, FLR_3_DOAS_COOLC, Design Size Design Outlet Air Humidity Ratio, 8.29183E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,FLR_3_DOAS_COOLC,59605.83,41784.45,17821.37,0.70,7093.87,71.95
+ Component Sizing Information, Coil:Heating:Water, FLR_3_DOAS_HEATC, Design Size Rated Capacity [W], 42581.36390
+ Component Sizing Information, Coil:Heating:Water, FLR_3_DOAS_HEATC, Design Size Maximum Water Flow Rate [m3/s], 9.16738E-004
+ Component Sizing Information, Coil:Heating:Water, FLR_3_DOAS_HEATC, Design Size U-Factor Times Area Value [W/K], 672.28957
+Water Heating Coil Capacity Information,Coil:Heating:Water,FLR_3_DOAS_HEATC,35428.00
+ Component Sizing Information, Fan:ConstantVolume, FLR_3_DOAS_FAN, Design Size Maximum Flow Rate [m3/s], 2.37888
+ Component Sizing Information, Controller:WaterCoil, FLR_3_DOAS_COOLC_CONTROLLER, Maximum Actuated Flow [m3/s], 1.86205E-003
+ Component Sizing Information, Controller:WaterCoil, FLR_3_DOAS_COOLC_CONTROLLER, Controller Convergence Tolerance, 2.55735E-004
+ Component Sizing Information, Controller:WaterCoil, FLR_3_DOAS_HEATC_CONTROLLER, Maximum Actuated Flow [m3/s], 9.16738E-004
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Coil Load [W], 3426.56083
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Water Flow Rate [m3/s], 1.22387E-004
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Air Flow Rate [m3/s], 0.15576
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Inlet Air Temperature [C], 25.38206
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Outlet Air Temperature [C], 12.82000
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Inlet Air Humidity Ratio, 1.02534E-002
+ Component Sizing Information, Coil:Cooling:Water, FLR_6_DOAS_COOLC, Design Size Design Outlet Air Humidity Ratio, 8.29183E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,FLR_6_DOAS_COOLC,3915.58,2742.15,1173.42,0.70,467.31,4.74
+ Component Sizing Information, Coil:Heating:Water, FLR_6_DOAS_HEATC, Design Size Rated Capacity [W], 2788.06549
+ Component Sizing Information, Coil:Heating:Water, FLR_6_DOAS_HEATC, Design Size Maximum Water Flow Rate [m3/s], 6.00245E-005
+ Component Sizing Information, Coil:Heating:Water, FLR_6_DOAS_HEATC, Design Size U-Factor Times Area Value [W/K], 44.01896
+Water Heating Coil Capacity Information,Coil:Heating:Water,FLR_6_DOAS_HEATC,2319.69
+ Component Sizing Information, Fan:ConstantVolume, FLR_6_DOAS_FAN, Design Size Maximum Flow Rate [m3/s], 0.15576
+ Component Sizing Information, Controller:WaterCoil, FLR_6_DOAS_COOLC_CONTROLLER, Maximum Actuated Flow [m3/s], 1.22387E-004
+ Component Sizing Information, Controller:WaterCoil, FLR_6_DOAS_COOLC_CONTROLLER, Controller Convergence Tolerance, 1.00000E-003
+ Component Sizing Information, Controller:WaterCoil, FLR_6_DOAS_HEATC_CONTROLLER, Maximum Actuated Flow [m3/s], 6.00245E-005
+ Component Sizing Information, Controller:OutdoorAir, VAV WITH REHEAT_OA_CONTROLLER, Maximum Outdoor Air Flow Rate [m3/s], 31.05338
+ Component Sizing Information, Controller:OutdoorAir, VAV WITH REHEAT_OA_CONTROLLER, Minimum Outdoor Air Flow Rate [m3/s], 11.95143
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Coil Load [W], 564856.21563
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Water Flow Rate [m3/s], 2.01750E-002
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Air Flow Rate [m3/s], 31.05338
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Inlet Air Temperature [C], 22.75249
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Inlet Water Temperature [C], 6.67000
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Outlet Air Temperature [C], 12.80000
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Inlet Air Humidity Ratio, 9.90480E-003
+ Component Sizing Information, Coil:Cooling:Water, VAV WITH REHEAT_COOLC, Design Size Design Outlet Air Humidity Ratio, 8.28082E-003
+Water Cooling Coil Capacity Information,Coil:Cooling:Water,VAV WITH REHEAT_COOLC,737104.51,529494.20,207610.31,0.72,95275.14,966.33
+ Component Sizing Information, Coil:Heating:Water, VAV WITH REHEAT_HEATC, Design Size Rated Capacity [W], 152107.01613
+ Component Sizing Information, Coil:Heating:Water, VAV WITH REHEAT_HEATC, Design Size Maximum Water Flow Rate [m3/s], 3.27473E-003
+ Component Sizing Information, Coil:Heating:Water, VAV WITH REHEAT_HEATC, Design Size U-Factor Times Area Value [W/K], 2382.50647
+Water Heating Coil Capacity Information,Coil:Heating:Water,VAV WITH REHEAT_HEATC,126555.55
+ Component Sizing Information, Fan:VariableVolume, VAV WITH REHEAT_FAN, Design Size Maximum Flow Rate [m3/s], 31.05338
+ Component Sizing Information, Controller:WaterCoil, VAV WITH REHEAT_COOLC_CONTROLLER, Maximum Actuated Flow [m3/s], 2.01750E-002
+ Component Sizing Information, Controller:WaterCoil, VAV WITH REHEAT_COOLC_CONTROLLER, Controller Convergence Tolerance, 2.36030E-005
+ Component Sizing Information, Controller:WaterCoil, VAV WITH REHEAT_HEATC_CONTROLLER, Maximum Actuated Flow [m3/s], 3.27473E-003
+Water Heater Information,WaterHeater:Mixed,SWHSYS1 WATER HEATER,2.0000,845000.0,0.346,0.6782
+ Component Sizing Information, PlantLoop, COOLSYS1, Maximum Loop Flow Rate [m3/s], 1.95862E-002
+ Component Sizing Information, PlantLoop, COOLSYS1, Plant Loop Volume [m3], 2.35035
+ Component Sizing Information, Pump:VariableSpeed, COOLSYS1 PUMP, Design Flow Rate [m3/s], 1.95862E-002
+ Component Sizing Information, Pump:VariableSpeed, COOLSYS1 PUMP, Design Power Consumption [W], 5004.02845
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 1, Design Size Reference Chilled Water Flow Rate [m3/s], 9.79311E-003
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 1, Design Size Reference Capacity [W], 274181.02051
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 1, Design Size Reference Condenser Fluid Flow Rate  [m3/s], 31.25664
+! <Chiller Standard Rating Information>, Component Type, Component Name, IPLV in SI Units {W/W}, IPLV in IP Units {Btu/W-h}
+ Chiller Standard Rating Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 1, 7.28, 24.83
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 2, Design Size Reference Chilled Water Flow Rate [m3/s], 9.79311E-003
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 2, Design Size Reference Capacity [W], 274181.02051
+ Component Sizing Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 2, Design Size Reference Condenser Fluid Flow Rate  [m3/s], 31.25664
+ Chiller Standard Rating Information, Chiller:Electric:EIR, COOLSYS1 CHILLER 2, 7.28, 24.83
+ Component Sizing Information, PlantLoop, HEATSYS1, Maximum Loop Flow Rate [m3/s], 3.03403E-002
+ Component Sizing Information, PlantLoop, HEATSYS1, Plant Loop Volume [m3], 3.64083
+ Component Sizing Information, Pump:VariableSpeed, HEATSYS1 PUMP, Design Flow Rate [m3/s], 3.03403E-002
+ Component Sizing Information, Pump:VariableSpeed, HEATSYS1 PUMP, Design Power Consumption [W], 7751.55464
+ Component Sizing Information, Boiler:HotWater, HEATSYS1 BOILER, Design Size Nominal Capacity [W], 1414764.45730
+ Component Sizing Information, Boiler:HotWater, HEATSYS1 BOILER, Design Size Design Water Flow Rate [m3/s], 3.03403E-002
+ Component Sizing Information, PlantLoop, SWHSYS1, Maximum Loop Flow Rate [m3/s], 4.22952E-003
+ Component Sizing Information, PlantLoop, SWHSYS1, Plant Loop Volume [m3], 0.50754
+ Component Sizing Information, Pump:VariableSpeed, SWHSYS1 PUMP, Design Flow Rate [m3/s], 4.22952E-003
+ Component Sizing Information, Pump:VariableSpeed, SWHSYS1 PUMP, Design Power Consumption [W], 1080.58762
+ Component Sizing Information, WaterHeater:Mixed, SWHSYS1 WATER HEATER, Use Side Design Flow Rate [m3/s], 4.22952E-003
+! <Environment>,Environment Name,Environment Type, Start Date, End Date, Start DayOfWeek, Duration {#days}, Source:Start DayOfWeek,  Use Daylight Saving, Use Holidays, Apply Weekend Holiday Rule,  Use Rain Values, Use Snow Values
+! <Environment:Special Days>, Special Day Name, Special Day Type, Source, Start Date, Duration {#days}
+! <Environment:Daylight Saving>, Daylight Saving Indicator, Source, Start Date, End Date
+! <Environment:WarmupDays>, NumberofWarmupDays
+Environment,SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,WeatherFileRunPeriod,01/01,12/31,Sunday,365,Use RunPeriod Specified Day,No,No,No,Yes,Yes
+Environment:Daylight Saving,Yes,InputFile,03/12,11/05
+Environment:Special Days,NEW YEARS DAY,Holiday,InputFile,01/01,  1
+Environment:Special Days,VETERANS DAY,Holiday,InputFile,11/11,  1
+Environment:Special Days,CHRISTMAS,Holiday,InputFile,12/25,  1
+Environment:Special Days,INDEPENDENCE DAY,Holiday,InputFile,07/04,  1
+Environment:Special Days,MLK DAY,Holiday,InputFile,01/16,  1
+Environment:Special Days,PRESIDENTS DAY,Holiday,InputFile,02/20,  1
+Environment:Special Days,MEMORIAL DAY,Holiday,InputFile,05/29,  1
+Environment:Special Days,LABOR DAY,Holiday,InputFile,09/04,  1
+Environment:Special Days,COLUMBUS DAY,Holiday,InputFile,10/09,  1
+Environment:Special Days,THANKSGIVING,Holiday,InputFile,11/23,  1
+Environment:WarmupDays,  7
+! <Warmup Convergence Information>,Zone Name,Environment Type/Name,Average Warmup Temperature Difference {deltaC},Std Dev Warmup Temperature Difference {deltaC},Max Temperature Pass/Fail Convergence,Min Temperature Pass/Fail Convergence,Average Warmup Load Difference {W},Std Dev Warmup Load Difference {W},Heating Load Pass/Fail Convergence,Cooling Load Pass/Fail Convergence
+ Warmup Convergence Information,BANQUET_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,7.2446771909E-002,0.3414092994,Pass,Pass,4.3105617180E-002,0.1264747248,Pass,Pass
+ Warmup Convergence Information,BASEMENT,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,1.7427799423E-002,6.6027270895E-002,Pass,Pass,3.9548059666E-002,0.1321752273,Pass,Pass
+ Warmup Convergence Information,CAFE_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,0.1078363425,0.4066467562,Pass,Pass,0.2088751512,1.0730687855,Pass,Pass
+ Warmup Convergence Information,CORRIDOR_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,1.7031887783E-002,1.3943022603E-002,Pass,Pass,6.4108047314E-003,8.9562094391E-003,Pass,Pass
+ Warmup Convergence Information,CORRIDOR_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.3373427024E-002,2.4494150311E-002,Pass,Pass,1.3962882681E-002,1.6128343758E-002,Pass,Pass
+ Warmup Convergence Information,DINING_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,7.3284760565E-002,0.3224199718,Pass,Pass,3.5630929578E-002,9.8839846895E-002,Pass,Pass
+ Warmup Convergence Information,KITCHEN_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,0.1263263309,0.2232077841,Pass,Pass,1.6847192565E-002,3.4881127615E-002,Pass,Pass
+ Warmup Convergence Information,LAUNDRY_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,0.1123568200,0.3989632590,Pass,Pass,5.1532204009E-002,0.2292676982,Pass,Pass
+ Warmup Convergence Information,LOBBY_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.6549098691E-002,0.1989829996,Pass,Pass,6.3343125545E-002,0.2016635827,Pass,Pass
+ Warmup Convergence Information,MECH_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,2.1042169451E-002,2.5281686998E-002,Pass,Pass,7.2383735907E-003,9.9237319263E-003,Pass,Pass
+ Warmup Convergence Information,RETAIL_1_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,9.6249832204E-002,0.3531255294,Pass,Pass,0.3794588200,1.6893251290,Pass,Pass
+ Warmup Convergence Information,RETAIL_2_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.1388917909E-002,0.1744787723,Pass,Pass,7.7927901225E-002,0.4358992795,Pass,Pass
+ Warmup Convergence Information,ROOM_1_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,3.8322019161E-002,6.2011419373E-002,Pass,Pass,0.1606549721,0.4699240533,Pass,Pass
+ Warmup Convergence Information,ROOM_1_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.1998992126E-002,6.5078372380E-002,Pass,Pass,0.1837996308,0.3693092737,Pass,Pass
+ Warmup Convergence Information,ROOM_2_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.8308960248E-002,6.5795086283E-002,Pass,Pass,1.3581865279,15.1712722632,Pass,Pass
+ Warmup Convergence Information,ROOM_2_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.2105472899E-002,8.1337880571E-002,Pass,Pass,0.1693303178,0.4881085621,Pass,Pass
+ Warmup Convergence Information,ROOM_3_MULT19_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,1.0144931260E-004,1.9284714110E-004,Pass,Pass,4.5335917041E-002,5.9335071714E-002,Pass,Pass
+ Warmup Convergence Information,ROOM_3_MULT9_FLR_6,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.1799079289E-002,9.0852508798E-002,Pass,Pass,0.2234367892,0.9530474867,Pass,Pass
+ Warmup Convergence Information,ROOM_4_MULT19_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,2.4776445468E-005,5.1728770285E-005,Pass,Pass,0.1906281345,0.5775101753,Pass,Pass
+ Warmup Convergence Information,ROOM_5_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.5368001053E-002,9.5103707251E-002,Pass,Pass,0.1110877574,0.3014745278,Pass,Pass
+ Warmup Convergence Information,ROOM_6_FLR_3,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,4.7371968118E-002,7.8858768597E-002,Pass,Pass,0.1088659322,0.4494347230,Pass,Pass
+ Warmup Convergence Information,STORAGE_FLR_1,RunPeriod: SAN_FRANCISCO CA USA TMY2-23234 WMO#=724940,1.5777782983E-002,1.4851031207E-002,Pass,Pass,7.3790834601E-003,1.0635304931E-002,Pass,Pass
+! <Program Control Information:Threads/Parallel Sims>, Threading Supported,Maximum Number of Threads, Env Set Threads (OMP_NUM_THREADS), EP Env Set Threads (EP_OMP_NUM_THREADS), IDF Set Threads, Number of Threads Used (Interior Radiant Exchange), Number Nominal Surfaces, Number Parallel Sims
+Program Control:Threads/Parallel Sims, No,1, N/A, N/A, N/A, N/A, N/A, N/A
+End of Data

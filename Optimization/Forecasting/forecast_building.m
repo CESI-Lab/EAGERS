@@ -5,7 +5,9 @@ function [buildings,forecast] = forecast_building(forecast,date,buildings,option
 n_b = length(buildings);
 n_s = length(date);
 
-forecast.Building.ExternalGains = zeros(length(date),n_b);
+forecast.Building.ExternalGains = zeros(n_s,n_b);
+forecast.Building.Tmin = zeros(n_s,n_b);
+forecast.Building.Tmax = zeros(n_s,n_b);
 for i = 1:1:n_b
     if isfield(buildings(i),'QPform')
         sgain = solar_gain(buildings(i),date,buildings(i).QPform.Location,forecast.Weather);
@@ -24,14 +26,14 @@ for i = 1:1:n_b
         end
     end
     forecast.Building.ExternalGains(:,i) = sgain.Walls + sgain.Roof;
+    forecast.Building.Tmin(:,i) = load_sched(buildings(i).Schedule,[],date,{'TsetH'},[]) - 0.5*buildings(i).VariableStruct.Comfort;
+    forecast.Building.Tmax(:,i) = load_sched(buildings(i).Schedule,[],date,{'TsetC'},[]) + 0.5*buildings(i).VariableStruct.Comfort;
 end
 
 if ~strcmp(options.solver,'NREL')
     forecast.Building.E0 = zeros(n_s,n_b);
     forecast.Building.C0 = zeros(n_s,n_b);
     forecast.Building.H0 = zeros(n_s,n_b);
-    forecast.Building.Tmin = zeros(n_s,n_b);
-    forecast.Building.Tmax = zeros(n_s,n_b);
     forecast.Building.Tset_H = zeros(n_s,n_b);
     forecast.Building.Tset_C = zeros(n_s,n_b);
     forecast.Building.Fan_Power = zeros(n_s,n_b);
@@ -41,8 +43,7 @@ if ~strcmp(options.solver,'NREL')
     forecast.Building.Damper = zeros(n_s,n_b);
     for i = 1:1:n_b
         [cooling, heating, fan_power,zone,wall,damper] = building_profile(buildings(i),date,forecast.Building.InternalGains(:,i),forecast.Building.ExternalGains(:,i),forecast.Weather.DrybulbC,forecast.Weather.RHum,buildings(i).Tzone,buildings(i).Twall);
-        forecast.Building.Tmin(:,i) = load_sched(buildings(i).Schedule,date,'TsetH') - 0.5*buildings(i).VariableStruct.Comfort;
-        forecast.Building.Tmax(:,i) = load_sched(buildings(i).Schedule,date,'TsetC') + 0.5*buildings(i).VariableStruct.Comfort;
+        
         [temperature_to_heat,temperature_to_cool] = equilib_temperature(buildings(i),date,forecast.Weather,zone(2:end),wall(2:end),cooling,heating,forecast.Building.InternalGains(:,i),forecast.Building.ExternalGains(:,i),forecast.Building.Tmin(:,i),forecast.Building.Tmax(:,i));
         forecast.Building.E0(:,i) = forecast.Building.NonHVACelectric(:,i) + fan_power(:,i);
         forecast.Building.C0(:,i) = cooling(:,i) ;
@@ -63,6 +64,8 @@ if ~strcmp(options.solver,'NREL')
         forecast.Building.Twall(:,i) = wall(2:end);
         forecast.Building.Damper(:,i) = damper;
     end
+else
+    forecast.Building.cooling_air_temperature = buildings(i).VariableStruct.ColdAirSet;
 end
 end%Ends function forecast_building
 

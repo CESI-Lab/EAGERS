@@ -21,7 +21,7 @@ function building = building_list(build,hObject, eventdata, handles)
 global Model_dir 
 list = get(handles.building_list,'string');
 sel = get(handles.building_list,'Value');
-load(fullfile(Model_dir,'System Library','Buildings',list{sel}));
+load(fullfile(Model_dir,'System_Library','Buildings',list{sel}));
 load_building_parameters(handles)
 
 function build = climate_list(build,hObject, eventdata, handles)
@@ -29,7 +29,7 @@ function build = climate_list(build,hObject, eventdata, handles)
 global Model_dir TestData
 list = get(handles.climate_list,'string');
 sel = get(handles.climate_list,'Value');
-load(fullfile(Model_dir,'System Library','Weather',list{sel}));
+weather = import_weather(fullfile(Model_dir,'System_Library','Weather',list{sel}));
 TestData.Weather = interpolate_weather(weather,TestData.Timestamp);
 
 function build = editName(build,hObject, eventdata, handles)

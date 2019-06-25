@@ -139,8 +139,7 @@ elseif ismember(gen(k).Type,{'CHP Generator';'Electric Generator';})
         out = 'E';
     end
 end
-
-scale_cost = update_cost(date,gen); 
+scale_cost = update_cost(date,gen);
 [~,~,spare_gen_cumulative] = gen_limit(gen,gen_output,locked,dt);
 rmv_cost = 0;
 if isfield(stor,out) && any(useful_stored_energy.(out))>0
@@ -154,14 +153,14 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
             rmv_cost = rmv_cost + gen(k).QPform.constCost*scale_cost(t+1,k)*dt(t);
         end
         if strcmp(gen(k).Type,'Chiller') && isfield(gen(k).QPform.constDemand,'E')
-            rmv_cost = rmv_cost + gen(k).QPform.constDemand.E*min(nonzeros(margin_cost.E.Cost.SpinReserve(:,t,1)))*dt(t);
+            rmv_cost = rmv_cost + (gen(k).QPform.constDemand.E + gen_output(t+1,k)./interp1(cap,eff,gen_output(t+1,k)))*min(nonzeros(margin_cost.E.Cost.SpinReserve(:,t,1)))*dt(t);%%total electricity used by chiller * marginal cost
         end
         if strcmp(gen(k).Type,'CHP Generator')
             rem_heat(t:end) = rem_heat(t:end) + gen_output(t+1,k)*dt(t);
             cum_out = 0;
             j = 1;
-            if  gen_output(t+1,k)>0
-                rem_heat(t:end) = rem_heat(t:end) - gen(k).QPform.constDemand.H;      
+            if gen_output(t+1,k)>0
+                rem_heat(t:end) = rem_heat(t:end) - gen(k).QPform.constDemand.H;
             end
             states = gen(k).QPform.states(1:nnz(~cellfun('isempty',gen(k).QPform.states(:,end))),end);
             while j<=length(states)
@@ -213,7 +212,7 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
             t_limit = n_s;
         end
         make_up_gen = 0;
-        rem_e = max(rem_gen);
+        rem_e = max(rem_gen);%removed energy (maximum = sum of generator output that is turned off * dt)
         sort_margin_cost = sort_mc(margin_cost,out,t_limit,k,dt);
         if ~isempty(sort_margin_cost) && sort_margin_cost(end,1)>=rem_e
             make_up_cost = interp1(sort_margin_cost(:,1),sort_margin_cost(:,2),rem_e);
@@ -221,18 +220,12 @@ if isfield(stor,out) && any(useful_stored_energy.(out))>0
                 r = 1;
                 while make_up_gen<rem_e && r<length(sort_margin_cost(:,1))
                     t = sort_margin_cost(r,4);
-                    add_gen = min(sort_margin_cost(r,5),rem_e);
-                    disp_comb{t}(i_best(t),sort_margin_cost(r,3)) = disp_comb{t}(i_best(t),sort_margin_cost(r,3)) + add_gen;
+                    add_gen_energy = min(sort_margin_cost(r,5)*dt(t),rem_e-make_up_gen);
+                    disp_comb{t}(i_best(t),sort_margin_cost(r,3)) = disp_comb{t}(i_best(t),sort_margin_cost(r,3)) + add_gen_energy/dt(t);
                     %%edit storage dispatch at this timestep so that UpdateStorageState works correctly
-                    disp_comb{t}(i_best(t),:) = stor_add(gen,disp_comb{t}(i_best(t),:),add_gen,k);
-                    make_up_gen = make_up_gen + add_gen;
-                    if t>=t1 && t<t2
-                        new_stor_power(t) = new_stor_power(t) - add_gen;
-                    end
+                    disp_comb{t}(i_best(t),:) = stor_add(gen,disp_comb{t}(i_best(t),:),add_gen_energy,k);
+                    make_up_gen = make_up_gen + add_gen_energy;
                     r = r+1;
-                end
-                for t = t1:1:t2-1
-                    disp_comb{t}(i_best(t),stor.(out)) = disp_comb{t}(i_best(t),stor.(out))+new_stor_power(t)/length(stor.(out));
                 end
             end
         end

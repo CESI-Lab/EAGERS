@@ -490,6 +490,7 @@ else%running the model
                 H2_out = H2_out + sum(Flow2.Outlet.CO(block.Flow2Dir(:,end)));
             end
             Tags.(block.name).H2utilization = (H2_in - H2_out)./H2_in;
+            Tags.(block.name).H2concentration = (Flow2.Inlet.H2 + Flow2.Outlet.H2)./(NetFlow(Flow2.Inlet)+NetFlow(Flow2.Outlet));
             Tags.(block.name).O2utilization = sum(Flow1.Inlet.O2(block.Flow1Dir(:,1)) - Flow1.Outlet.O2(block.Flow1Dir(:,end)))/sum(Flow1.Inlet.O2(block.Flow1Dir(:,1)));
             if strcmp(block.FCtype,'MCFC')
                 Tags.(block.name).CO2utilization = sum(Flow1.Inlet.CO2(block.Flow1Dir(:,1)) - Flow1.Outlet.CO2(block.Flow1Dir(:,end)))/sum(Flow1.Inlet.CO2(block.Flow1Dir(:,1))); %only makes sense if FCtype=1 and CO2 is a cathode state

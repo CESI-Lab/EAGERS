@@ -10,8 +10,8 @@ m = length(T_init);
 T_profile = zeros(nS+1,m);
 Tsupply = zeros(nS,1);
 T_profile(1,:) = T_init;
-TsetC = load_sched(Build,Date,'TsetC');
-TsetH = load_sched(Build,Date,'TsetH');
+TsetC = load_sched(Build,[],Date,{'TsetC'},[]);
+TsetH = load_sched(Build,[],Date,{'TsetH'},[]);
 if nS == 1
     dt = 1;
 else

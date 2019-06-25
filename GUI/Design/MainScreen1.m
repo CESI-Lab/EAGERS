@@ -144,13 +144,14 @@ popupmenu_Callback
 
 
 function popupmenu_Callback
+global SYSINDEX testSystems
 handles = guihandles;
 tab = find_active_tab(handles);
 if tab == 1
     set(handles.ProjectsPanel,'Visible','on')
     set(handles.plotting_panel,'Visible','off')
     Library_Callback([],[], handles)
-    network_representation(handles);
+    network_representation(testSystems(SYSINDEX),handles);
 elseif tab == 2
     set(handles.ProjectsPanel,'Visible','off')
     set(handles.plotting_panel,'Visible','off')
@@ -423,7 +424,7 @@ end
 function saveSystem_Callback(hObject, eventdata, handles)
 global GENINDEX SYSINDEX testSystems Model_dir
 component = testSystems(SYSINDEX).Generator(GENINDEX);
-[f,p]=uiputfile(fullfile(Model_dir,'System Library',component.Name),'Save Plant As...');
+[f,p]=uiputfile(fullfile(Model_dir,'System_Library',component.Name),'Save Plant As...');
 if f==0; return; end
 save([p,f],'component')
 
@@ -593,7 +594,7 @@ end
 list_comp = {};
 list_dir = {};
 for i = 1:1:length(folders_add)
-    files=dir(fullfile(Model_dir,'System Library',folders_add{i},'*.mat'));
+    files=dir(fullfile(Model_dir,'System_Library',folders_add{i},'*.mat'));
     list_comp(end+1:end+length(files))=strrep({files.name},'.mat','');
     list_dir(end+1:end+length(files))=folders_add(i);
 end
@@ -603,7 +604,7 @@ end
 handles = guihandles;
 [s,OK] = listdlg('PromptString','Select Model','SelectionMode','single','ListString',list_comp);
 if OK && strcmp(get(hObject,'Tag'),'building')
-    load(fullfile(Model_dir,'System Library','Buildings',strcat(list_comp{s},'.mat')));
+    load(fullfile(Model_dir,'System_Library','Buildings',strcat(list_comp{s},'.mat')));
     if ~isfield(testSystems(SYSINDEX),'Building') || isempty(testSystems(SYSINDEX).Building)
         testSystems(SYSINDEX).Building = building;
     else
@@ -615,10 +616,10 @@ if OK && strcmp(get(hObject,'Tag'),'building')
         end
         testSystems(SYSINDEX).Building(end+1) = building;
     end
-    network_representation(handles);
+    network_representation(testSystems(SYSINDEX),handles);
 elseif OK && ~strcmp(list_comp{s},emptyStr)
     componentName = list_comp{s};
-    load(fullfile(Model_dir,'System Library',list_dir{s},strcat(componentName,'.mat')));
+    load(fullfile(Model_dir,'System_Library',list_dir{s},strcat(componentName,'.mat')));
     if isfield(testSystems(SYSINDEX).Generator(1),'QPform')
         component.QPform = [];
         component.CurrentState = [];
@@ -652,7 +653,7 @@ elseif OK && ~strcmp(list_comp{s},emptyStr)
     elseif OK
         testSystems(SYSINDEX).Network(1).Equipment(end+1) = {type_name};
     end
-    network_representation(handles);
+    network_representation(testSystems(SYSINDEX),handles);
     component_details(handles)
 end
 if ~isfield(testSystems(SYSINDEX),'Costs') 
@@ -674,7 +675,7 @@ end
 testSystems(SYSINDEX).Generator = testSystems(SYSINDEX).Generator([1:GENINDEX-1,GENINDEX+1:length(testSystems(SYSINDEX).Generator)]);
 testSystems(SYSINDEX).Costs.Equipment = testSystems(SYSINDEX).Costs.Equipment([1:GENINDEX-1,GENINDEX+1:length(testSystems(SYSINDEX).Costs.Equipment)]);
 GENINDEX = 1;
-network_representation(handles);
+network_representation(testSystems(SYSINDEX),handles);
 Library_Callback([],[], handles);
 testSystems(SYSINDEX).Design = [];%empty design day solution
 
@@ -716,7 +717,7 @@ end
 function SaveBuilding_Callback(hObject, eventdata, handles)
 global testSystems SYSINDEX Model_dir
 %savebuilding building type
-[f,p]=uiputfile(fullfile(Model_dir,'System Library','Buildings',strcat(testSystems(SYSINDEX).Building.Name,'.mat')),'Save Building As...');
+[f,p]=uiputfile(fullfile(Model_dir,'System_Library','Buildings',strcat(testSystems(SYSINDEX).Building.Name,'.mat')),'Save Building As...');
 if f==0; return; end
 testSystems(SYSINDEX).Building.Name = strrep(f,'.mat','');
 building = testSystems(SYSINDEX).Building;

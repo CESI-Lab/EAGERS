@@ -1,21 +1,24 @@
 %%move to seperate function to handle building stuff
 function load_building_parameters(build,handles)
 global Model_dir TestData
-files = dir(fullfile(Model_dir, 'System Library','Buildings','*.mat'));
+files = dir(fullfile(Model_dir, 'System_Library','Buildings','*.mat'));
 listB=strrep({files.name},'.mat','');
 set(handles.building_list,'string',listB,'value',1);
-
-files = dir(fullfile(Model_dir, 'System Library','Weather','*.mat'));
-listW=strrep({files.name},'.mat','');
-set(handles.climate_list,'string',listW,'value',1);
 I = find(strcmp(build.Name,listB));
 if isempty(I)
     listB = {build.Name;listB};
     I = 1;
 end
+
 set(handles.building_list,'string',listB);
 set(handles.building_list,'value',I);
 
+files = dir(fullfile(Model_dir, 'System_Library','Weather'));
+listW= {files.name}';
+set(handles.climate_list,'string',listW,'value',1);
+if ~isfield(TestData.Weather,'Name')
+    TestData.Weather.Name = 'Test_data_weather';
+end
 I = find(strcmp(TestData.Weather.Name,listW));
 if isempty(I)
     listW(end+1) = {TestData.Weather.Name};
@@ -23,7 +26,6 @@ if isempty(I)
 end
 set(handles.climate_list,'string',listW);
 set(handles.climate_list,'value',I);
-
 
 set(handles.build_name,'String',build.Name)
 set(handles.editArea,'String',num2str(build.Area*10.76))

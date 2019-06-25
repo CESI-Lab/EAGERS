@@ -35,7 +35,7 @@ Plant.optimoptions.endSOC = 'Flexible';
 %% Insert electric and gas utilities
 dir=strrep(which('build_hydro_fullSet.m'),fullfile('Projects','INFEWS_CRB','build_hydro_fullSet.m'),'');
 ut = 2;
-load(fullfile(dir,'System Library','Utility','Seattle1.mat'));
+load(fullfile(dir,'System_Library','Utility','Seattle1.mat'));
 Plant.Generator(1,1).Type = 'Utility';
 Plant.Generator(1,1).Name = 'Seattle_Light';
 Plant.Generator(1,1).Source = 'Electricity';

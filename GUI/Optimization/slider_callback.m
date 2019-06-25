@@ -3,9 +3,8 @@ function slider_callback(index)
 global Plant TestData
 handles = guihandles;
 if strcmp(Plant.optimoptions.solver,'NREL')
-%     building.Name = 'Building';
-%     building.Tzone = 22;
     building = Plant.Building;
+    building.Tzone = 22;
     date = TestData.Timestamp(1) + get(handles.sliderStartDate,'Value');
     solution = single_optimization_NREL(Plant.Generator,building,Plant.optimoptions,TestData,date);
     Plant.Building.Tzone = solution.Buildings.Temperature(1);

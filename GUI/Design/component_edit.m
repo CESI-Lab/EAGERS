@@ -22,7 +22,7 @@ elseif ismember(gen.Type,{'CHP Generator';'Electric Generator';'Heater';'Chiller
     p = eig(gen.VariableStruct.StateSpace.A);
     w_0 = sqrt(real(p(1))^2 + imag(p(1))^2);
     zeta = -real(p(1)+p(2))/(2*w_0);
-    set(handles.compText5,'String',num2str(w0));
+    set(handles.compText5,'String',num2str(w_0));
     set(handles.compText6,'String',num2str(zeta));
     ss_response(gen,handles);
 elseif ismember(gen.Type,{'Electric Storage';'Thermal Storage';}) 

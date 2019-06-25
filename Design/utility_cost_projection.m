@@ -5,7 +5,7 @@ function projection = utility_cost_projection(utility,user,years,state)
 % state is the two letter state abreviation
 global Model_dir
 if strcmp(utility,'gas')
-    load(fullfile(Model_dir,'System Library', 'NatGas','RateData','GasRate'))
+    load(fullfile(Model_dir,'System_Library', 'NatGas','RateData','GasRate'))
     Date = GasRate.Date(:,1);
     Data = GasRate.(state).(user);
     yH = floor(length(Date)/12);
@@ -17,7 +17,7 @@ if strcmp(utility,'gas')
     end
     monthAvg = monthAvg/yH;
 elseif strcmp(utility,'electric')
-    load(fullfile(Model_dir,'System Library', 'Grid','RateData','ElecRate'))
+    load(fullfile(Model_dir,'System_Library', 'Grid','RateData','ElecRate'))
     Date = ElecRate.Date;
     Data = ElecRate.(state).(user);
     yH = floor(length(Date)/12);

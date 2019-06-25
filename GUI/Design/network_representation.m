@@ -1,7 +1,12 @@
-function handles = network_representation(gen,buildings,network,handles)
+function handles = network_representation(sys,handles)
 %% create diagram of equipment and network
 %%collect networks, nodes and equipment
-[gen, buildings] = update_qpform_all(gen,buildings,network,1);% updates the QPform field in all generators and buildings
+network = sys.Network;
+buildings = [];
+if isfield(sys,'Building') && ~isempty(sys.Building)
+    buildings = sys.Building;
+end
+[gen, buildings] = update_qpform_all(sys.Generator,buildings,network,1);% updates the QPform field in all generators and buildings
 [subnet, gen, buildings] = load_network(network,gen,buildings);
 
 n_g = length(gen);

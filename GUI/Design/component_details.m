@@ -223,22 +223,25 @@ switch gen.Type
         create_item(handles.uipanelGenSpec,'text','Location',[66 32 14 1.75],12,'normal',[],'textEdit1',[]);
         create_item(handles.uipanelGenSpec,'text','Size (kW)',[75 28 14 1.75],12,'normal',[],'textEdit2',[]);
         create_item(handles.uipanelGenSpec,'text','Size (m^2)',[73.5 26 16 1.75],12,'normal',[],'textEdit3',[]);
-        create_item(handles.uipanelGenSpec,'text','Conversion Efficiency (%)',[55 22 34 1.75],11.5,'normal',[],'textEdit4',[]);
-        create_item(handles.uipanelGenSpec,'text','Azimuth Angle (Degrees) ',[57 20 32 1.75],11.5,'normal',[],'textEdit5',[]);
-        create_item(handles.uipanelGenSpec,'text','Tilt Angle (Degrees)',[63 18 26 1.75],11.5,'normal',[],'textEdit6',[]);
+        create_item(handles.uipanelGenSpec,'text','Conversion Efficiency (%)',[54 20 35 1.75],11.5,'normal',[],'textEdit4',[]);
+        create_item(handles.uipanelGenSpec,'text','Azimuth Angle (Degrees) ',[54 18 35 1.75],11.5,'normal',[],'textEdit5',[]);
+        create_item(handles.uipanelGenSpec,'text','Tilt Angle (Degrees)',[54 16 35 1.75],11.5,'normal',[],'textEdit6',[]);
         create_item(handles.uipanelGenSpec,'text','Solar Type',[15 28.1 17 1.75],12,'bold',[],'textEdit7',[]);
         create_item(handles.uipanelGenSpec,'text','Solar Tracking',[12 24.1 22 1.75],12,'bold',[],'textEdit8',[]);
 
         create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Size),[90 28 15 1.75],10,'normal',[],'compText1',[]);
         create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Sizem2),[90 26 15 1.75],10,'normal',[],'compText2',[]);
-        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Eff),[90 22 15 1.75],10,'normal',[],'compText3',[]);
-        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Azimuth),[90 20 15 1.75],10,'normal',[],'compText4',[]);
-        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Tilt),[90 18 15 1.75],10,'normal',[],'compText5',[]);
+        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Eff),[90 20 15 1.75],10,'normal',[],'compText3',[]);
+        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Azimuth),[90 18 15 1.75],10,'normal',[],'compText4',[]);
+        create_item(handles.uipanelGenSpec,'edit',num2str(gen.VariableStruct.Tilt),[90 16 15 1.75],10,'normal',[],'compText5',[]);
 
         stateName = {'Alabama';'Alaska';'Arizona';'Arkansas';'California';'Colorado';'Connecticut';'Delaware';'Florida';'Georgia';'Hawaii';'Idaho';'Illinois';'Indiana';'Iowa';'Kansas';
          'Kentucky';'Louisiana';'Maine';'Maryland';'Massachusetts';'Michigan';'Minnesota';'Mississippi';'Missouri';'Montana';'Nebraska';'Nevada';'New Hampshire';'New Jersey';
          'New Mexico';'New York';'North Carolina';'North Dakota';'Ohio';'Oklahoma';'Oregon';'Pennsylvania';'Rhode Island';'South Carolina';'South Dakota';'Tennessee';'Texas';
          'Utah';'Vermont';'Virginia';'Washington';'West Virginia';'Wisconsin';'Wyoming';};
+        if ~isfield(gen.VariableStruct,'State')
+            [zip_code,gen.VariableStruct.State] = get_zip_code(testSystems(SYSINDEX).Network.Location.Latitude,testSystems(SYSINDEX).Network.Location.Longitude);
+        end
         stateNum = find(strcmp(gen.VariableStruct.State,stateName));
         create_item(handles.uipanelGenSpec,'popup',stateName,[80 32 25 1.75],10,'normal',stateNum,'popupSolar',[]);
         if strcmp(gen.VariableStruct.PVtype,'flat')
@@ -248,8 +251,8 @@ switch gen.Type
             val1 = 0;
             val2 = 1;
         end
-        create_item(handles.uipanelGenSpec,'radiobutton','Flat Panel',[5 27 16 1.5],11,'normal',val1,'Flat','radiobuttonSType');
-        create_item(handles.uipanelGenSpec,'radiobutton','Concentrated',[23 27 20 1.5],11,'normal',val2,'Concentrated','radiobuttonSType');
+        create_item(handles.uipanelGenSpec,'radiobutton','Flat Panel',[5 27 20 1.5],11,'normal',val1,'Flat','radiobuttonSType');
+        create_item(handles.uipanelGenSpec,'radiobutton','Concentrated',[27 27 25 1.5],11,'normal',val2,'Concentrated','radiobuttonSType');
 
         if strcmp(gen.VariableStruct.Tracking,'fixed')
             val1 = 1;
@@ -264,13 +267,13 @@ switch gen.Type
             val2 = 0;
             val3 = 1;
         end
-        create_item(handles.uipanelGenSpec,'radiobutton','Fixed',[1 23 10 1.5],11,'normal',val1,'Fixed','radiobuttonSTracking');
-        create_item(handles.uipanelGenSpec,'radiobutton','Single Axis',[13 23 17 1.5],11,'normal',val2,'SingleAxis','radiobuttonSTracking');            
-        create_item(handles.uipanelGenSpec,'radiobutton','Dual Axis',[32 23 15 1.5],11,'normal',val3,'DualAxis','radiobuttonSTracking');        
+        create_item(handles.uipanelGenSpec,'radiobutton','Fixed',[1 23 12 1.5],11,'normal',val1,'Fixed','radiobuttonSTracking');
+        create_item(handles.uipanelGenSpec,'radiobutton','Single Axis',[16 23 20 1.5],11,'normal',val2,'SingleAxis','radiobuttonSTracking');            
+        create_item(handles.uipanelGenSpec,'radiobutton','Dual Axis',[40 23 20 1.5],11,'normal',val3,'DualAxis','radiobuttonSTracking');        
 
-        row = {'DC rating';'Inverter/Transformer';'Mismatch';'Diodes/Connection';'DC wiring';...
-               'AC wiring';'Soiling';'System availability';'Shading';'Sun-Tracking';'Age';};
-        create_table(handles,gen.VariableStruct.Data,{'Value';'Min';'Max'},'auto',row,[20 1.5 71.13 15.72],'uitableDCAC',logical([1 0 0]));
+%         row = {'DC rating';'Inverter/Transformer';'Mismatch';'Diodes/Connection';'DC wiring';...
+%                'AC wiring';'Soiling';'System availability';'Shading';'Sun-Tracking';'Age';};
+%         create_table(handles,gen.VariableStruct.Data,{'Value';'Min';'Max'},'auto',row,[20 1.5 71.13 15.72],'uitableDCAC',logical([1 0 0]));
 
     case 'Electric Storage'
         create_item(handles.uipanelGenSpec,'text','Size (kWh)',[70 32 20 1.75],12,'normal',[],'textEdit1',[]);

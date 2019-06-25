@@ -18,7 +18,7 @@ Outlet = [];
 J = center_menu('Non-linear model options','Initialize from system description','Load previously initialized plant','Skip to pre-loaded linear model');
 if J ==1
     %the goal is to have a GUI replace these m-files
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','*.m'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','*.m'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(strrep(ModelFiles(i).name,'.m',''));
@@ -33,12 +33,12 @@ if J ==1
         BuildModel(Plant); %%Build & Initialize model
         J2 = center_menu('Save Model?','Yes','No');
         if J2 ==1
-            [f,p]=uiputfile(fullfile(Model_dir,'Model Library','Saved Models',strcat(modelName,'.mat')),'Save Model As...');
+            [f,p]=uiputfile(fullfile(Model_dir,'Model_Library','Saved_Models',strcat(modelName,'.mat')),'Save Model As...');
             save([p f],'modelParam')
         end
     end
 elseif J ==2
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','Saved Models','*.mat'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','Saved_Models','*.mat'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(ModelFiles(i).name);
@@ -49,7 +49,7 @@ elseif J ==2
     else
         modelName = list{s};
         modelName = strrep(modelName,'.mat','');
-        load(fullfile(Model_dir,'Model Library','Saved Models',modelName));
+        load(fullfile(Model_dir,'Model_Library','Saved Models',modelName));
         Outlet = modelParam.NominalOutlet; SimSettings = modelParam.NominalSettings; Tags = modelParam.NominalTags;
     end
 end
@@ -62,11 +62,11 @@ if J2 ==1
     CreateLinModel;
     J3 = center_menu('Save Linearized Model?','Yes','No');
     if J3 ==1
-        [f,p]=uiputfile(fullfile(Model_dir,'Model Library','Saved Linearizations',strcat(modelName,'.mat')),'Save Linearized Model As...');
+        [f,p]=uiputfile(fullfile(Model_dir,'Model_Library','Saved Linearizations',strcat(modelName,'.mat')),'Save Linearized Model As...');
         save([p f],'LinMod')
     end
 elseif J2 ==2
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','Saved Linearizations','*.mat'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','Saved Linearizations','*.mat'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(ModelFiles(i).name);
@@ -75,17 +75,18 @@ elseif J2 ==2
     if OK~=1
         disp('Invalid selection. Exiting...')
     else
-        load(fullfile(Model_dir,'Model Library','Saved Linearizations',list{s}));
+        load(fullfile(Model_dir,'Model_Library','Saved Linearizations',list{s}));
     end
 end
 
 if J2 ==3
     if J ==1 || J ==2
         J3 = center_menu('Simulation Options','Simulate non-linear response','Exit');
-        if J3 == 2;
+        if J3 == 2
             J3 = 4;%exit
         end
-    else J3 = 4; %no linear or non-linear model loaded, exit
+    else
+        J3 = 4; %no linear or non-linear model loaded, exit
     end
 elseif J == 3
     J3 = 2; %simulate linear response

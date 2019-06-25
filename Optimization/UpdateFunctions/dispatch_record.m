@@ -89,7 +89,6 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
     predicted.LineFlows(:,:,si-1) = solution.LineFlows;
     predicted.Buildings(:,:,si-1) = solution.Buildings.Temperature;
     predicted.fluid_loop(:,:,si-1) = solution.fluid_loop;
-    predicted.hydroSOC(:,:,si-1) = solution.hydroSOC;
     
     %%copy select fields of actual data and forecasted data into saved dispatch and predicted
     F = fieldnames(actual_data);
@@ -132,7 +131,7 @@ elseif strcmp(options.method,'Dispatch') || strcmp(options.method,'Control')
     if isfield(solution,'hydroSOC') && ~isempty(solution.hydroSOC)
         dispatch.Hydro.SOC(si,:) = solution.hydroSOC(1,:);
         dispatch.Hydro.spillFlow(si,:) = solution.hydroSpillFlow(1,:);
-        predicted.hydroSOC(:,:,si) = solution.hydroSOC;
+        predicted.hydroSOC(:,:,si-1) = solution.hydroSOC;
         for n = 1:1:length(subnet.Hydro.nodes)
             dispatch.Hydro.OutFlow(si,n) = solution.LineFlows(1,subnet.Hydro.lineNumber(n));
         end
