@@ -1,0 +1,183 @@
+Program Version,EnergyPlus, Version 8.8.0-7c3bbe4830, YMD=2018.08.30 23:09
+! <Version>, Version ID
+ Version, 8.8
+! <Timesteps per Hour>, #TimeSteps, Minutes per TimeStep {minutes}
+ Timesteps per Hour,  6, 10
+! <System Convergence Limits>, Minimum System TimeStep {minutes}, Max HVAC Iterations, Minimum Plant Iterations, Maximum Plant Iterations
+ System Convergence Limits, 2, 25, 2, 8
+! <Simulation Control>, Do Zone Sizing, Do System Sizing, Do Plant Sizing, Do Design Days, Do Weather Simulation, Do HVAC Sizing Simulation
+ Simulation Control, Yes, Yes, Yes, No, Yes, No
+! <Output Reporting Tolerances>, Tolerance for Time Heating Setpoint Not Met, Tolerance for Zone Cooling Setpoint Not Met Time
+ Output Reporting Tolerances, 0.556, 0.556, 
+! <Site:GroundTemperature:BuildingSurface>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:BuildingSurface,  10.41,  10.24,  11.37,  13.10,  16.43,  19.37,  22.17,  24.22,  21.68,  17.38,  14.27,  11.38
+! <Site:GroundTemperature:FCfactorMethod>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:FCfactorMethod,   2.18,   1.16,   2.97,   5.81,  13.21,  18.93,  22.79,  23.96,  21.96,  17.52,  11.59,   6.09
+! <Site:GroundTemperature:Shallow>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:Shallow,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00,  13.00
+! <Site:GroundTemperature:Deep>,Jan{C},Feb{C},Mar{C},Apr{C},May{C},Jun{C},Jul{C},Aug{C},Sep{C},Oct{C},Nov{C},Dec{C}
+ Site:GroundTemperature:Deep,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00,  16.00
+! <Site:GroundReflectance>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Site:GroundReflectance:SnowModifier>, Normal, Daylighting {dimensionless}
+ Site:GroundReflectance:SnowModifier,   1.000,   1.000
+! <Site:GroundReflectance:Snow>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance:Snow,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Site:GroundReflectance:Snow:Daylighting>,Jan{dimensionless},Feb{dimensionless},Mar{dimensionless},Apr{dimensionless},May{dimensionless},Jun{dimensionless},Jul{dimensionless},Aug{dimensionless},Sep{dimensionless},Oct{dimensionless},Nov{dimensionless},Dec{dimensionless}
+ Site:GroundReflectance:Snow:Daylighting,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20,  0.20
+! <Environment:Weather Station>,Wind Sensor Height Above Ground {m},Wind Speed Profile Exponent {},Wind Speed Profile Boundary Layer Thickness {m},Air Temperature Sensor Height Above Ground {m},Wind Speed Modifier Coefficient-Internal,Temperature Modifier Coefficient-Internal
+Environment:Weather Station,10.000,0.140,270.000,1.500,1.586,9.750E-003
+! <Site:Location>, Location Name, Latitude {N+/S- Deg}, Longitude {E+/W- Deg},  Time Zone Number {GMT+/-}, Elevation {m},  Standard Pressure at Elevation {Pa}, Standard RhoAir at Elevation
+Site:Location,BALTIMORE MD USA TMY2-93721 WMO#=724060,39.18,-76.67,-5.00,47.00,100762,1.1976
+! <Building Information>, Building Name,North Axis {deg},Terrain,  Loads Convergence Tolerance Value,Temperature Convergence Tolerance Value,  Solar Distribution,Maximum Number of Warmup Days,Minimum Number of Warmup Days
+ Building Information,Ref Bldg Warehouse New2004_v1.3_5.0,0.000,City,4.00000E-002,0.20000,FullInteriorAndExterior,40,6
+! <Inside Convection Algorithm>, Algorithm {Simple | TARP | CeilingDiffuser | AdaptiveConvectionAlgorithm}
+Inside Convection Algorithm,TARP
+! <Outside Convection Algorithm>, Algorithm {SimpleCombined | TARP | MoWitt | DOE-2 | AdaptiveConvectionAlgorithm}
+Outside Convection Algorithm,DOE-2
+! <Sky Radiance Distribution>, Value {Anisotropic}
+Sky Radiance Distribution,Anisotropic
+! <Zone Air Solution Algorithm>, Value {ThirdOrderBackwardDifference | AnalyticalSolution | EulerMethod}
+ Zone Air Solution Algorithm, AnalyticalSolution
+! <Zone Air Carbon Dioxide Balance Simulation>, Simulation {Yes/No}, Carbon Dioxide Concentration
+ Zone Air Carbon Dioxide Balance Simulation, No,N/A
+! <Zone Air Generic Contaminant Balance Simulation>, Simulation {Yes/No}, Generic Contaminant Concentration
+ Zone Air Generic Contaminant Balance Simulation, No,N/A
+! <Zone Air Mass Flow Balance Simulation>, Enforce Mass Balance, Adjust Zone Mixing, Adjust Zone Infiltration {AddInfiltration | AdjustInfiltration | None}, Infiltration Zones {MixingSourceZonesOnly | AllZones}
+ Zone Air Mass Flow Balance Simulation, No,N/A,N/A,N/A
+! <HVACSystemRootFindingAlgorithm>, Value {RegulaFalsi | Bisection | BisectionThenRegulaFalsi | RegulaFalsiThenBisection}
+ HVACSystemRootFindingAlgorithm, RegulaFalsi
+! <Environment:Site Atmospheric Variation>,Wind Speed Profile Exponent {},Wind Speed Profile Boundary Layer Thickness {m},Air Temperature Gradient Coefficient {K/m}
+Environment:Site Atmospheric Variation,0.330,460.000,6.500000E-003
+! <Surface Geometry>,Starting Corner,Vertex Input Direction,Coordinate System,Daylight Reference Point Coordinate System,Rectangular (Simple) Surface Coordinate System
+ Surface Geometry,UpperLeftCorner,Counterclockwise,RelativeCoordinateSystem,RelativeCoordinateSystem,RelativeToZoneOrigin
+! <Surface Heat Transfer Algorithm>, Value {CTF - ConductionTransferFunction | EMPD - MoisturePenetrationDepthConductionTransferFunction | CondFD - ConductionFiniteDifference | HAMT - CombinedHeatAndMoistureFiniteElement} - Description,Inside Surface Max Temperature Limit{C}, Surface Convection Coefficient Lower Limit {W/m2-K}, Surface Convection Coefficient Upper Limit {W/m2-K}
+Surface Heat Transfer Algorithm, CTF - ConductionTransferFunction,200,0.10,1000.0
+! <Shading Summary>, Number of Fixed Detached Shades, Number of Building Detached Shades, Number of Attached Shades
+ Shading Summary,0,0,0
+! <Zone Summary>, Number of Zones, Number of Zone Surfaces, Number of SubSurfaces
+ Zone Summary,3,41,18
+! <Zone Information>,Zone Name,North Axis {deg},Origin X-Coordinate {m},Origin Y-Coordinate {m},Origin Z-Coordinate {m},Centroid X-Coordinate {m},Centroid Y-Coordinate {m},Centroid Z-Coordinate {m},Type,Zone Multiplier,Zone List Multiplier,Minimum X {m},Maximum X {m},Minimum Y {m},Maximum Y {m},Minimum Z {m},Maximum Z {m},Ceiling Height {m},Volume {m3},Zone Inside Convection Algorithm {Simple-Detailed-CeilingDiffuser-TrombeWall},Zone Outside Convection Algorithm {Simple-Detailed-Tarp-MoWitt-DOE-2-BLAST}, Floor Area {m2},Exterior Gross Wall Area {m2},Exterior Net Wall Area {m2},Exterior Window Area {m2}, Number of Surfaces, Number of SubSurfaces, Number of Shading SubSurfaces,  Part of Total Building Area
+ Zone Information, BULKSTORAGE,0.0,0.00,0.00,0.00,22.86,67.24,4.27,1,1,1,0.00,45.72,30.48,100.58,0.00,8.53,8.53,27350.11,TARP,DOE-2,3204.84,1586.63,1528.76,0.00,5,10,0,Yes
+ Zone Information, FINESTORAGE,0.0,0.00,0.00,0.00,23.07,14.53,4.60,1,1,1,0.00,45.72,0.00,30.48,0.00,8.53,7.81,10880.60,TARP,DOE-2,1393.41,1150.96,1147.06,0.00,9,2,0,Yes
+ Zone Information, OFFICE,0.0,0.00,0.00,0.00,12.95,4.57,2.13,1,1,1,0.00,25.91,0.00,9.14,0.00,4.27,4.27,1010.76,TARP,DOE-2,236.88,299.12,275.60,17.66,6,6,0,Yes
+! <Zone Internal Gains Nominal>,Zone Name, Floor Area {m2},# Occupants,Area per Occupant {m2/person},Occupant per Area {person/m2},Interior Lighting {W/m2},Electric Load {W/m2},Gas Load {W/m2},Other Load {W/m2},Hot Water Eq {W/m2},Steam Equipment {W/m2},Sum Loads per Area {W/m2},Outdoor Controlled Baseboard Heat
+ Zone Internal Gains Nominal, BULKSTORAGE,3204.84,0.0,N/A,0.000,9.680,2.560,0.000,0.000,0.000,0.000,12.240,No
+ Zone Internal Gains Nominal, FINESTORAGE,1393.41,0.0,N/A,0.000,15.060,0.000,0.000,0.000,0.000,0.000,15.060,No
+ Zone Internal Gains Nominal, OFFICE,236.88,5.0,47.376,2.111E-002,11.840,8.070,0.000,0.000,0.000,0.000,19.910,No
+! <People Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Number of People {},People/Floor Area {person/m2},Floor Area per person {m2/person},Fraction Radiant,Fraction Convected,Sensible Fraction Calculation,Activity level,ASHRAE 55 Warnings,Carbon Dioxide Generation Rate,Nominal Minimum Number of People,Nominal Maximum Number of People,MRT Calculation Type,Work Efficiency, Clothing Insulation Calculation Method,Clothing Insulation Calculation Method Schedule,Clothing,Air Velocity,Fanger Calculation,Pierce Calculation,KSU Calculation
+ People Internal Gains Nominal, OFFICE PEOPLE,BLDG_OCC_SCH,OFFICE,236.88,5.0,5.0,2.111E-002,47.376,0.300,0.700,AutoCalculate,ACTIVITY_SCH,No,3.8200E-008,0,5,Zone Averaged,WORK_EFF_SCH,Clothing Insulation Schedule,N/A,CLOTHING_SCH,AIR_VELO_SCH,Yes,No,No
+! <Lights Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Lighting Level {W},Lights/Floor Area {W/m2},Lights per person {W/person},Fraction Return Air,Fraction Radiant,Fraction Short Wave,Fraction Convected,Fraction Replaceable,End-Use Category,Nominal Minimum Lighting Level {W},Nominal Maximum Lighting Level {W}
+ Lights Internal Gains Nominal, BULKSTORAGE_LIGHTS,BLDG_LIGHT_SCH,BULKSTORAGE,3204.84,0.0,31022.857,9.680,N/A,0.000,0.500,0.200,0.300,1.000,General,0.000,31022.857
+ Lights Internal Gains Nominal, FINESTORAGE_LIGHTS,BLDG_LIGHT_SCH,FINESTORAGE,1393.41,0.0,20984.754,15.060,N/A,0.000,0.500,0.200,0.300,1.000,General,0.000,20984.754
+ Lights Internal Gains Nominal, OFFICE_LIGHTS,BLDG_LIGHT_SCH,OFFICE,236.88,5.0,2804.634,11.840,560.927,0.000,0.500,0.200,0.300,1.000,General,0.000,2804.634
+! <ElectricEquipment Internal Gains Nominal>,Name,Schedule Name,Zone Name,Zone Floor Area {m2},# Zone Occupants,Equipment Level {W},Equipment/Floor Area {W/m2},Equipment per person {W/person},Fraction Latent,Fraction Radiant,Fraction Lost,Fraction Convected,End-Use SubCategory,Nominal Minimum Equipment Level {W},Nominal Maximum Equipment Level {W}
+ ElectricEquipment Internal Gains Nominal, BULKSTORAGE_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,BULKSTORAGE,3204.84,0.0,8204.392,2.560,N/A,0.000,0.500,0.000,0.500,MiscPlug,0.000,8204.392
+ ElectricEquipment Internal Gains Nominal, OFFICE_MISCPLUG_EQUIP,BLDG_EQUIP_SCH,OFFICE,236.88,5.0,1911.605,8.070,382.321,0.000,0.500,0.000,0.500,MiscPlug,0.000,1911.605
+! <Shadowing/Sun Position Calculations Annual Simulations>, Calculation Method, Value {days}, Allowable Number Figures in Shadow Overlap {}, Polygon Clipping Algorithm, Sky Diffuse Modeling Algorithm
+Shadowing/Sun Position Calculations Annual Simulations,AverageOverDaysInFrequency,7,15000,SutherlandHodgman,SimpleSkyDiffuseModeling,InternalCalculation,No
+! <ZoneInfiltration Airflow Stats Nominal>,Name,Schedule Name,Zone Name, Zone Floor Area {m2}, # Zone Occupants,Design Volume Flow Rate {m3/s},Volume Flow Rate/Floor Area {m3/s/m2},Volume Flow Rate/Exterior Surface Area {m3/s/m2},ACH - Air Changes per Hour,Equation A - Constant Term Coefficient {},Equation B - Temperature Term Coefficient {1/C},Equation C - Velocity Term Coefficient {s/m}, Equation D - Velocity Squared Term Coefficient {s2/m2}
+ ZoneInfiltration Airflow Stats Nominal, BULKSTORAGE_INFILTRATION,ALWAYS_ON,BULKSTORAGE,3204.84,0.0,1.465,4.570E-004,3.020E-004,0.193,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, FINESTORAGE_INFILTRATION,ALWAYS_ON,FINESTORAGE,1393.41,0.0,0.770,5.523E-004,3.020E-004,0.255,1.000,0.000,0.000,0.000
+ ZoneInfiltration Airflow Stats Nominal, OFFICE_INFILTRATION,ALWAYS_ON,OFFICE,236.88,5.0,9.210E-002,3.888E-004,3.020E-004,0.328,1.000,0.000,0.000,0.000
+! <ZoneVentilation Airflow Stats Nominal>,Name,Schedule Name,Zone Name, Zone Floor Area {m2}, # Zone Occupants,Design Volume Flow Rate {m3/s},Volume Flow Rate/Floor Area {m3/s/m2},Volume Flow Rate/person Area {m3/s/person},ACH - Air Changes per Hour,Fan Type {Exhaust;Intake;Natural},Fan Pressure Rise {Pa},Fan Efficiency {},Equation A - Constant Term Coefficient {},Equation B - Temperature Term Coefficient {1/C},Equation C - Velocity Term Coefficient {s/m}, Equation D - Velocity Squared Term Coefficient {s2/m2},Minimum Indoor Temperature{C}/Schedule,Maximum Indoor Temperature{C}/Schedule,Delta Temperature{C}/Schedule,Minimum Outdoor Temperature{C}/Schedule,Maximum Outdoor Temperature{C}/Schedule,Maximum WindSpeed{m/s}
+ ZoneVentilation Airflow Stats Nominal, BULKSTORAGE_VENTILATION,MINOA_SCHED,BULKSTORAGE,3204.84,0.0,0.801,2.500E-004,N/A,0.105,Intake,49.800,0.5,1.000,0.000,0.000,0.000,7.50,35.00,-27.50,-30.00,50.00,6.00
+! <AirFlow Model>, Simple
+ AirFlow Model, Simple
+! <RoomAir Model>, Zone Name, Mixing/Mundt/UCSDDV/UCSDCV/UCSDUFI/UCSDUFE/User Defined
+RoomAir Model,BULKSTORAGE,Mixing/Well-Stirred
+RoomAir Model,FINESTORAGE,Mixing/Well-Stirred
+RoomAir Model,OFFICE,Mixing/Well-Stirred
+! <AirflowNetwork Model:Control>, No Multizone or Distribution/Multizone with Distribution/Multizone without Distribution/Multizone with Distribution only during Fan Operation
+AirflowNetwork Model:Control,NoMultizoneOrDistribution
+! <Zone Volume Capacitance Multiplier>, Sensible Heat Capacity Multiplier, Moisture Capacity Multiplier, Carbon Dioxide Capacity Multiplier, Generic Contaminant Capacity Multiplier
+Zone Volume Capacitance Multiplier,   1.000 ,   1.000,   1.000,   1.000
+! <Load Timesteps in Zone Design Calculation Averaging Window>, Value
+ Load Timesteps in Zone Design Calculation Averaging Window,    6
+! <Heating Sizing Factor Information>, Sizing Factor ID, Value
+ Heating Sizing Factor Information, Global,   1.2000    
+ Heating Sizing Factor Information, Zone BULKSTORAGE,   1.2000    
+ Heating Sizing Factor Information, Zone FINESTORAGE,   1.2000    
+ Heating Sizing Factor Information, Zone OFFICE,   1.2000    
+! <Cooling Sizing Factor Information>, Sizing Factor ID, Value
+ Cooling Sizing Factor Information, Global,   1.2000    
+ Cooling Sizing Factor Information, Zone BULKSTORAGE,   1.2000    
+ Cooling Sizing Factor Information, Zone FINESTORAGE,   1.2000    
+ Cooling Sizing Factor Information, Zone OFFICE,   1.2000    
+! <Zone Sizing Information>, Zone Name, Load Type, Calc Des Load {W}, User Des Load {W}, Calc Des Air Flow Rate {m3/s}, User Des Air Flow Rate {m3/s}, Design Day Name, Date/Time of Peak, Temperature at Peak {C}, Humidity Ratio at Peak {kgWater/kgDryAir}, Floor Area {m2}, # Occupants, Calc Outdoor Air Flow Rate {m3/s}, Calc DOAS Heat Addition Rate {W}
+ Zone Sizing Information, BULKSTORAGE, Cooling, 91669.53412, 110003.44095, 7.50386, 9.00463, BALTIMORE ANN CLG .4% CONDNS WB=>MDB, 7/21 15:50:00, 30.78000, 1.85424E-002, 3204.84064, 0.00000, 0.80121, 0.00000
+ Zone Sizing Information, BULKSTORAGE, Heating, 64713.86752, 77656.64103, 1.61531, 1.93838, BALTIMORE ANN HTG 99.6% CONDNS DB, 1/21 24:00:00, -11.00000, 1.47100E-003, 3204.84064, 0.00000, 0.80121, 0.00000
+ Zone Sizing Information, FINESTORAGE, Cooling, 32741.01077, 39289.21293, 2.11015, 2.53218, BALTIMORE ANN CLG .4% CONDNS WB=>MDB, 7/21 15:30:00, 30.98800, 1.85424E-002, 1393.40997, 0.00000, 0.34835, 0.00000
+ Zone Sizing Information, FINESTORAGE, Heating, 95560.65261, 114672.78314, 3.20594, 3.84712, BALTIMORE ANN HTG 99.6% CONDNS DB, 1/21 24:00:00, -11.00000, 1.47100E-003, 1393.40997, 0.00000, 0.34835, 0.00000
+ Zone Sizing Information, OFFICE, Cooling, 8250.96826, 9901.16191, 0.67541, 0.81049, BALTIMORE ANN CLG .4% CONDNS WB=>MDB, 7/21 15:40:00, 30.88400, 1.85424E-002, 236.87791, 5.00000, 5.00000E-002, 0.00000
+ Zone Sizing Information, OFFICE, Heating, 20901.58088, 25081.89706, 0.90049, 1.08059, BALTIMORE ANN HTG 99.6% CONDNS DB, 1/21 24:00:00, -11.00000, 1.47100E-003, 236.87791, 5.00000, 5.00000E-002, 0.00000
+! <System Sizing Information>, System Name, Load Type, Peak Load Kind, User Design Capacity, Calc Des Air Flow Rate [m3/s], User Des Air Flow Rate [m3/s], Design Day Name, Date/Time of Peak
+ System Sizing Information, FURNACE_PACU_CAV_1:1, Cooling, Sensible, 11333.08, 0.81049, 0.81049, BALTIMORE ANN CLG .4% CONDNS WB=>MDB, 7/21 05:00:00
+ System Sizing Information, FURNACE_PACU_CAV_1:1, Heating, Sensible, 26641.64, 1.08059, 1.08059, BALTIMORE ANN HTG 99.6% CONDNS DB, 1/21 24:00:00
+ System Sizing Information, FURNACE_PACU_CAV_2:2, Cooling, Sensible, 44138.67, 2.53218, 2.53218, BALTIMORE ANN CLG .4% CONDNS WB=>MDB, 7/21 05:00:00
+ System Sizing Information, FURNACE_PACU_CAV_2:2, Heating, Sensible, 124150.37, 3.84712, 3.84712, BALTIMORE ANN HTG 99.6% CONDNS DB, 1/21 24:00:00
+! <Component Sizing Information>, Component Type, Component Name, Input Field Description, Value
+ Component Sizing Information, ZoneHVAC:UnitHeater, BULKSTORAGE UNIT HEATER, Design Size Maximum Supply Air Flow Rate [m3/s], 1.93838
+ Component Sizing Information, Fan:ConstantVolume, BULKSTORAGE UNIT HEATERFAN, Design Size Maximum Flow Rate [m3/s], 1.93838
+ Component Sizing Information, Coil:Heating:Fuel, BULKSTORAGE UNIT HEATER COIL, Design Size Nominal Capacity [W], 95459.14158
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, FINESTORAGE DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 3.84712
+ Component Sizing Information, AirTerminal:SingleDuct:Uncontrolled, OFFICE DIRECT AIR, Design Size Maximum Air Flow Rate [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC, FURNACE_PACU_CAV_1:1, Design Supply Air Flow Rate [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC, FURNACE_PACU_CAV_2:2, Design Supply Air Flow Rate [m3/s], 3.84712
+ Component Sizing Information, Controller:OutdoorAir, FURNACE_PACU_CAV_1:1_OA_CONTROLLER, Maximum Outdoor Air Flow Rate [m3/s], 1.08059
+ Component Sizing Information, Controller:OutdoorAir, FURNACE_PACU_CAV_1:1_OA_CONTROLLER, Minimum Outdoor Air Flow Rate [m3/s], 5.00000E-002
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_COOLCOIL, Design Size Rated Air Flow Rate [m3/s], 1.08059
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_COOLCOIL, Design Size Gross Rated Total Cooling Capacity [W], 20955.10014
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_COOLCOIL, Design Size Gross Rated Sensible Heat Ratio, 0.78484
+! <DX Cooling Coil Standard Rating Information>, Component Type, Component Name, Standard Rating (Net) Cooling Capacity {W}, Standard Rated Net COP {W/W}, EER {Btu/W-h}, SEER {Btu/W-h}, IEER {Btu/W-h}
+ DX Cooling Coil Standard Rating Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_COOLCOIL, 20117.4, 2.95, 10.06, 11.56, 11.02
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Supply Air Flow Rate [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Supply Air Flow Rate During Heating Operation [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Supply Air Flow Rate During Cooling Operation [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Supply Air Flow Rate When No Cooling or Heating is Needed [m3/s], 1.08059
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Nominal Heating Capacity [W], 26641.64453
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Nominal Cooling Capacity [W], 20955.10014
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Maximum Supply Air Temperature from Supplemental Heater [C], 40.00000
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE, Fraction of Supply Air Flow That Goes Through the Controlling Zone, 1.00000
+ Component Sizing Information, Fan:OnOff, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_FAN, Design Size Maximum Flow Rate [m3/s], 1.08059
+ Component Sizing Information, Coil:Heating:Fuel, FURNACE_PACU_CAV_1:1_UNITARY_PACKAGE_HEATCOIL, Design Size Nominal Capacity [W], 26641.64453
+ Component Sizing Information, Controller:OutdoorAir, FURNACE_PACU_CAV_2:2_OA_CONTROLLER, Maximum Outdoor Air Flow Rate [m3/s], 3.84712
+ Component Sizing Information, Controller:OutdoorAir, FURNACE_PACU_CAV_2:2_OA_CONTROLLER, Minimum Outdoor Air Flow Rate [m3/s], 0.34835
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_COOLCOIL, Design Size Rated Air Flow Rate [m3/s], 3.84712
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_COOLCOIL, Design Size Gross Rated Total Cooling Capacity [W], 95533.20515
+ Component Sizing Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_COOLCOIL, Design Size Gross Rated Sensible Heat Ratio, 0.69808
+ DX Cooling Coil Standard Rating Information, Coil:Cooling:DX:SingleSpeed, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_COOLCOIL, 92548.9, 2.84, 9.71, 11.93, 11.06
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Supply Air Flow Rate [m3/s], 3.84712
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Supply Air Flow Rate During Heating Operation [m3/s], 3.84712
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Supply Air Flow Rate During Cooling Operation [m3/s], 3.84712
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Supply Air Flow Rate When No Cooling or Heating is Needed [m3/s], 3.84712
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Nominal Heating Capacity [W], 124150.36787
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Nominal Cooling Capacity [W], 95533.20515
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Maximum Supply Air Temperature from Supplemental Heater [C], 40.00000
+ Component Sizing Information, AirLoopHVAC:UnitaryHeatCool, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE, Fraction of Supply Air Flow That Goes Through the Controlling Zone, 1.00000
+ Component Sizing Information, Fan:OnOff, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_FAN, Design Size Maximum Flow Rate [m3/s], 3.84712
+ Component Sizing Information, Coil:Heating:Fuel, FURNACE_PACU_CAV_2:2_UNITARY_PACKAGE_HEATCOIL, Design Size Nominal Capacity [W], 124150.36787
+! <Environment>,Environment Name,Environment Type, Start Date, End Date, Start DayOfWeek, Duration {#days}, Source:Start DayOfWeek,  Use Daylight Saving, Use Holidays, Apply Weekend Holiday Rule,  Use Rain Values, Use Snow Values
+! <Environment:Special Days>, Special Day Name, Special Day Type, Source, Start Date, Duration {#days}
+! <Environment:Daylight Saving>, Daylight Saving Indicator, Source, Start Date, End Date
+! <Environment:WarmupDays>, NumberofWarmupDays
+Environment,BALTIMORE MD USA TMY2-93721 WMO#=724060,WeatherFileRunPeriod,01/01,12/31,Sunday,365,Use RunPeriod Specified Day,No,No,No,Yes,Yes
+Environment:Daylight Saving,Yes,InputFile,03/12,11/05
+Environment:Special Days,NEW YEARS DAY,Holiday,InputFile,01/01,  1
+Environment:Special Days,VETERANS DAY,Holiday,InputFile,11/11,  1
+Environment:Special Days,CHRISTMAS,Holiday,InputFile,12/25,  1
+Environment:Special Days,INDEPENDENCE DAY,Holiday,InputFile,07/04,  1
+Environment:Special Days,MLK DAY,Holiday,InputFile,01/16,  1
+Environment:Special Days,PRESIDENTS DAY,Holiday,InputFile,02/20,  1
+Environment:Special Days,MEMORIAL DAY,Holiday,InputFile,05/29,  1
+Environment:Special Days,LABOR DAY,Holiday,InputFile,09/04,  1
+Environment:Special Days,COLUMBUS DAY,Holiday,InputFile,10/09,  1
+Environment:Special Days,THANKSGIVING,Holiday,InputFile,11/23,  1
+Environment:WarmupDays,  6
+! <Warmup Convergence Information>,Zone Name,Environment Type/Name,Average Warmup Temperature Difference {deltaC},Std Dev Warmup Temperature Difference {deltaC},Max Temperature Pass/Fail Convergence,Min Temperature Pass/Fail Convergence,Average Warmup Load Difference {W},Std Dev Warmup Load Difference {W},Heating Load Pass/Fail Convergence,Cooling Load Pass/Fail Convergence
+ Warmup Convergence Information,BULKSTORAGE,RunPeriod: BALTIMORE MD USA TMY2-93721 WMO#=724060,1.0059218936E-002,1.2322645953E-002,Pass,Pass,4.6338852110E-002,0.1624815883,Pass,Pass
+ Warmup Convergence Information,FINESTORAGE,RunPeriod: BALTIMORE MD USA TMY2-93721 WMO#=724060,0.5924110810,0.4822611007,Pass,Pass,0.5192043258,0.4746311797,Pass,Pass
+ Warmup Convergence Information,OFFICE,RunPeriod: BALTIMORE MD USA TMY2-93721 WMO#=724060,0.8011764681,0.8052165150,Pass,Pass,0.6275087192,0.5790593177,Pass,Pass
+! <Program Control Information:Threads/Parallel Sims>, Threading Supported,Maximum Number of Threads, Env Set Threads (OMP_NUM_THREADS), EP Env Set Threads (EP_OMP_NUM_THREADS), IDF Set Threads, Number of Threads Used (Interior Radiant Exchange), Number Nominal Surfaces, Number Parallel Sims
+Program Control:Threads/Parallel Sims, No,1, N/A, N/A, N/A, N/A, N/A, N/A
+End of Data

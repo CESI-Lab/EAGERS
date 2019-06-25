@@ -26,8 +26,9 @@ if plotFC
     for i = 1:1:length(CompNames)
         if isfield(Mod.Components.(CompNames{i}),'type') && (strcmp(Mod.Components.(CompNames{i}).type,'FuelCell') || strcmp(Mod.Components.(CompNames{i}).type,'Electrolyzer'))
             block = Mod.Components.(CompNames{i});
-            CellMap(Y(end,:),block,n+1);
-            n = n+1;
+            CellMap(Y(end,:),block,n+1,'T');
+            CellMap(Y(end,:),block,n+2,'I');
+            n = n+2;
         end
     end 
 end

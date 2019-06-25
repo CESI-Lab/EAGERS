@@ -183,14 +183,8 @@ else%running the model
     
     Inlet = checkSaturation(Inlet,block);
     RPM = Y(1)*60/(2*pi); %convert rad/s back to RPM
-    if any(isinf(RPM)) || any(isnan(RPM)) 
-        disp('WTF')
-    end
     [Power,Flow] = OpPoint(RPM,Inlet,block);
     NetPower = Inlet.Power - Power;
-    if Flow.O2<=0 
-        disp('WTF')
-    end
     if strcmp(string1,'Outlet')
         Out.Outlet = Flow;
         Out.Speed = RPM;

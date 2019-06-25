@@ -168,9 +168,6 @@ else%running the model
             end
         end
     end
-    if NetIn.O2==0
-        disp('WTF')
-    end
     ReactMix.T = Y(1);
     %% 3 reaction:
     % CH4 + 1.5O2 --> CO + 2H2O
@@ -249,9 +246,6 @@ else%running the model
         end
         dY(2+i) = (ReactFlow - NetFlow(ActualOut))*block.Ru*Y(1)/(block.Vol); %change in Pressure
         Out = dY;
-        if any(isnan(dY))
-            disp('WTF')
-        end
     end
 end
 end%Ends function Oxidizer

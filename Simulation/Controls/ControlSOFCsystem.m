@@ -5,7 +5,7 @@ function Out = ControlSOFCsystem(varargin)
 % Measured voltage determines current and fuel flow to meet power and utilization
 % Seven (7) Inlets: Four Targets (temperature set point, temperature differential, steam to carbon ration, and power), T FC exit, T FC inlet, Voltage
 % Nine (9) outlets: Four associated with the targets, Heater bypass, blower power, fuel flow rate, current, anode recirculation
-% Two (2) states: Heater bypass, blower power
+% Four (4) states: Target inlet temperature, Heater bypass, target RPM, blower power
 % May need to add state for current back in to avoid fuel starvation during step changes
 global Tags
 F=96485.339; % %Faraday's constant in Coulomb/mole

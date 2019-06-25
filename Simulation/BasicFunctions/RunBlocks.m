@@ -124,9 +124,7 @@ end
 TagInf.Pstates(IterCount,:) = Y(modelParam.Pstates)';
 dY = dY./modelParam.Scale;
 dY = dY+(Y-Yoriginal)./modelParam.Scale; %anti-windup for saturated states
-if IterCount==29
-    disp('WTF')
-end
+
 if t>0 && WaitBar.Show == 1 && Jcount==length(Y) && isfield(modelParam,'Scope')
     n = length(modelParam.Scope);
     dt = TagInf.Time(IterCount,1) - TagInf.Time(IterCount-1,1);

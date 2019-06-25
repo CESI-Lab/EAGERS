@@ -196,9 +196,6 @@ else%running the model
 
     Nflow1Out = block.PfactorCold*(Pflow1In-Inlet.ColdPout);%total cold flow out
     Nflow2Out = block.PfactorHot*(Pflow2In-Inlet.HotPout);%total hot flow out
-    if Nflow1Out<=0
-        disp('WTF')
-    end
     specFlow1 = fieldnames(Inlet.Flow1);
     specFlow2 = fieldnames(Inlet.Flow2);
 

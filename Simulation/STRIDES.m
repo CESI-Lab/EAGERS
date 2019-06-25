@@ -18,7 +18,7 @@ Outlet = [];
 J = center_menu('Non-linear model options','Initialize from system description','Load previously initialized plant','Skip to pre-loaded linear model');
 if J ==1
     %the goal is to have a GUI replace these m-files
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','*.m'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','*.m'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(strrep(ModelFiles(i).name,'.m',''));
@@ -33,12 +33,12 @@ if J ==1
         BuildModel(Plant); %%Build & Initialize model
         J2 = center_menu('Save Model?','Yes','No');
         if J2 ==1
-            [f,p]=uiputfile(fullfile(Model_dir,'Model Library','Saved Models',strcat(modelName,'.mat')),'Save Model As...');
+            [f,p]=uiputfile(fullfile(Model_dir,'Model_Library','Saved_Models',strcat(modelName,'.mat')),'Save Model As...');
             save([p f],'modelParam')
         end
     end
 elseif J ==2
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','Saved Models','*.mat'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','Saved_Models','*.mat'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(ModelFiles(i).name);
@@ -49,7 +49,7 @@ elseif J ==2
     else
         modelName = list{s};
         modelName = strrep(modelName,'.mat','');
-        load(fullfile(Model_dir,'Model Library','Saved Models',modelName));
+        load(fullfile(Model_dir,'Model_Library','Saved Models',modelName));
         Outlet = modelParam.NominalOutlet; SimSettings = modelParam.NominalSettings; Tags = modelParam.NominalTags;
     end
 end
@@ -62,11 +62,11 @@ if J2 ==1
     CreateLinModel;
     J3 = center_menu('Save Linearized Model?','Yes','No');
     if J3 ==1
-        [f,p]=uiputfile(fullfile(Model_dir,'Model Library','Saved Linearizations',strcat(modelName,'.mat')),'Save Linearized Model As...');
+        [f,p]=uiputfile(fullfile(Model_dir,'Model_Library','Saved Linearizations',strcat(modelName,'.mat')),'Save Linearized Model As...');
         save([p f],'LinMod')
     end
 elseif J2 ==2
-    ModelFiles=dir(fullfile(Model_dir,'Model Library','Saved Linearizations','*.mat'));
+    ModelFiles=dir(fullfile(Model_dir,'Model_Library','Saved Linearizations','*.mat'));
     list = {};
     for i = 1:1:length(ModelFiles)
         list(i) = cellstr(ModelFiles(i).name);
@@ -75,17 +75,18 @@ elseif J2 ==2
     if OK~=1
         disp('Invalid selection. Exiting...')
     else
-        load(fullfile(Model_dir,'Model Library','Saved Linearizations',list{s}));
+        load(fullfile(Model_dir,'Model_Library','Saved Linearizations',list{s}));
     end
 end
 
 if J2 ==3
     if J ==1 || J ==2
         J3 = center_menu('Simulation Options','Simulate non-linear response','Exit');
-        if J3 == 2;
+        if J3 == 2
             J3 = 4;%exit
         end
-    else J3 = 4; %no linear or non-linear model loaded, exit
+    else
+        J3 = 4; %no linear or non-linear model loaded, exit
     end
 elseif J == 3
     J3 = 2; %simulate linear response
@@ -103,9 +104,10 @@ if J3 ~=4
         controls = fieldnames(LinMod.Controls);
         Outlet = LinMod.NominalOutlet; SimSettings = LinMod.NominalSettings; Tags = LinMod.NominalTags;
     end
-    A = (inputdlg('Test Duration (s)','Specify length of the transient simulation',1,{num2str(24*3600)}));
-    SimSettings.RunTime = eval(A{1});
-    
+    A = (inputdlg({'Test Duration (hr)';'Maximum Step Size (hr)'},'Specify length of the transient simulation in hours',1,{'24';'.25';}));
+    SimSettings.RunTime = eval(A{1})*3600;
+    options = odeset('MaxStep',eval(A{2})*3600);
+    t_Steps = [0,SimSettings.RunTime];
     for i = 1:1:length(controls)
         if ~isempty(modelParam)
             Cont = modelParam.Controls.(controls{i});
@@ -120,8 +122,10 @@ if J3 ~=4
                 for k = 1:1:length(globvar)
                     SimSettings.(globvar{k}) = eval(A{k});
                 end
+                t_Steps = [t_Steps SimSettings.(globvar{1})*3600];
             end
         end
+        SimSettings.t_Steps = sort(unique(t_Steps));
         %% modify control terms
         nC = length(Cont.Gain);
         Prompt = {};
@@ -150,7 +154,7 @@ end
 if J3 ==1 || J3 == 3
     WaitBar.Show = 1; 
     IterCount = 1; TagInf =[]; TagFinal =[];  WaitBar.Text = 'Running non-linear model with transient';WaitBar.Handle =waitbar(0,WaitBar.Text);
-    tic; [T, Y] = ode15s(@RunBlocks, [0, SimSettings.RunTime], modelParam.IC); disp(strcat('Time to run model:',num2str(toc),' seconds'));close(WaitBar.Handle);
+    tic; [T, Y] = ode15s(@RunBlocks, [0, SimSettings.RunTime], modelParam.IC,options); disp(strcat('Time to run model:',num2str(toc),' seconds'));close(WaitBar.Handle);
     PlotSimulation(T,Y,1,0,1)% Plot the tags and scopes in Plant.Plot. The first option (after Y) is to plot any fuel cell or electrolyzer temperature profiles, the second option is to mave a video of the transient, the third is to plot compressor turbine and blower maps
 end
 
@@ -159,7 +163,7 @@ if J3 ==2 || J3 ==3
     % need to find better initial condition (won't always start at nominal power)
     IC =  [LinMod.Model{1}.X0;LinMod.Model{1}.UX0];
     IterCount = 1; TagInf =[]; TagFinal =[]; WaitBar.Show = 1; WaitBar.Text = 'Running linear model with transient';WaitBar.Handle =waitbar(0,WaitBar.Text);
-    tic; [T, Y] = ode15s(@RunLinSystem, [0, SimSettings.RunTime], IC); disp(strcat('Time to run model:',num2str(toc),' seconds'));close(WaitBar.Handle);
+    tic; [T, Y] = ode15s(@RunLinSystem, [0, SimSettings.RunTime], IC,options); disp(strcat('Time to run model:',num2str(toc),' seconds'));close(WaitBar.Handle);
     if J3 == 2
         PlotSimulation(T,Y,1,0,1)
     else

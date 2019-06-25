@@ -1,15 +1,15 @@
 %% SOFC stack with basic control of fuel and air flow
 function Plant = SOFCstack
 global SimSettings
-SimSettings.NominalPower= 300;
-Reformer = 'internal'; % options are 'internal' for indirect internal reforming, 'direct' for direct internal reforming, 'adiabatic' for external reforming using the heat from the anode (over-rides S2C ratio),'external' for an external reformer with heat captured from oxidixed anode exhaust, 'pox' partial oxidation reformer
+SimSettings.NominalPower= 100;
+Reformer = 'direct'; % options are 'internal' for indirect internal reforming, 'direct' for direct internal reforming, 'adiabatic' for external reforming using the heat from the anode (over-rides S2C ratio),'external' for an external reformer with heat captured from oxidixed anode exhaust, 'pox' partial oxidation reformer
 
 Utilization = 0.8; %global fuel utilization
-Steam2Carbon = 3.0;
+Steam2Carbon = 2.0;
 Air.N2 = .79;
 Air.O2 = .21;
 
-Fuel.CH4 = 0.9;
+Fuel.CH4 = .9;
 Fuel.CO = 0.04;
 Fuel.CO2 = 0.04;
 Fuel.H2 = 0;
@@ -60,7 +60,8 @@ Plant.Components.FuelSource.name = 'FuelSource';
 Plant.Components.FuelSource.InitialComposition = Fuel;
 if S2C<Steam2Carbon %there will be anode recirculation to heat incoming fuel
     Plant.Components.FuelSource.connections = {300;'';'Controller.FuelFlow';};
-else Plant.Components.FuelSource.connections = {900;'';'Controller.FuelFlow';};
+else
+    Plant.Components.FuelSource.connections = {900;'';'Controller.FuelFlow';};
 end
 
 if S2C<Steam2Carbon || strcmp(Reformer,'adiabatic')%add anode recirculation
@@ -135,41 +136,40 @@ Plant.Components.FC1.ClosedCathode = 0; %0 means air or some excess flow of O2 i
 Plant.Components.FC1.CoolingStream = 'cathode'; % choices are 'anode' or 'cathode'. Determines which flow is increased to reach desired temperature gradient.
 Plant.Components.FC1.Mode = 'fuelcell'; % options are 'fuelcell' or 'electrolyzer'
 Plant.Components.FC1.PressureRatio = 1.2;
-Plant.Components.FC1.columns = 5;
+Plant.Components.FC1.columns = 10;
 Plant.Components.FC1.rows = 1;
-Plant.Components.FC1.RatedStack_kW = 300; %Nominal Stack Power in kW
+Plant.Components.FC1.RatedStack_kW = SimSettings.NominalPower; %Nominal Stack Power in kW
 Plant.Components.FC1.Flow1Spec = Plant.Components.AirSource.InitialComposition; %initial oxidant composition
 Plant.Components.FC1.Flow2Spec = Fuel; %initial fuel composition at inlet
 Plant.Components.FC1.Steam2Carbon = Steam2Carbon;
 Plant.Components.FC1.method = 'Achenbach'; %Determines reforming reaction kinetics options: 'Achenbach' , 'Leinfelder' , 'Drescher'   
 Plant.Components.FC1.L_Cell = .09;  %Cell length in meters
 Plant.Components.FC1.W_Cell = .09;  %Cell Width in meters  
-Plant.Components.FC1.Specification = 'power density'; %options are 'cells', 'power density', 'voltage', or 'current density'. Note: careful when specifying cells that it arrives at a feasible power density
-Plant.Components.FC1.SpecificationValue = 450; % power density specified in mW/cm^2, voltage specified in V/cell, current density specified in A/cm^2
-Plant.Components.FC1.deltaTStack = 50; %temperature difference from cathode inlet to cathode outlet
+Plant.Components.FC1.Specification = 'current density';%'power density'; %options are 'cells', 'power density', 'voltage', or 'current density'. Note: careful when specifying cells that it arrives at a feasible power density
+Plant.Components.FC1.SpecificationValue = 0.5;%450; % power density specified in mW/cm^2, voltage specified in V/cell, current density specified in A/cm^2
+Plant.Components.FC1.deltaTStack = 100; %temperature difference from cathode inlet to cathode outlet
 Plant.Components.FC1.TpenAvg = 1023;% 750 C, average electrolyte operating temperature
 Plant.Components.FC1.Utilization_Flow2 = Utilization; %fuel utilization (net hydrogen consumed/ maximum hydrogen produced with 100% Co and CH4 conversion
 Plant.Components.FC1.Flow1Pdrop = 10; %design air pressure drop
 Plant.Components.FC1.Flow2Pdrop = 2; %Design fuel/steam pressure drop
 Plant.Components.FC1.Map = 'SOFC_map'; %Radiative heat transfer view factors, imported from CAD
+if (Fuel.CH4+Fuel.CO)>0
+    Plant.Components.FC1.AnPercEquilib = 1; %CH4 reforming reaches equilibrium at anode exit.
+end
 switch Reformer
     case {'direct';'internal'}
-        Plant.Components.FC1.AnPercEquilib = 1; %CH4 reforming reaches equilibrium at anode exit.
+        Plant.Components.FC1.connections = {'Controller.Current';'AirSource.Outlet';'FuelSource.Outlet';'';'';};
         if S2C<Steam2Carbon %add anode recirculation
             Plant.Components.FC1.connections = {'Controller.Current';'AirSource.Outlet';'Mix1.Outlet';'';'';};
-        else
-            Plant.Components.FC1.connections = {'Controller.Current';'AirSource.Outlet';'FuelSource.Outlet';'';'';};
         end
         if strcmp(Reformer,'internal')
             Plant.Components.FC1.RefPerc = 0.8;% necessary for internal reformer, proportion of CH4 reforming in the reforming channels
             Plant.Components.FC1.RefSpacing = 1;% necessary for internal reformer. This is the # of active cells between reformer plates
         end
-    case 'external';
-        Plant.Components.FC1.AnPercEquilib = 1; %CH4 reforming reaches equilibrium at anode exit.
+    case 'external'
         Plant.Components.FC1.connections = {'Controller.Current';'AirSource.Outlet';'Reformer.Reformed';'Oxidizer.Pin';'Oxidizer.Pin';};
         Plant.Components.FC1.RefPerc = Plant.Components.Reformer.ReformTarget; % necessary for internal or external reformer. This is the percent towards equilibrium occurin in the reformer plaes
     case 'adiabatic'
-        Plant.Components.FC1.AnPercEquilib = 1; %CH4 reforming reaches equilibrium at anode exit.
         Plant.Components.FC1.connections = {'Controller.Current';'AirSource.Outlet';'Reformer.Reformed';'';'';};
     case 'pox'
 end

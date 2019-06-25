@@ -120,7 +120,7 @@ n = 0;
 for i = 1:1:length(CompNames)
     if strcmp(modelParam.Components.(CompNames{i}).type,'FuelCell')|| strcmp(modelParam.Components.(CompNames{i}).type,'Electrolyzer')
         block = modelParam.Components.(CompNames{i});
-        CellMap(modelParam.IC',block,n+1);
+        CellMap(modelParam.IC',block,n+1,'T');
         title(strcat('Inital temperaturedistribution for :',CompNames{i}))
         n = n+1;
     end
@@ -132,7 +132,7 @@ IterCount = 1; TagInf =[]; TagFinal =[]; WaitBar.Text = 'Initialization'; WaitBa
 [T, Y] = ode15s(@RunBlocks, [0, SimSettings.RunTime], modelParam.IC,options);
 % [T, Y] = solverFixedStep(SimSettings.RunTime,300,modelParam.IC); 
 disp(strcat('Initialization:',num2str(toc),' seconds'));close(WaitBar.Handle); 
-%     PlotSimulation(T,Y,1,0,1)
+    PlotSimulation(T,Y,1,0,1)
 modelParam.IC = Y(end,:)';
 %Other global variables specific to this initialization
 modelParam.NominalOutlet = Outlet;

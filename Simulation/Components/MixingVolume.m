@@ -133,9 +133,6 @@ else%running the model
     for i = 1:1:length(block.spec)
         ActualOut.(block.spec{i}) = max(0,Y(i+1)*scaleFlow);
     end
-    if isfield(ActualOut,'O2') && ActualOut.O2<=0
-        disp('WTF')
-    end
     if strcmp(string1,'Outlet')
         Out.Pin = Pin;
         Out.Outlet = ActualOut;
@@ -172,15 +169,12 @@ else%running the model
         dY(1) = (Hin-Hout)/(block.Vol*Cp*Pin).*Y(1)*block.Ru;
         %species
         for i = 1:1:length(block.spec)
-            dY(1+i) = (NetIn.(block.spec{i})-Y(i+1)).*Y(1)*block.Ru/(block.Vol*Pin);%change in stored mass of each species
-%             dY(1+i) = ((NetIn.(block.spec{i})/FlowIn-Y(i+1)/FlowOut)*FlowOut + FlowError*Y(i+1)/FlowOut)/(block.Vol*Pin).*Y(1)*block.Ru;%change in stored mass of each species
+%             dY(1+i) = (NetIn.(block.spec{i})-Y(i+1)).*Y(1)*block.Ru/(block.Vol*Pin);%change in stored mass of each species
+            dY(1+i) = ((NetIn.(block.spec{i})/FlowIn-Y(i+1)/FlowOut)*FlowOut + FlowError*Y(i+1)/FlowOut)/(block.Vol*Pin).*Y(1)*block.Ru;%change in stored mass of each species
         end
         %pressure
         dY(end) = (FlowIn - NetFlow(ActualOut))*block.Ru*Y(1)/(block.Vol);
         Out = dY;
-        if any(isnan(dY))
-            disp('WTF')
-        end
     end
 end
 end%Ends function MixingVolume

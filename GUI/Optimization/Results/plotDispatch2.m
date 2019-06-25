@@ -31,15 +31,17 @@ for q = 1:1:length(S)
     negBars =[];
     StoragePower =[];
     StorageState = [];
+    FCcount = [];
     nLegend = zeros(1,length(Plant.Generator));
     for i = 1:1:length(Plant.Generator)
         if (strcmp(Plant.Generator(i).Type,'Thermal Storage') || strcmp(Plant.Generator(i).Type,'Electric Storage')) && isfield(Plant.Generator(i).QPform.output,S{q}) % energy storage
-            stor(end+1) = i;
             StoragePower(:,end+1) = (GeneratorDispatch(1:end-1,i)-GeneratorDispatch(2:end,i))./dt;
             plotBars(:,end+1) = [0;max(0,StoragePower(:,end));];
             negBars(:,end+1) = -[0;max(0,-StoragePower(:,end));];
             name(end+1) = cellstr(Plant.Generator(i).Name);
             nLegend(i) = length(plotBars(1,:));
+            stor(end+1) = i;
+            %stor(end+1) = length(plotBars(1,:));
 %             name(end+1) = {['Discharge ',Plant.Generator(i).Name]};
 %             name2(end+1) = {['Charge ',Plant.Generator(i).Name]};
             if isfield(Plant.Generator(i).QPform.output,'E')
@@ -60,7 +62,12 @@ for q = 1:1:length(S)
             end
         elseif isfield(Plant.Generator(i).QPform.output,S{q}) && ~(strcmp(Plant.Generator(i).Type,'Chiller') && strcmp(S{q},'E')) %generators & renewables
             plotBars(:,end+1) = GeneratorDispatch(:,i)*Plant.Generator(i).QPform.output.(S{q})(1); %accounts for Hratio or such when gen has multiple outputs
-            name(end+1) = cellstr(Plant.Generator(i).Name);
+            compName = cellstr(Plant.Generator(i).Name);
+            name(end+1) = compName;
+            if strcmp(compName{1}(1:2),'Fu') %if its a fuel cell
+                FCcount(end+1) = i;
+                nLegend(i) = length(plotBars(1,:));
+            end
         end
     end
     %put storage at the end, this section should only exist for plotting
@@ -68,10 +75,20 @@ for q = 1:1:length(S)
     if isempty(stor)
         plotBars(:,end+1) = zeros(length(plotBars(:,1)),1);
     elseif stor(end)<length(plotBars(1,:))
-        plotBars = [plotBars(:,1:stor(1)-1),plotBars(:,(stor(end)+1):end),plotBars(:,stor)];
-        name = {name{1:stor(1)-1},name{stor(end)+1},name{stor}};
-        nLegend(stor) = nLegend(stor)+length(plotBars(1,(stor(end)+1):end));
+        stori = nLegend(stor(1));
+        plotBars = [plotBars(:,1:stori-1),plotBars(:,(stori+1):end),plotBars(:,stori)];
+        name = {name{1:stori-1},name{stori+1:end},name{stori}};
+        nLegend(stor) = nLegend(stor)+length(plotBars(1,(stori+1):end));
         nLegend = [nLegend(1:stor(1)-1),nLegend(stor(end)+1:end),nLegend(stor)];
+    end
+    %reorder fuel cells 1 and 2 to come first because they are almost
+    %always on
+    if ~isempty(FCcount)
+        FC1 = nLegend(FCcount(1));
+        FCend = nLegend(FCcount(end));
+        name = {name{FC1:FCend},name{1:FC1-1},name{FCend+1:end}};
+        plotBars = [plotBars(:,FC1:FCend),plotBars(:,1:FC1-1),plotBars(:,FCend+1:end)];
+        nLegend(FCcount) = 0;
     end
     nLegend = nonzeros(nLegend);
     %% Plot

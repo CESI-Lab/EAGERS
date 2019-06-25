@@ -63,6 +63,7 @@ if length(varargin)==1 %first initialization
     block.Fuel = ComponentProperty(block.Fuel);
     Current = block.Target4.IC*1000/(block.Voltage.IC*block.Cells);
     Recirculation = ComponentProperty(block.AnodeRecirc);
+    block.AnodeRecirc = [];
     if isfield(block,'OxyFC')
         FuelFlow = NetFlow(ComponentProperty(block.FuelFlow));
         block.Oxidant = ComponentProperty(block.Oxidant_IC);
@@ -80,6 +81,7 @@ if length(varargin)==1 %first initialization
     block.OxidantTemp.IC = OxidantTemp;
     block.OxidantFlow.IC = OxidantFlow; 
     block.AnodeRecirc.IC = Recirculation;
+    block.FuelFlow = [];
     block.FuelFlow.IC = FuelFlow; 
     block.Current.IC = Current;
     
@@ -239,6 +241,11 @@ else %running the model
         end
         if block.AnodeRecirc.IC == 0
             Recirculation = 0;
+            if (block.Fuel.CH4+0.5*block.Fuel.CO)>0
+                Steam2Carbon = block.Fuel.H2O/(block.Fuel.CH4+0.5*block.Fuel.CO);
+            else
+                Steam2Carbon = 0;
+            end
         else
             Steam2Carbon = Inlet.Target3;
             Recirculation = anodeRecircHumidification(block.Fuel,FuelFlow,block.WGSeffective,Steam2Carbon,block.Cells*Current/(2*F*1000),block.AnodeRecirc.IC);

@@ -123,7 +123,11 @@ if length(varargin)==1 % first initialization
     %% initial guess of reforming cooling
     if strcmp(block.Mode,'fuelcell')
         FuelSupply  = sum(Current)/(2*block.F*1000)/(block.Utilization_Flow2*(4*block.Flow2Spec.CH4+block.Flow2Spec.CO+block.Flow2Spec.H2))*block.Cells; % fuel flow rate,  current/(2*F*1000) = kmol H2
-        block.Recirc.Flow2 = anodeRecircHumidification(block.Flow2Spec,FuelSupply,0.7,block.Steam2Carbon,block.Cells*sum(Current)/(2*block.F*1000),0.5);
+        if ~isfield(block,'AnPercEquilib')
+            block.Recirc.Flow2 = 0;
+        else
+            block.Recirc.Flow2 = anodeRecircHumidification(block.Flow2Spec,FuelSupply,0.7,block.Steam2Carbon,block.Cells*sum(Current)/(2*block.F*1000),0.5);
+        end
         switch block.Reformer
             case 'adiabatic'
                 block.ReformT = 823; %an initial guess temperature for adiabatic reforme, or if uncommenting line 873, this is the setpoint
@@ -146,7 +150,11 @@ if length(varargin)==1 % first initialization
                 block.R_WGS =  block.R_CH4*.8;
             case {'direct'}
                 block.Flow2_IC  = sum(Current)/(2*block.F*1000)/(block.Utilization_Flow2*(4*block.Flow2Spec.CH4+block.Flow2Spec.CO+block.Flow2Spec.H2))*block.Cells; % fuel flow rate,  current/(2*F*1000) = kmol H2
-                R1 = block.Flow2Spec.CH4*block.AnPercEquilib*block.Flow2_IC;
+                if isfield(block,'AnPercEquilib')
+                    R1 = block.Flow2Spec.CH4*block.AnPercEquilib*block.Flow2_IC;
+                else
+                    R1 = 0;%no reforming
+                end
                 block.R_CH4 = R1/block.Cells*ones(block.nodes,1)/block.nodes;
                 block.R_WGS =  block.R_CH4*.8;
         end 
@@ -319,9 +327,6 @@ else%running the model
     block = varargin{4};
     string1 = varargin{5};
     Inlet = checkSaturation(Inlet,block);
-    if Inlet.Flow1.O2<=0
-        disp('WTF')
-    end
     %% add species that may not be in inlet
     inFields = fieldnames(Inlet.Flow1);
     for i = 1:1:length(block.Spec1)
@@ -463,9 +468,6 @@ else%running the model
     if strcmp(string1,'Outlet')
         %% Outlet Ports
         Out.Flow1Out = Flow1Out;
-        if Out.Flow1Out.O2<=0
-            disp('WTF')
-        end
         Out.Flow2Out  = Flow2Out;
         Out.Flow1Pin = P_flow1;
         Out.Flow2Pin = P_flow2;
@@ -488,6 +490,7 @@ else%running the model
                 H2_out = H2_out + sum(Flow2.Outlet.CO(block.Flow2Dir(:,end)));
             end
             Tags.(block.name).H2utilization = (H2_in - H2_out)./H2_in;
+            Tags.(block.name).H2concentration = (Flow2.Inlet.H2 + Flow2.Outlet.H2)./(NetFlow(Flow2.Inlet)+NetFlow(Flow2.Outlet));
             Tags.(block.name).O2utilization = sum(Flow1.Inlet.O2(block.Flow1Dir(:,1)) - Flow1.Outlet.O2(block.Flow1Dir(:,end)))/sum(Flow1.Inlet.O2(block.Flow1Dir(:,1)));
             if strcmp(block.FCtype,'MCFC')
                 Tags.(block.name).CO2utilization = sum(Flow1.Inlet.CO2(block.Flow1Dir(:,1)) - Flow1.Outlet.CO2(block.Flow1Dir(:,end)))/sum(Flow1.Inlet.CO2(block.Flow1Dir(:,1))); %only makes sense if FCtype=1 and CO2 is a cathode state
@@ -642,9 +645,6 @@ else%running the model
         Nflow2 = block.Pfactor2*max(0.1,(P_flow2-Inlet.Flow2Pout));%total fuel/steam flow out
         dY(n+2) = (NetFlow(Inlet.Flow2)-Nflow2)*block.Ru*Inlet.Flow2.T/block.tC(n+2);%working with total flow rates so must multiply by nodes & cells
         Out = dY;
-        if any(isnan(dY))
-            disp('WTF')
-        end
     end
 end
 end %Ends function FuelCell
@@ -853,9 +853,12 @@ end
 for i = 1:1:length(block.Spec2)
     X = Flow2.Outlet.(block.Spec2{i})./NetFlow(Flow2.Outlet);%concentration
     block.tC(n+1:n+block.nodes) = (block.Vol_flow(2)*block.Flow2_Pinit)./(block.T.Flow2*block.Ru); %fuel/steam
-    if any(X<.01) %concentration less than 1%
-        block.IC(n+1:n+block.nodes) = X;
+    if all(X==0)
+        block.IC(n+1:n+block.nodes) = 0;
         block.Scale(n+1:n+block.nodes) = NetFlow(Flow2.Outlet); %anode flow
+    elseif any(X<.01) %concentration less than 1%
+        block.IC(n+1:n+block.nodes) = Flow2.Outlet.(block.Spec2{i})/max(Flow2.Outlet.(block.Spec2{i}));
+        block.Scale(n+1:n+block.nodes) = max(Flow2.Outlet.(block.Spec2{i})); %max flow of this species (inlet or outlet probably)
     else
         block.Scale(n+1:n+block.nodes) = Flow2.Outlet.(block.Spec2{i}); %individual species flow
     end   

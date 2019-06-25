@@ -4,6 +4,8 @@ global Plant
 networkNames = fieldnames(Plant.Network);
 networkNames = networkNames(~strcmp('name',networkNames));
 networkNames = networkNames(~strcmp('Equipment',networkNames));
+networkNames = networkNames(~strcmp('Location',networkNames));
+networkNames = networkNames(~strcmp('Buildings',networkNames));
 
 dt = Time' - [0, Time(1:end-1)]';
 horizon = Plant.optimoptions.Horizon;
@@ -11,7 +13,8 @@ if horizon>24
     axStep = floor(horizon/10);
 elseif horizon>12
     axStep=2;
-else axStep=1;
+else
+    axStep=1;
 end
 axTick = ceil(Time(1)-dt(1)):axStep:Time(end);
 axIndex = axTick;

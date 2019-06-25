@@ -1,4 +1,4 @@
-function CellMap(Y,block,FigNum)
+function CellMap(Y,block,FigNum,mode)
 if ~isfield(block,'Manifold')
     block.Manifold = 0;
 end
@@ -20,14 +20,18 @@ end
 wC = block.L_Cell/columns;
 wR = block.W_Cell/rows;
 FCstates = Y(block.States).*block.Scale';
-CellT = FCstates(2*nodes+1:3*nodes)-273;
+if strcmp(mode,'T')
+    CellProperty = FCstates(2*nodes+1:3*nodes)-273;%electrolyte temperature
+else
+    CellProperty = FCstates(end-nodes-1:end-2)/(wC*wR*1e4);%current density
+end
 if rows ==1
     X = [0 linspace(.5*wC,block.L_Cell -.5*wC,columns) block.L_Cell];
     Y = [0 block.W_Cell];
     Z(1,1:columns+2) = 0;
-    C(1,1:columns+2) =  [CellT(1) CellT(1:columns) CellT(columns)];
+    C(1,1:columns+2) =  [CellProperty(1) CellProperty(1:columns) CellProperty(columns)];
     Z(2,1:columns+2) = 0;
-    C(2,1:columns+2) =  [CellT(1) CellT(1:columns) CellT(columns)];
+    C(2,1:columns+2) =  [CellProperty(1) CellProperty(1:columns) CellProperty(columns)];
     %Draw line coordinates
     for j = 1:1:rows+1
         HorizLinesX(3*j-2:3*j) = [0 block.L_Cell 0];
@@ -49,16 +53,16 @@ elseif block.Manifold== 0 && rows>1
     Y = [0 linspace(.5*wR,block.L_Cell -.5*wR,rows) block.W_Cell];
     for j = 1:1:rows
         Z(j+1,2:columns+1) = 0;
-        C(j+1,2:columns+1) = CellT(1+(j-1)*columns:j*columns);
+        C(j+1,2:columns+1) = CellProperty(1+(j-1)*columns:j*columns);
     end
     Z(1,2:columns+2) = 0;
-    C(1,2:columns+2) =  [CellT(1:columns) CellT(columns)];
+    C(1,2:columns+2) =  [CellProperty(1:columns) CellProperty(columns)];
     Z(2:rows+2,columns+2) = 0;
-    C(2:rows+2,columns+2) = [CellT(linspace(columns,rows*columns,rows)) CellT(rows*columns)];
+    C(2:rows+2,columns+2) = [CellProperty(linspace(columns,rows*columns,rows)) CellProperty(rows*columns)];
     Z(rows+2,linspace(columns+1,1,columns+1)) = 0;
-    C(rows+2,linspace(columns+1,1,columns+1)) = [CellT(linspace(rows*columns,(rows-1)*columns+1,columns)) CellT((rows-1)*columns+1)];
+    C(rows+2,linspace(columns+1,1,columns+1)) = [CellProperty(linspace(rows*columns,(rows-1)*columns+1,columns)) CellProperty((rows-1)*columns+1)];
     Z(linspace(rows+1,1,rows+1),1) = 0;
-    C(linspace(rows+1,1,rows+1),1) = [CellT(linspace((rows-1)*columns+1,1,rows)) CellT(1)];
+    C(linspace(rows+1,1,rows+1),1) = [CellProperty(linspace((rows-1)*columns+1,1,rows)) CellProperty(1)];
     %Draw line coordinates
     for j = 1:1:rows+1
         HorizLinesX(3*j-2:3*j) = [0 block.L_Cell 0];
@@ -83,7 +87,7 @@ elseif block.Manifold == 1  %% need to edit this
     Y = [0 .5*wE2 linspace(wE2+.5*wR,block.W_Plate -(wE2+.5*wR),rows) block.W_Plate-.5*wE2 block.W_Plate];
     for j = 1:1:rows
         Z(j+2,3:columns+2) = 0;
-        C(j+2,3:columns+2) = CellT(1+(j-1)*columns:j*columns);
+        C(j+2,3:columns+2) = CellProperty(1+(j-1)*columns:j*columns);
     end
     %Edges
     Z(2,3:columns+3) = 0;
@@ -130,7 +134,11 @@ end
 
 figure(FigNum);
 surf(X, Y, Z, C,'FaceColor','interp','EdgeColor','none')
-caxis([block.TpenAvg-.75*block.deltaTStack-273 block.TpenAvg+.75*block.deltaTStack-273]);
+if strcmp(mode,'T')
+    caxis([block.TpenAvg-.75*block.deltaTStack-273 block.TpenAvg+.75*block.deltaTStack-273]);
+else
+    caxis([0 1.5]);%CellProperty
+end
 hold on
 plot3(HorizLinesX,HorizLinesY,HorizLinesZ,'k-','LineWidth',1);
 plot3(VertLinesX,VertLinesY,VertLinesZ,'k-','LineWidth',1)

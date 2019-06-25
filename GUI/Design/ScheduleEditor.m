@@ -22,7 +22,7 @@ function varargout = ScheduleEditor(varargin)
 
 % Edit the above text to modify the response to help ScheduleEditor
 
-% Last Modified by GUIDE v2.5 01-Aug-2017 11:17:34
+% Last Modified by GUIDE v2.5 07-Mar-2018 23:49:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -72,10 +72,15 @@ set(handles.tableSchedule,'Visible','off')
 
 set(handles.rampfactor,'String','1')
 ramp = 1e-4;
-[~,data] = decideSched(handles); 
+data= decideSched(handles); 
 plotSched(data,ramp,handles.axesSchedule)
 
 guidata(hObject, handles);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = ScheduleEditor_OutputFcn(hObject, eventdata, handles)
+building_edit()
 
 function rampfactor_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -92,8 +97,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --- Outputs from this function are returned to the command line.
-function varargout = ScheduleEditor_OutputFcn(hObject, eventdata, handles)
 
 function editLoad_Callback(hObject, eventdata, handles)
 global testSystems SYSINDEX
@@ -102,24 +105,43 @@ global testSystems SYSINDEX
 
 
 function ramp_Callback(hObject, eventdata, handles)
+global testSystems SYSINDEX
+list = get(handles.popupSched,'String');
+val = get(handles.popupSched,'Value');
+sched = list{val};
+
 if get(hObject,'Value')==1
     set(handles.rampfactor,'Visible','on')
+    ramp = str2double(get(handles.rampfactor,'String'));
+    testSystems(SYSINDEX).Building.Schedule.(sched).Ramp = ramp;
+else
+    testSystems(SYSINDEX).Building.Schedule.(sched) = rmfield(testSystems(SYSINDEX).Building.Schedule.(sched),'Ramp');
 end
 rampfactor_Callback(handles.rampfactor,eventdata,handles)
 
 
 function step_Callback(hObject, eventdata, handles)
+global testSystems SYSINDEX
+list = get(handles.popupSched,'String');
+val = get(handles.popupSched,'Value');
+sched = list{val};
 if get(hObject,'Value')==1
     set(handles.rampfactor,'Visible','off')
+    testSystems(SYSINDEX).Building.Schedule.(sched) = rmfield(testSystems(SYSINDEX).Building.Schedule.(sched),'Ramp');
 end
 ramp = 1e-4;
-[~,data] = decideSched(handles); 
+data= decideSched(handles); 
 plotSched(data,ramp,handles.axesSchedule)
 
 
 function rampfactor_Callback(hObject, eventdata, handles)
-ramp = str2num(get(handles.rampfactor,'String'));
-[~,data] = decideSched(handles); 
+global testSystems SYSINDEX
+list = get(handles.popupSched,'String');
+val = get(handles.popupSched,'Value');
+sched = list{val};
+ramp = str2double(get(handles.rampfactor,'String'));
+testSystems(SYSINDEX).Building.Schedule.(sched).Ramp = ramp;
+data= decideSched(handles); 
 plotSched(data,ramp,handles.axesSchedule)
 
 function onSeason_Callback(hObject, eventdata, handles)
@@ -128,7 +150,7 @@ function offSeason_Callback(hObject, eventdata, handles)
 
 function checkEdit_Callback(hObject, eventdata, handles)
 if get(handles.checkEdit,'Value')==1
-    [~,data] = decideSched(handles);
+    data = decideSched(handles);
     set(handles.tableSchedule,'Data',data)
     hw = get(handles.tableSchedule,'Extent');
     pos = get(handles.tableSchedule,'Position');
@@ -140,23 +162,28 @@ end
 
 function tableSchedule_CellEditCallback(hObject, eventdata, handles)
 global testSystems SYSINDEX
-[name,~] = decideSched(handles);
-sched = char(name(1));
-type = char(name(2));
+list = get(handles.popupSched,'String');
+val = get(handles.popupSched,'Value');
+sched = list{val};
+if get(handles.weekdaySched,'Value')==1
+    type = 'Weekday';
+elseif get(handles.saturdaySched,'Value')==1
+    type = '.Sat';
+else
+    type = '.Sun';
+end
 testSystems(SYSINDEX).Building.Schedule.(sched).(type) = hObject.Data;
 if strcmp(get(handles.rampfactor,'Visible'),'on')
-    ramp = str2num(get(handles.rampfactor,'String'));
+    ramp = str2double(get(handles.rampfactor,'String'));
 else
     ramp = 1e-4;
 end
 plotSched(hObject.Data,ramp,handles.axesSchedule)
 
-
-
 function popupSched_Callback(hObject, eventdata, handles)
 global testSystems SYSINDEX
 if strcmp(get(handles.rampfactor,'Visible'),'on')
-    ramp = str2num(get(handles.rampfactor,'String'));
+    ramp = str2double(get(handles.rampfactor,'String'));
 else
     ramp = 1e-4;
 end
@@ -190,7 +217,7 @@ else
 end
 
 
-[~,data] = decideSched(handles); 
+data= decideSched(handles); 
 plotSched(data,ramp,handles.axesSchedule)
 checkEdit_Callback(hObject, eventdata, handles)
 
@@ -217,11 +244,11 @@ else
     set(hObject,'Value',1)
 end
 if strcmp(get(handles.rampfactor,'Visible'),'on')
-    ramp = str2num(get(handles.rampfactor,'String'));
+    ramp = str2double(get(handles.rampfactor,'String'));
 else
     ramp = 1e-4;
 end
-[~,data] = decideSched(handles);
+data = decideSched(handles);
 plotSched(data,ramp,handles.axesSchedule)
 checkEdit_Callback(hObject, eventdata, handles)
 
@@ -233,11 +260,11 @@ else
     set(hObject,'Value',1)
 end
 if strcmp(get(handles.rampfactor,'Visible'),'on')
-    ramp = str2num(get(handles.rampfactor,'String'));
+    ramp = str2double(get(handles.rampfactor,'String'));
 else
     ramp = 1e-4;
 end
-[~,data] = decideSched(handles);
+data= decideSched(handles);
 plotSched(data,ramp,handles.axesSchedule)
 checkEdit_Callback(hObject, eventdata, handles)
 
@@ -249,72 +276,28 @@ else
     set(hObject,'Value',1)
 end
 if strcmp(get(handles.rampfactor,'Visible'),'on')
-    ramp = str2num(get(handles.rampfactor,'String'));
+    ramp = str2double(get(handles.rampfactor,'String'));
 else
     ramp = 1e-4;
 end
-[~,data] = decideSched(handles); 
+data= decideSched(handles); 
 plotSched(data,ramp,handles.axesSchedule)
 checkEdit_Callback(hObject, eventdata, handles)
 
-function [name,data] = decideSched(handles)
+function data = decideSched(handles)
 global testSystems SYSINDEX
-x = get(handles.popupSched,'String');
+list = get(handles.popupSched,'String');
 val = get(handles.popupSched,'Value');
+sched = list{val};
 if get(handles.weekdaySched,'Value')==1
-    type = '.Weekday';
+    type = 'Weekday';
 elseif get(handles.saturdaySched,'Value')==1
-    type = '.Sat';
+    type = 'Sat';
 else
-    type = '.Sun';
+    type = 'Sun';
 end
-schedules = fieldnames(testSystems(SYSINDEX).Building.Schedule);
-name = char(x(val));
-name = name(find(~isspace(name)));
-if strcmp(name,'CoolingTemperatureSetpoints')
-    name = 'TsetC';
-elseif strcmp(name,'HeatingTemperatureSetpoints')
-    name = 'TsetH';
-end
-
-for i=1:length(schedules)
-    if strcmpi(name,schedules(i))
-        data = eval(strcat('testSystems(SYSINDEX).Building.Schedule.',char(schedules(i)),type));
-        name = {char(schedules(i));char(type(2:end))};
-    end
-end
-
+data = testSystems(SYSINDEX).Building.Schedule.(sched).(type);
 
 function plotSched(data,ramp,axes)
-newsched = convertSched(data,ramp);
+newsched = convert_sched(data,ramp);
 plot(axes,newsched(:,1),newsched(:,2))
-
-
-function newsched = convertSched(sched,Ramp)
-[m,n] = size(sched);
-if m==2
-    newsched = sched; %this is constant all day, already made 0 hour and 24 hour
-else
-    newsched = zeros(2*(m-1),n);
-    sched(1,2) = sched(2,2);
-    newsched(1,:) = sched(1,:);%hour 0
-    newsched(end,:) = sched(m,:);%hour 24
-    if Ramp<1e-3
-        for i = 2:1:m-1 
-            newsched(2*i-2,1) = sched(i);
-            newsched(2*i-2,2) = sched(i,2);
-            newsched(2*i-1,1) = sched(i)+Ramp;
-            newsched(2*i-1,2) = sched(i+1,2);
-        end
-    else 
-        for i = 2:1:m-1 %add points in the middle so it can be properly interpolated
-            t_bef = sched(i) - sched(i-1);
-            t_aft = sched(i+1)-sched(i);
-            Ramp2 = min([Ramp, t_aft/2,t_bef/2]);
-            newsched(2*i-2,1) = sched(i)-0.5*Ramp2;
-            newsched(2*i-2,2) = sched(i,2);
-            newsched(2*i-1,1) = sched(i)+0.5*Ramp2;
-            newsched(2*i-1,2) = sched(i+1,2);
-        end
-    end
-end
